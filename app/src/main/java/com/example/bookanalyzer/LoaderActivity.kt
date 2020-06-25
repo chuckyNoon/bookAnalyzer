@@ -1,20 +1,18 @@
 package com.example.bookanalyzer
 
 import android.annotation.SuppressLint
-import android.app.Activity
 import android.content.Intent
 import android.database.Cursor
-import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.AsyncTask
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.OpenableColumns
-import android.webkit.WebView
-import android.widget.ImageView
-import nl.siegmann.epublib.epub.Main
+import androidx.appcompat.app.AppCompatActivity
 import java.io.InputStream
+import java.io.InputStreamReader
+import java.io.OutputStreamWriter
 import kotlin.math.roundToInt
+
 
 class LoaderActivity : AppCompatActivity() {
     var analysis:BookAnalysis? = null
@@ -55,10 +53,6 @@ class LoaderActivity : AppCompatActivity() {
         return result
     }
 
-    fun getc() : LoaderActivity{
-        return (this)
-    }
-
     inner class BookAnalysis(private val inStream: InputStream, val path:String)
         : AsyncTask<Void, Int, Void>()
     {
@@ -76,10 +70,7 @@ class LoaderActivity : AppCompatActivity() {
 
         fun doit() {
             parser = FileParser()
-            var time1 = System.currentTimeMillis()
-            normalizer = WordNormalizer(getc())
-            var time2 = System.currentTimeMillis()
-            println("e=" + ((time2- time1).toDouble() / 1000 ).toString())
+            normalizer = WordNormalizer(this@LoaderActivity)
             simpleText = when{
                 path.contains(".txt") -> parser!!.parseTxt(inStream)
                 path.contains(".epub") -> parser!!.epubToTxt(inStream)
@@ -142,32 +133,31 @@ class LoaderActivity : AppCompatActivity() {
 
         override fun onPreExecute() {
             super.onPreExecute()
-
         }
 
         override fun doInBackground(vararg params: Void?): Void? {
             val time1 = System.currentTimeMillis()
             doit()
             val time2 = System.currentTimeMillis()
-            intent = Intent(getc(), MainActivity::class.java)
+            intent = Intent(this@LoaderActivity, MainActivity::class.java)
 
             intent?.putExtra("bookName", path)
             intent?.putExtra("wordCount", wordsCount.toString())
             intent?.putExtra("uniqCount", finalMap!!.size.toString())
             intent?.putExtra("sentLen",roundDouble(avgSentenceLen).toString())
             intent?.putExtra("wordLen",roundDouble(avgWordLen).toString())
-            intent?.putExtra("img", img)
-            var i = 0
-            finalMap?.let {
-                for ((a,b) in it){
-                    intent?.putExtra("w$i",a)
-                    intent?.putExtra("c$i",b)
-                    i++
-                }
-            }
+            intent?.putExtra("imgPath", "img.txt")
+            intent?.putExtra("listPath", "list.txt")
+
+
+            val imgOut = openFileOutput("img.txt", 0)
+            imgOut.write(img!!)
+            val lstOut = openFileOutput("list.txt", 0)
+            var str = finalMap.toString().toByteArray()
+            lstOut.write(str)
             val time3 = System.currentTimeMillis()
-            println("t=" + ((time2- time1).toDouble() / 1000 ).toString())
-            println("t=" + ((time3- time2).toDouble() / 1000 ).toString())
+            println("t algo=" + ((time2- time1).toDouble() / 1000 ).toString())
+            println("t out=" + ((time3- time2).toDouble() / 1000 ).toString())
             return (null)
         }
 
@@ -176,7 +166,6 @@ class LoaderActivity : AppCompatActivity() {
 
         override fun onPostExecute(result: Void?) {
             super.onPostExecute(result)
-
             startActivity(intent)
         }
     }

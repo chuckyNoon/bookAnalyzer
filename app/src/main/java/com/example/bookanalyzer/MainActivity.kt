@@ -50,12 +50,22 @@ class MainActivity : AppCompatActivity() {
         uniqueWordView?.text = arguments?.getString("uniqCount")
         avgSentenceView?.text = arguments?.getString("sentLen")
         avgWordView?.text = arguments?.getString("wordLen")
-        var byteArray = arguments?.getByteArray("img")
-        val bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray?.size?:0)
-        imageView?.setImageBitmap(bmp)
+        val imgPath = arguments?.getString("imgPath")
+        val listPath = arguments?.getString("listPath")
 
-        val asyncTask = AsyncTask<V>
+        imgPath?.let { readImg(it) }
+
+        listButton?.setOnClickListener {
+            val listIntent:Intent = Intent(this,ListActivity::class.java)
+            listIntent.putExtra("listPath", listPath)
+            startActivity(listIntent)
+        }
     }
 
-
+    fun readImg(path:String){
+        val f = openFileInput(path)
+        val byteArray = f.readBytes()
+        val bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size?:0)
+        imageView?.setImageBitmap(bmp)
+    }
 }

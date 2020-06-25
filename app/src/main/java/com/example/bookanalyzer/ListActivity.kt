@@ -13,14 +13,20 @@ class ListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_list)
-        print("ddd")
         listLayout = findViewById(R.id.listLayout)
         val arguments = intent.extras
-        val size =arguments?.getInt("size")
-        print("ddd")
-        size?.let{
-            for(i in 0 until it){
-                var hLayout = LinearLayout(this)
+        val listPath = arguments?.getString("listPath")
+        val listIn = openFileInput(listPath)
+        val strMap = listIn.readBytes().toString(Charsets.UTF_8)
+        val strs = strMap.split(',', ' ', '{')
+        var i = 0
+        for(str in strs){
+                if (str == "")
+                    continue
+                val words = str.split("=")
+                if (words.size != 2)
+                    continue
+                val hLayout = LinearLayout(this)
                 hLayout.orientation = LinearLayout.HORIZONTAL
                 val lparams: LinearLayout.LayoutParams = LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT)
@@ -32,8 +38,8 @@ class ListActivity : AppCompatActivity() {
                     0,135)//LinearLayout.LayoutParams.WRAP_CONTENT)
                 tparams.weight = 1F
 
-                textView1.text = arguments.getString("word$i")
-                textView2.text = arguments.getInt("count$i").toString()
+                textView1.text = words[0]
+                textView2.text = words[1]
                 textView1.layoutParams= tparams
                 textView2.layoutParams= tparams
                 textView1.gravity = Gravity.CENTER
@@ -47,10 +53,9 @@ class ListActivity : AppCompatActivity() {
                 hLayout.addView(textView1)
                 hLayout.addView(textView2)
                 listLayout?.addView(hLayout)
+                i++
                 if (i == 40)
                     break
-                println(i)
-            }
         }
     }
 }
