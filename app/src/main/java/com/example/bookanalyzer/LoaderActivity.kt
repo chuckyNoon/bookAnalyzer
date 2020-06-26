@@ -8,9 +8,8 @@ import android.os.AsyncTask
 import android.os.Bundle
 import android.provider.OpenableColumns
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.FragmentActivity
 import java.io.InputStream
-import java.io.InputStreamReader
-import java.io.OutputStreamWriter
 import kotlin.math.roundToInt
 
 
@@ -28,6 +27,11 @@ class LoaderActivity : AppCompatActivity() {
 
         analysis = BookAnalysis(inStream!!, path!!)
         analysis?.execute()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        analysis?.cancel(false)
     }
 
     @SuppressLint("Recycle")
@@ -158,6 +162,7 @@ class LoaderActivity : AppCompatActivity() {
             val time3 = System.currentTimeMillis()
             println("t algo=" + ((time2- time1).toDouble() / 1000 ).toString())
             println("t out=" + ((time3- time2).toDouble() / 1000 ).toString())
+            //println("e"+finalMap.toString().split(',').size)
             return (null)
         }
 

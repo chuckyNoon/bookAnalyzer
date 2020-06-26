@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    fun readImg(path:String){
+    private fun readImg(path:String){
         val f = openFileInput(path)
         val byteArray = f.readBytes()
         val bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size?:0)
