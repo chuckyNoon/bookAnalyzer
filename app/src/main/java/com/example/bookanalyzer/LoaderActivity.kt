@@ -9,12 +9,20 @@ import android.os.Bundle
 import android.provider.OpenableColumns
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentActivity
+import kotlinx.coroutines.*
+import kotlinx.coroutines.launch
+import java.io.FileInputStream
 import java.io.InputStream
+import java.io.Writer
+import kotlin.coroutines.CoroutineContext
 import kotlin.math.roundToInt
 
 
 class LoaderActivity : AppCompatActivity() {
     var analysis:BookAnalysis? = null
+    var job:Job? = null
+    val scope = MainScope()
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,14 +32,52 @@ class LoaderActivity : AppCompatActivity() {
         val uri = Uri.parse(arguments?.getString("uri"))
         val inStream = contentResolver.openInputStream(uri)
         val path = getFileName(uri)
+        val ind = arguments!!.getInt("ind")
 
-        analysis = BookAnalysis(inStream!!, path!!)
-        analysis?.execute()
+        analysis = BookAnalysis(inStream!!, path!!, this)
+
+        job = scope.launch(Dispatchers.IO){
+            val time1 = System.currentTimeMillis()
+            analysis!!.doit()
+            yield()
+            val time2 = System.currentTimeMillis()
+            val intent1 = Intent(this@LoaderActivity, MainActivity::class.java)
+
+            val infoFileName = "info$ind"
+            val listFileName = "list$ind"
+            val imgFileName = "img$ind"
+
+            intent1.putExtra("imgPath", imgFileName)
+            intent1.putExtra("listPath", listFileName)
+            intent1.putExtra("infoPath", infoFileName)
+
+            val imgOut = openFileOutput(imgFileName, 0)
+            imgOut.write(analysis!!.img!!)
+
+            val lstOut = openFileOutput(listFileName, 0)
+            lstOut.write(analysis!!.finalMap.toString().toByteArray())
+
+            val infoOut  = openFileOutput(infoFileName, 0)
+            val info = path + "\n" + analysis!!.wordsCount.toString() + "\n" + analysis!!.finalMap!!.size.toString() + "\n" +
+                    analysis!!.avgSentenceLen.toString() + "\n" + analysis!!.avgWordLen.toString()
+            infoOut.write(info.toByteArray())
+            println(info)
+
+            val inAll = openFileOutput("all", 0)
+            inAll.write((ind+1).toString().toByteArray())
+            println("i$ind")
+            val time3 = System.currentTimeMillis()
+            println("t algo=" + ((time2- time1).toDouble() / 1000 ).toString())
+            println("t out=" + ((time3- time2).toDouble() / 1000 ).toString())
+
+            startActivity(intent1)
+        }
     }
 
     override fun onStop() {
         super.onStop()
-        analysis?.cancel(false)
+        println("3")
+        job!!.cancel()
     }
 
     @SuppressLint("Recycle")
@@ -55,123 +101,5 @@ class LoaderActivity : AppCompatActivity() {
             }
         }
         return result
-    }
-
-    inner class BookAnalysis(private val inStream: InputStream, val path:String)
-        : AsyncTask<Void, Int, Void>()
-    {
-        private var parser:FileParser? = null
-        private var simpleText:String? = null
-        var finalMap:Map<String,Int>? = null
-        var avgWordLen:Double = 0.0
-        var avgSentenceLen:Double= 0.0
-        var wordsPerTwo:Int = 0
-        var wordsCount = 0
-        var unWordsCount = 0
-        var img:ByteArray? = null
-        private var normalizer: WordNormalizer? = null
-        var intent:Intent?= null
-
-        fun doit() {
-            parser = FileParser()
-            normalizer = WordNormalizer(this@LoaderActivity)
-            simpleText = when{
-                path.contains(".txt") -> parser!!.parseTxt(inStream)
-                path.contains(".epub") -> parser!!.epubToTxt(inStream)
-                else -> parser!!.parseTxt(inStream)
-            }
-            img = parser?.img
-            finalMap = normalizeWordMap(parser!!.parseWords(simpleText!!))
-            calcWordCount()
-            calcAvgWordLen()
-            calcAvgSentenceLen()
-            unWordsCount = finalMap?.size ?:0
-            println(unWordsCount)
-            /* for((a,b) in finalMap!!)
-                 println("$a $b")*/
-        }
-
-        private fun calcWordCount(){
-            var ans:Int = 0
-            finalMap?.let {
-                for ((a, b) in it) {
-                    ans += b
-                }
-            }
-            wordsCount = ans
-        }
-
-        fun roundDouble(d:Double):Double{
-            return ((d * 100).roundToInt().toDouble() / 100)
-        }
-
-
-        private fun calcAvgWordLen(){
-            var sumLen:Long = 0
-            finalMap?.let {
-                for ((a, b) in it) {
-                    sumLen += a.length * b
-                }
-            }
-            avgWordLen = if (wordsCount != 0)  sumLen.toDouble()/ wordsCount else 0.0
-        }
-
-        private fun calcAvgSentenceLen(){
-            val strs = simpleText?.split(".")
-            val sentencesCount = strs?.size?:0
-            avgSentenceLen = if (sentencesCount != 0) wordsCount.toDouble() / sentencesCount else 0.0
-        }
-
-        private fun normalizeWordMap(sourceMap:MutableMap<String,Int>):Map<String,Int>{
-            val ansMap = mutableMapOf<String,Int>()
-            for ((a, b) in sourceMap){
-                val newWord = normalizer!!.getLemma(a)
-                if (newWord == null){
-                    ansMap[a] = (ansMap[a]?:0) + b
-                }else{
-                    ansMap[newWord] = (ansMap[newWord]?:0) + b
-                }
-            }
-            return (ansMap.toList().sortedBy { it.second }.reversed().toMap())
-        }
-
-        override fun onPreExecute() {
-            super.onPreExecute()
-        }
-
-        override fun doInBackground(vararg params: Void?): Void? {
-            val time1 = System.currentTimeMillis()
-            doit()
-            val time2 = System.currentTimeMillis()
-            intent = Intent(this@LoaderActivity, MainActivity::class.java)
-
-            intent?.putExtra("bookName", path)
-            intent?.putExtra("wordCount", wordsCount.toString())
-            intent?.putExtra("uniqCount", finalMap!!.size.toString())
-            intent?.putExtra("sentLen",roundDouble(avgSentenceLen).toString())
-            intent?.putExtra("wordLen",roundDouble(avgWordLen).toString())
-            intent?.putExtra("imgPath", "img.txt")
-            intent?.putExtra("listPath", "list.txt")
-
-
-            val imgOut = openFileOutput("img.txt", 0)
-            imgOut.write(img!!)
-            val lstOut = openFileOutput("list.txt", 0)
-            var str = finalMap.toString().toByteArray()
-            lstOut.write(str)
-            val time3 = System.currentTimeMillis()
-            println("t algo=" + ((time2- time1).toDouble() / 1000 ).toString())
-            println("t out=" + ((time3- time2).toDouble() / 1000 ).toString())
-            //println("e"+finalMap.toString().split(',').size)
-            return (null)
-        }
-
-        override fun onProgressUpdate(vararg progress: Int?) {
-        }
-
-        override fun onPostExecute(result: Void?) {
-            super.onPostExecute(result)
-            startActivity(intent)
-        }
     }
 }

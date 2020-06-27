@@ -18,6 +18,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import java.io.InputStream
+import java.util.*
 import kotlin.concurrent.thread
 import kotlin.math.roundToInt
 
@@ -45,15 +46,15 @@ class MainActivity : AppCompatActivity() {
         listButton = findViewById(R.id.listButton)
 
         val arguments = intent.extras
-        bookView?.text = arguments?.getString("bookName")
-        allWordView?.text = arguments?.getString("wordCount")
-        uniqueWordView?.text = arguments?.getString("uniqCount")
-        avgSentenceView?.text = arguments?.getString("sentLen")
-        avgWordView?.text = arguments?.getString("wordLen")
+
         val imgPath = arguments?.getString("imgPath")
         val listPath = arguments?.getString("listPath")
+        val infoPath = arguments?.getString("infoPath")
 
+        println(imgPath + " " + infoPath)
         imgPath?.let { readImg(it) }
+        infoPath?.let { readInfo(it) }
+
 
         listButton?.setOnClickListener {
             val listIntent:Intent = Intent(this,ListActivity::class.java)
@@ -67,5 +68,16 @@ class MainActivity : AppCompatActivity() {
         val byteArray = f.readBytes()
         val bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size?:0)
         imageView?.setImageBitmap(bmp)
+    }
+
+    private fun readInfo(path:String){
+        val f = openFileInput(path)
+        val scanner = Scanner(f)
+
+        bookView?.text =  scanner.nextLine()
+        allWordView?.text = scanner.nextLine()
+        uniqueWordView?.text = scanner.nextLine()
+        avgSentenceView?.text = scanner.nextLine()
+        avgWordView?.text = scanner.nextLine()
     }
 }
