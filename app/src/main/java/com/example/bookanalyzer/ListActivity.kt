@@ -95,7 +95,7 @@ class ListActivity : AppCompatActivity() {
         val listPath = arguments?.getString("listPath")
         val listIn = openFileInput(listPath)
         val strMap = listIn.readBytes().toString(Charsets.UTF_8)
-        strs = strMap.substring(1,strMap.length - 2).split(',')
+        strs = strMap.substring(1,strMap.length - 1).split(',')
         createWordList(strs!!)
         toPrevButton?.setOnClickListener {
             currInd-=sm
