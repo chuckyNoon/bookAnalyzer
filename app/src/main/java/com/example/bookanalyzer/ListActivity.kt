@@ -3,14 +3,11 @@ package com.example.bookanalyzer
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.view.Gravity
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.ScrollView
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 
 class ListActivity : AppCompatActivity() {
-    var listLayout:LinearLayout? = null
+    var listLayout: TableLayout? = null
     val sm:Int = 15
     var currInd:Int = 0
     var strs:List<String>? = null
@@ -23,6 +20,11 @@ class ListActivity : AppCompatActivity() {
     var toStartButton:Button? = null
     var toEndButton:Button? = null
 
+    private fun dpToPx(dp:Int):Int{
+        val scale: Float = this.resources.displayMetrics.density
+        return (dp * scale + 0.5f).toInt()
+    }
+
     private fun createWordList(strs:List<String>){
         views = Array<Pair<TextView?,TextView?>>(sm) {null to null}
         var ind = 0
@@ -33,26 +35,30 @@ class ListActivity : AppCompatActivity() {
             val words = str.split("=")
             if (words.size != 2)
                 continue
-            val hLayout = LinearLayout(this)
-            hLayout.orientation = LinearLayout.HORIZONTAL
-            val lparams: LinearLayout.LayoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,LinearLayout.LayoutParams.WRAP_CONTENT)
+            val hLayout = TableRow(this)
+            val lparams: TableLayout.LayoutParams =TableLayout.LayoutParams(
+                TableLayout.LayoutParams.MATCH_PARENT,TableLayout.LayoutParams.WRAP_CONTENT)
             hLayout.layoutParams = lparams
 
             val textView1 = TextView(this)
             val textView2 = TextView(this)
-            val tparams: LinearLayout.LayoutParams = LinearLayout.LayoutParams(
-                0,135)//LinearLayout.LayoutParams.WRAP_CONTENT)
-            tparams.weight = 1F
+            val tparams1: TableRow.LayoutParams = TableRow.LayoutParams(
+                TableRow.LayoutParams.WRAP_CONTENT,135)
+            val tparams2: TableRow.LayoutParams = TableRow.LayoutParams(
+                TableRow.LayoutParams.WRAP_CONTENT,135)
+            tparams1.weight = 2F
+            tparams2.leftMargin = dpToPx(30)
+            tparams2.weight = 1F
 
             textView1.text = words[0]
             textView2.text = words[1]
-            textView1.layoutParams= tparams
-            textView2.layoutParams= tparams
+            textView1.layoutParams= tparams1
+            textView2.layoutParams= tparams2
+            textView1.textSize = 24F
+            textView2.textSize = 24F
             textView1.gravity = Gravity.CENTER
-            textView2.gravity = Gravity.CENTER
-            textView1.textSize = 18F
-            textView2.textSize = 18F
+            textView1.setPadding(dpToPx(0),0,0,0)
+            textView2.gravity = Gravity.START
 
             hLayout.addView(textView1)
             hLayout.addView(textView2)
@@ -120,6 +126,5 @@ class ListActivity : AppCompatActivity() {
             updateList(strs!!)
             //scrollView?.fullScroll(ScrollView.FOCUS_UP)
         }
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT;
     }
 }

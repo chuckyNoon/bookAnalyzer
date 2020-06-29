@@ -4,6 +4,7 @@ import android.R.attr
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Intent
+import android.content.res.Configuration
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -43,10 +44,11 @@ class MainActivity : AppCompatActivity() {
         uniqueWordView = findViewById(R.id.uniqueWordView)
         avgSentenceView = findViewById(R.id.avgSentenceView)
         avgWordView = findViewById(R.id.avgWordView)
-        listButton = findViewById(R.id.listButton)
-
+        listButton = when(resources.configuration.orientation){
+            Configuration.ORIENTATION_LANDSCAPE -> findViewById(R.id.listButton)
+            else -> findViewById(R.id.listButton)
+        }
         val arguments = intent.extras
-
         val imgPath = arguments?.getString("imgPath")
         val listPath = arguments?.getString("listPath")
         val infoPath = arguments?.getString("infoPath")
@@ -57,6 +59,7 @@ class MainActivity : AppCompatActivity() {
 
 
         listButton?.setOnClickListener {
+            println("lst")
             val listIntent:Intent = Intent(this,ListActivity::class.java)
             listIntent.putExtra("listPath", listPath)
             startActivity(listIntent)
