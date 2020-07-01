@@ -7,46 +7,45 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Point
 import android.graphics.drawable.BitmapDrawable
+import android.os.Build
 import android.os.Bundle
-import android.util.DisplayMetrics
 import android.view.Gravity
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TableLayout
 import android.widget.TableRow
+import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import java.io.IOException
+import java.nio.charset.StandardCharsets
 import java.util.*
 
 
 class StartActivity : AppCompatActivity() {
-    var linLayout:LinearLayout? = null
-    var tableLayout:TableLayout?= null
-    var count = 0
-    var currInd = 0
-    var tableWidth = 0
-    var tableHeight = 0
+    private lateinit var linLayout:LinearLayout
+    private lateinit var tableLayout:TableLayout
+    private  var bookCount = 0
+    private var currBookInd = 0
+    private var tableWidth = 0
+    private var tableHeight = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_start)
 
         linLayout = findViewById(R.id.linLayout)
-        count = readCount()
-
+        bookCount = readCount()
         createTable()
     }
 
     override fun onStart() {
         super.onStart()
-        val newCount = readCount()
-        if (newCount != count) {
-            linLayout?.removeView(tableLayout)
-            count = newCount
-            currInd = 0
+        val newBookCount = readCount()
+        if (newBookCount != bookCount) {
+            linLayout.removeView(tableLayout)
+            bookCount = newBookCount
             createTable()
         }
-        println("back")
     }
 
     private fun createTable(){
@@ -54,29 +53,34 @@ class StartActivity : AppCompatActivity() {
             Configuration.ORIENTATION_PORTRAIT -> 3
             else -> 6
         }
-        tableHeight = (count) / tableWidth + 1
+        tableHeight = (bookCount) / tableWidth + 1
         tableLayout = TableLayout(this)
-        tableLayout?.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
+        tableLayout.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
             LinearLayout.LayoutParams.WRAP_CONTENT)
 
+        currBookInd = 0
         var lastRow:TableRow? = null
         for (i in 0 until tableHeight){
             lastRow = createRow()
-            tableLayout?.addView(lastRow)
+            tableLayout.addView(lastRow)
         }
         val selectButton = createSelectButton()
         lastRow?.addView(selectButton)
-        linLayout?.addView(tableLayout)
+        linLayout.addView(tableLayout)
     }
 
     private fun createRow() : TableRow{
         val tableRow = TableRow(this).apply {
             layoutParams = TableLayout.LayoutParams(
                 TableLayout.LayoutParams.MATCH_PARENT,
-                TableLayout.LayoutParams.WRAP_CONTENT)
+                TableLayout.LayoutParams.WRAP_CONTENT).apply {
+                setMargins(0,0,0,0)
+            }
+            gravity = Gravity.TOP
+
         }
         for (j in 0 until tableWidth){
-            if (currInd == count)
+            if (currBookInd == bookCount)
                 break
             tableRow.addView(createField())
         }
@@ -90,18 +94,26 @@ class StartActivity : AppCompatActivity() {
 
     private fun createField() :Button{
         val button = Button(this).apply{
-            val bitmapDrawable = BitmapDrawable(resources, getImg("img$currInd"))
-            background = bitmapDrawable
-
+            val img =  getImg("img$currBookInd")
+            if (img != null) {
+                val bitmapDrawable = BitmapDrawable(resources, img)
+                background = bitmapDrawable
+            }else {
+                    val name = getName("info$currBookInd")
+                    text = if (name != null && name.length > 20)
+                        name.substring(0..20) + "..." else name
+                }
             val size = Point()
             windowManager.defaultDisplay.getSize(size)
-            val margin= dpToPx(6)
+            val margin= dpToPx(16)
             val w = size.x / tableWidth - margin
             val h = (w * 1.5).toInt()
             val lytParams = TableRow.LayoutParams(w, h)
             lytParams.setMargins(margin / 2, margin, margin / 2, margin/2)
             layoutParams = lytParams
-            id = currInd
+            elevation = 8f
+            stateListAnimator = null
+            id = currBookInd
         }
 
         button.setOnClickListener {
@@ -111,10 +123,9 @@ class StartActivity : AppCompatActivity() {
             intent1.putExtra("listPath", "list$ind1")
             intent1.putExtra("imgPath", "img$ind1")
             intent1.putExtra("infoPath", "info$ind1")
-            println("img$ind1")
             startActivity(intent1)
         }
-        currInd++
+        currBookInd++
         return (button)
     }
 
@@ -122,8 +133,6 @@ class StartActivity : AppCompatActivity() {
     private fun createSelectButton() : Button{
         val selectButton = Button(this)
         selectButton.text = "+"
-        //selectButton.minWidth = 0
-       // selectButton.minHeight = 0
 
         val t = TableRow.LayoutParams(dpToPx(70),dpToPx(70))//TableRow.LayoutParams.WRAP_CONTENT, TableRow.LayoutParams.WRAP_CONTENT)
         t.setMargins(dpToPx(10),dpToPx(10),dpToPx(10),dpToPx(10))
@@ -151,20 +160,45 @@ class StartActivity : AppCompatActivity() {
         return (count)
     }
 
-    private fun getImg(path:String) : Bitmap{
-        val f = openFileInput(path)
-        val byteArray = f.readBytes()
-        val bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size?:0)
-        return bmp
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun getImg(path:String) : Bitmap?{
+        return try {
+            val f = openFileInput(path)
+            val byteArray = f.readBytes()
+            val base64Array = String(byteArray,StandardCharsets.UTF_8)
+            try {
+                val newByteArray = Base64.getMimeDecoder().decode(base64Array)
+                val bmp = BitmapFactory.decodeByteArray(newByteArray, 0, newByteArray.size)
+                (bmp)
+            }catch (e:java.lang.IllegalArgumentException){
+                val bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+                (bmp)
+            }
+        }catch (e:IOException){
+            (null)
+        }
+    }
+
+    private fun getName(path: String) : String?{
+        return try {
+            val fileInput = openFileInput(path)
+            val scanner = Scanner(fileInput)
+            val name = scanner.nextLine()
+            scanner.close()
+            (name)
+        }catch (e:IOException){
+            null
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 123 && resultCode == Activity.RESULT_OK) {
-            var strUri = data!!.data.toString()
+            val strUri = data?.data.toString()
             val intent = Intent(this, LoaderActivity::class.java)
             intent.putExtra("uri",strUri)
-            intent.putExtra("ind", count)
+            intent.putExtra("ind", bookCount)
             startActivity(intent)
         }
     }

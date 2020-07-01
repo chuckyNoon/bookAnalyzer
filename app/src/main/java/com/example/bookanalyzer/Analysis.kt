@@ -11,40 +11,38 @@ import kotlin.math.roundToInt
 class BookAnalysis(private val inStream: InputStream, val path:String, val ctx:Context)
 
 {
-    private var parser:FileParser? = null
+    private lateinit var parser:FileParser
+    private var normalizer: WordNormalizer? = null
+
     private var simpleText:String? = null
-    var finalMap:Map<String,Int>? = null
+    lateinit var finalMap:Map<String,Int>
     var avgWordLen:Double = 0.0
     var avgSentenceLen:Double= 0.0
-    var wordsPerTwo:Int = 0
     var wordsCount = 0
     var unWordsCount = 0
     var img:ByteArray? = null
-    private var normalizer: WordNormalizer? = null
-    var intent: Intent?= null
 
     fun doit() {
         parser = FileParser()
         normalizer = WordNormalizer(ctx)
         simpleText = when{
-            path.contains(".txt") -> parser!!.parseTxt(inStream)
-            path.contains(".epub") -> parser!!.epubToTxt(inStream)
-            else -> parser!!.parseTxt(inStream)
+            path.contains(".txt") -> parser.parseTxt(inStream)
+            path.contains(".epub") -> parser.epubToTxt(inStream)
+            path.contains(".fb2") ->parser.fb2ToTxt(inStream)
+            else -> parser.parseTxt(inStream)
         }
-        img = parser?.img
-        finalMap = normalizeWordMap(parser!!.parseWords(simpleText!!))
+        img = parser.img
+        finalMap = normalizeWordMap(parser.parseWords(simpleText!!))
         calcWordCount()
         calcAvgWordLen()
         calcAvgSentenceLen()
-        unWordsCount = finalMap?.size ?:0
+        unWordsCount = finalMap.size
         println(unWordsCount)
-        /* for((a,b) in finalMap!!)
-             println("$a $b")*/
     }
 
     private fun calcWordCount(){
         var ans:Int = 0
-        finalMap?.let {
+        finalMap.let {
             for ((a, b) in it) {
                 ans += b
             }
@@ -52,13 +50,13 @@ class BookAnalysis(private val inStream: InputStream, val path:String, val ctx:C
         wordsCount = ans
     }
 
-    fun roundDouble(d:Double):Double{
+    private fun roundDouble(d:Double):Double{
         return ((d * 100).roundToInt().toDouble() / 100)
     }
 
     private fun calcAvgWordLen(){
         var sumLen:Long = 0
-        finalMap?.let {
+        finalMap.let {
             for ((a, b) in it) {
                 sumLen += a.length * b
             }
@@ -75,7 +73,7 @@ class BookAnalysis(private val inStream: InputStream, val path:String, val ctx:C
     private fun normalizeWordMap(sourceMap:MutableMap<String,Int>):Map<String,Int>{
         val ansMap = mutableMapOf<String,Int>()
         for ((a, b) in sourceMap){
-            val newWord = normalizer!!.getLemma(a)
+            val newWord = normalizer?.getLemma(a)
             if (newWord == null){
                 ansMap[a] = (ansMap[a]?:0) + b
             }else{

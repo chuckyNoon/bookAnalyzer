@@ -8,8 +8,7 @@ import java.io.InputStreamReader
 import kotlin.concurrent.thread
 
 
-class WordNormalizer(val ctx: Context)///(nounPath:String = "dic/i.noun" ,verbPath:String = "dic/i.verb", adjPath:String = "dic/i.adj", advPath:String = "dic/i.adv",
-//nounExPath:String = "dic/noun.exc", verbExPath:String = "dic/verb.exc", adjExPath:String = "dic/adj.exc")
+class WordNormalizer(private val ctx: Context)
 {
     private val nounMap:MutableMap<String,Int> = mutableMapOf()
     private val verbMap:MutableMap<String,Int> = mutableMapOf()
@@ -20,13 +19,13 @@ class WordNormalizer(val ctx: Context)///(nounPath:String = "dic/i.noun" ,verbPa
     private val verbExMap:MutableMap<String,String> = mutableMapOf()
     private val adjExMap:MutableMap<String,String> = mutableMapOf()
 
-    private var nounRules:Array<Pair<String,String>>? = null
-    private var verbRules:Array<Pair<String,String>>? = null
-    private var adjRules:Array<Pair<String,String>>? = null
+    private lateinit var nounRules:Array<Pair<String,String>>
+    private lateinit var verbRules:Array<Pair<String,String>>
+    private lateinit var adjRules:Array<Pair<String,String>>
 
     init {
         val t1 = thread {parseFile(R.raw.inoun,nounMap, ::insertInMap)}
-        val t2 = thread { parseFile(R.raw.iverb,verbMap, ::insertInMap)}
+        val t2 = thread {parseFile(R.raw.iverb,verbMap, ::insertInMap)}
         val t3 = thread {parseFile(R.raw.iadj,adjMap, ::insertInMap)}
         val t4 = thread {parseFile(R.raw.iadv,advMap, ::insertInMap)}
 
@@ -127,19 +126,6 @@ class WordNormalizer(val ctx: Context)///(nounPath:String = "dic/i.noun" ,verbPa
             }
             return result.toString("UTF-8")
         }
-        /*var line: String? = ""
-                val inputreader = InputStreamReader(inputStream)
-        val buffreader = BufferedReader(inputreader)
-        val text = java.lang.StringBuilder()
-        try {
-            while (buffreader.readLine().also({ line = it }) != null) {
-                text.append(line)
-                text.append('\n')
-            }
-        } catch (e: IOException) {
-            return null
-        }
-        return text.toString()*/
     }
 
     private fun tryNorm(word:String,map:MutableMap<String,Int>,rules:Array<Pair<String,String>>?) :String?{
@@ -170,7 +156,6 @@ class WordNormalizer(val ctx: Context)///(nounPath:String = "dic/i.noun" ,verbPa
             verbMap.contains(word) -> return (word)
             adjMap.contains(word) -> return (word)
         }
-        return (tryNorm(word, nounMap, nounRules)?:
-        if (advMap.contains(word)) word else null)
+        return (tryNorm(word, nounMap, nounRules)?: if (advMap.contains(word)) word else null)
     }
 }
