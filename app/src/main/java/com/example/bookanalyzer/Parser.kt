@@ -28,7 +28,6 @@ class FileParser(){
 
     fun parseWords(text:String):MutableMap<String,Int>{
         val reg = "\\s*\\s|,|>|<|“|—|\\[|]|!|;|:|”|/|\\*|-|…|\\)|\\(|\\?|\\.|\"\\s*"
-        val reg1 = "\\W+"
         val words = text.split(reg.toRegex()).toTypedArray()
         val map = mutableMapOf<String,Int>()
 
@@ -47,7 +46,7 @@ class FileParser(){
         var line: String? = ""
         val text = java.lang.StringBuilder()
         try {
-            while (buffreader.readLine().also({ line = it }) != null) {
+            while (buffreader.readLine().also { line = it } != null) {
                 text.append(line)
                 text.append('\n')
             }
@@ -60,13 +59,11 @@ class FileParser(){
     fun epubToTxt(inStream: InputStream):String{
         val book: Book = EpubReader().readEpub(inStream)
         var htmlText = java.lang.StringBuilder()
-
-        img = book.coverImage.data
+        img = book?.coverImage?.data
         for (elem in book.contents) {
             val st = elem.reader.readText()
             htmlText = htmlText.append(st)
         }
-        //println(htmlText)
         val doc = Jsoup.parse(htmlText.toString())
         val htmlElements = doc.body()
         var simpleText = StringBuilder("")
@@ -74,13 +71,42 @@ class FileParser(){
         val ptexts = htmlElements.select("p")
         if (texts.size > ptexts.size) {
             for (t in texts) {
-                simpleText.append(t.text())
+                simpleText.append(t.text() + "\n")
             }
         }else{
             for(p in ptexts){
-                simpleText.append(p.text())
+                simpleText.append(p.text() +  "\n")
             }
         }
         return (simpleText.toString())
+    }
+
+    fun fb2ToTxt(inStream: InputStream):String?{
+        val unhandledStr = parseTxt(inStream) ?: return (null)
+        var imgNameStart = unhandledStr.indexOf( "xlink:href=")
+        var name = ""
+        if (imgNameStart >= 0) {
+            imgNameStart += ("xlink:href=").length
+            val imgNameEnd = unhandledStr.indexOf("\"", imgNameStart + 1)
+            if (imgNameEnd >= 0){
+                name = unhandledStr.substring(imgNameStart, imgNameEnd + 1).replace("#","")
+            }
+        }
+
+        val bodyStart = unhandledStr.indexOf("<body>")?:-1
+        val bodyEnd = unhandledStr.indexOf("</body>")?:-1
+        val time1 = System.currentTimeMillis()
+        val str = if (bodyStart >= 0 && bodyEnd >= 0){
+            val bodyStr = unhandledStr.substring(bodyStart + "<body>".length, bodyEnd - "</body>".length)
+            bodyStr.replace("(\\<(/?[^>]+)>)".toRegex(),"")
+        }else{
+            unhandledStr
+        }
+        val imgStart = unhandledStr.indexOf(">",unhandledStr.indexOf("<binary id=$name")) + 1
+        val imgEnd = unhandledStr.indexOf("</binary", imgStart) - 1
+        if (imgStart >=0 && imgEnd>= 0) {
+            img = unhandledStr.substring(imgStart, imgEnd).toByteArray()
+        }
+        return (str)
     }
 }

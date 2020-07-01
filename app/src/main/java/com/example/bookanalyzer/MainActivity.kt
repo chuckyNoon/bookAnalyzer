@@ -25,13 +25,13 @@ import kotlin.math.roundToInt
 
 
 class MainActivity : AppCompatActivity() {
-    var imageView:ImageView? = null
-    var bookView:TextView? = null
-    var allWordView:TextView? = null
-    var uniqueWordView:TextView? = null
-    var avgSentenceView:TextView? = null
-    var avgWordView:TextView? = null
-    var listButton:Button? = null
+    private lateinit var imageView:ImageView
+    private lateinit var bookView:TextView
+    private lateinit var allWordView:TextView
+    private lateinit var uniqueWordView:TextView
+    private lateinit var avgSentenceView:TextView
+    private lateinit var avgWordView:TextView
+    private lateinit var listButton:Button
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,13 +53,10 @@ class MainActivity : AppCompatActivity() {
         val listPath = arguments?.getString("listPath")
         val infoPath = arguments?.getString("infoPath")
 
-        println(imgPath + " " + infoPath)
-        imgPath?.let { readImg(it) }
+     //   imgPath?.let { readImg(it) }
         infoPath?.let { readInfo(it) }
 
-
-        listButton?.setOnClickListener {
-            println("lst")
+        listButton.setOnClickListener {
             val listIntent:Intent = Intent(this,ListActivity::class.java)
             listIntent.putExtra("listPath", listPath)
             startActivity(listIntent)
@@ -70,17 +67,17 @@ class MainActivity : AppCompatActivity() {
         val f = openFileInput(path)
         val byteArray = f.readBytes()
         val bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size?:0)
-        imageView?.setImageBitmap(bmp)
+        imageView.setImageBitmap(bmp)
     }
 
     private fun readInfo(path:String){
-        val f = openFileInput(path)
-        val scanner = Scanner(f)
+        val fileInput = openFileInput(path)
+        val scanner = Scanner(fileInput)
 
-        bookView?.text =  scanner.nextLine()
-        allWordView?.text = scanner.nextLine()
-        uniqueWordView?.text = scanner.nextLine()
-        avgSentenceView?.text = scanner.nextLine()
-        avgWordView?.text = scanner.nextLine()
+        bookView.text =  scanner.nextLine()
+        allWordView.text = scanner.nextLine()
+        uniqueWordView.text = scanner.nextLine()
+        avgSentenceView.text = scanner.nextLine()
+        avgWordView.text = scanner.nextLine()
     }
 }
