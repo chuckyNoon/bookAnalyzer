@@ -18,6 +18,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import java.io.IOException
 import java.io.InputStream
 import java.util.*
 import kotlin.concurrent.thread
@@ -57,7 +58,7 @@ class MainActivity : AppCompatActivity() {
         infoPath?.let { readInfo(it) }
 
         listButton.setOnClickListener {
-            val listIntent:Intent = Intent(this,ListActivity::class.java)
+            val listIntent = Intent(this,ListActivity::class.java)
             listIntent.putExtra("listPath", listPath)
             startActivity(listIntent)
         }
@@ -71,13 +72,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun readInfo(path:String){
-        val fileInput = openFileInput(path)
-        val scanner = Scanner(fileInput)
+        try {
+            val fileInput = openFileInput(path)
+            val scanner = Scanner(fileInput)
 
-        bookView.text =  scanner.nextLine()
-        allWordView.text = scanner.nextLine()
-        uniqueWordView.text = scanner.nextLine()
-        avgSentenceView.text = scanner.nextLine()
-        avgWordView.text = scanner.nextLine()
+            bookView.text = scanner.nextLine()
+            allWordView.text = scanner.nextLine()
+            uniqueWordView.text = scanner.nextLine()
+            avgSentenceView.text = scanner.nextLine()
+            avgWordView.text = scanner.nextLine()
+        }catch (e:IOException){
+            println("reading info error")
+        }
     }
 }

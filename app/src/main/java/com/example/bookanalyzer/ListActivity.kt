@@ -5,9 +5,10 @@ import android.os.Bundle
 import android.view.Gravity
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
+import java.io.IOException
 
 class ListActivity : AppCompatActivity() {
-    private var listLayout: TableLayout? = null
+    private lateinit var tableLayout: TableLayout
     private lateinit var scrollView: ScrollView
     private lateinit var indicesView: TextView
     private lateinit var toNextButton: Button
@@ -15,120 +16,113 @@ class ListActivity : AppCompatActivity() {
     private lateinit var toStartButton: Button
     private lateinit var toEndButton: Button
 
-    private lateinit var views: Array<Pair<TextView?, TextView?>>
-    private val sm: Int = 15
+    private lateinit var linesList:List<String>
+    private lateinit var tableFields: Array<Pair<TextView?, TextView?>>
+    private val elementsOnPage: Int = 15
     private var currInd: Int = 0
-    private var strs: List<String>? = null
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_list)
-        listLayout = findViewById(R.id.listLayout)
+        tableLayout = findViewById(R.id.listLayout)
         toNextButton = findViewById(R.id.toNextButton)
         toPrevButton = findViewById(R.id.toPrevButton)
         toStartButton = findViewById(R.id.toStartButton)
         toEndButton = findViewById(R.id.toEndButton)
         scrollView = findViewById(R.id.scroll)
         indicesView = findViewById(R.id.indicesView)
-
-        val newText = "1 - ${sm + 1}"
-        indicesView.text = newText
+        indicesView.text = "1 - ${elementsOnPage + 1}"
 
         val arguments = intent.extras
-        val listPath = arguments?.getString("listPath")
-        val listIn = openFileInput(listPath)
-        val strMap = listIn.readBytes().toString(Charsets.UTF_8)
-        strs = strMap.substring(1, strMap.length - 1).split(',')
-        createWordList(strs!!)
+        val listPath = arguments?.getString("listPath")?:return
+        linesList = readLinesList(listPath)?:return
+        createWordTable()
+
         toPrevButton.setOnClickListener {
-            currInd -= sm
+            currInd -= elementsOnPage
             if (currInd < 0)
                 currInd = 0
-            updateList(strs!!)
+            updateText()
         }
         toNextButton.setOnClickListener {
-            currInd += sm
-            if (currInd + sm >= strs!!.size)
-                currInd = strs!!.size - sm
-            updateList(strs!!)
+            currInd += elementsOnPage
+            if (currInd + elementsOnPage >= linesList.size)
+                currInd =  linesList.size - elementsOnPage
+            updateText()
             //scrollView?.fullScroll(ScrollView.FOCUS_UP)
         }
         toStartButton.setOnClickListener {
             currInd = 0
-            updateList(strs!!)
-            //scrollView?.fullScroll(ScrollView.FOCUS_UP)
+            updateText()
         }
         toEndButton.setOnClickListener {
-            currInd = strs!!.size - sm
-            updateList(strs!!)
-            //scrollView?.fullScroll(ScrollView.FOCUS_UP)
+            currInd = linesList.size - elementsOnPage
+            updateText()
         }
     }
 
+    private fun readLinesList(listPath:String):List<String>?{
+        return try {
+            val listIn = openFileInput(listPath)
+            val strMap = listIn.readBytes().toString(Charsets.UTF_8)
+            (strMap.substring(1, strMap.length - 1).split(','))
+        }catch (e:IOException){
+            println("reading list error")
+            (null)
+        }
+    }
+
+    private fun createWordTable() {
+        tableFields = Array(elementsOnPage) { null to null }
+        for (i in 0 until elementsOnPage) {
+            val row = TableRow(this).apply {
+                val lytParams: TableLayout.LayoutParams = TableLayout.LayoutParams(
+                    TableLayout.LayoutParams.MATCH_PARENT, TableLayout.LayoutParams.WRAP_CONTENT
+                )
+                layoutParams = lytParams
+            }
+            val wordView = TextView(this).apply{
+                val lytParams = TableRow.LayoutParams(0, dpToPx(135))
+                lytParams.weight = 2F
+                layoutParams = lytParams
+                textSize = 24F
+                setPadding(dpToPx(0), 0, 0, 0)
+                gravity = Gravity.CENTER
+            }
+            val numberView = TextView(this).apply {
+                val lytParams = TableRow.LayoutParams(0, dpToPx(135))
+                lytParams.leftMargin = dpToPx(30)
+                lytParams.weight = 1F
+                layoutParams = lytParams
+                textSize = 24F
+                gravity = Gravity.START
+            }
+            row.addView(wordView)
+            row.addView(numberView)
+            tableLayout.addView(row)
+            tableFields[i] = wordView to numberView
+        }
+        updateText()
+    }
+
+    private fun updateText(ind: Int = currInd) {
+        for (i in 0 until elementsOnPage) {
+            val str = linesList[i + ind]
+            if (str == "")
+                continue
+            val words = str.split("=")
+            if (words.size != 2)
+                continue
+            tableFields[i].first?.text = words[0]
+            tableFields[i].second?.text = words[1]
+        }
+        val newIndices = "${currInd+1} - ${currInd + elementsOnPage}"
+        indicesView.text = newIndices
+    }
 
     private fun dpToPx(dp: Int): Int {
         val scale: Float = this.resources.displayMetrics.density
         return (dp * scale + 0.5f).toInt()
-    }
-
-    private fun createWordList(strs: List<String>) {
-        views = Array(sm) { null to null }
-        for (i in 0 until sm) {
-            val str = strs[i]
-            if (str == "")
-                continue
-            val words = str.split("=")
-            if (words.size != 2)
-                continue
-            val hLayout = TableRow(this)
-            val lparams: TableLayout.LayoutParams = TableLayout.LayoutParams(
-                TableLayout.LayoutParams.MATCH_PARENT, TableLayout.LayoutParams.WRAP_CONTENT
-            )
-            hLayout.layoutParams = lparams
-
-            val textView1 = TextView(this)
-            val textView2 = TextView(this)
-            val tparams1: TableRow.LayoutParams = TableRow.LayoutParams(
-                TableRow.LayoutParams.WRAP_CONTENT, 135
-            )
-            val tparams2: TableRow.LayoutParams = TableRow.LayoutParams(
-                TableRow.LayoutParams.WRAP_CONTENT, 135
-            )
-            tparams1.weight = 2F
-            tparams2.leftMargin = dpToPx(30)
-            tparams2.weight = 1F
-
-            textView1.text = words[0]
-            textView2.text = words[1]
-            textView1.layoutParams = tparams1
-            textView2.layoutParams = tparams2
-            textView1.textSize = 24F
-            textView2.textSize = 24F
-            textView1.gravity = Gravity.CENTER
-            textView1.setPadding(dpToPx(0), 0, 0, 0)
-            textView2.gravity = Gravity.START
-
-            hLayout.addView(textView1)
-            hLayout.addView(textView2)
-            listLayout?.addView(hLayout)
-            views[i] = textView1 to textView2
-        }
-    }
-
-    private fun updateList(strs: List<String>, ind: Int = currInd) {
-        for (i in 0 until sm) {
-            val str = strs[i + ind]
-            if (str == "")
-                continue
-            val words = str.split("=")
-            if (words.size != 2)
-                continue
-
-            views[i].first?.text = words[0]
-            views[i].second?.text = words[1]
-            val newText = (currInd + 1).toString() + " - " + (currInd + sm).toString()
-            indicesView.text = newText
-        }
     }
 }

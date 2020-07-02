@@ -11,7 +11,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.launch
-
+import java.io.IOException
 
 
 class LoaderActivity : AppCompatActivity() {
@@ -28,42 +28,28 @@ class LoaderActivity : AppCompatActivity() {
         val uri = Uri.parse(arguments?.getString("uri"))
         val inStream = contentResolver.openInputStream(uri)
         val path = getFileName(uri)
-        val ind= arguments?.getInt("ind")?:0
+        val bookInd= arguments?.getInt("ind")?:0
 
-        analysis = BookAnalysis(inStream!!, path!!, this)
+        if (inStream == null || path == null){
+            finish()
+        }else {
+            analysis = BookAnalysis(inStream, path, this)
+        }
 
         job = scope.launch(Dispatchers.IO){
-            val time1 = System.currentTimeMillis()
             analysis.doit()
             yield()
-
             val intent1 = Intent(this@LoaderActivity, MainActivity::class.java)
 
-            val infoFileName = "info$ind"
-            val listFileName = "list$ind"
-            val imgFileName = "img$ind"
+            val infoFileName = "info$bookInd"
+            val listFileName = "list$bookInd"
+            val imgFileName = "img$bookInd"
 
             intent1.putExtra("imgPath", imgFileName)
             intent1.putExtra("listPath", listFileName)
             intent1.putExtra("infoPath", infoFileName)
 
-            analysis.img?.let {
-                val imgOut = openFileOutput(imgFileName, 0)
-                imgOut.write(it)
-            }
-
-            val lstOut = openFileOutput(listFileName, 0)
-            lstOut.write(analysis.finalMap.toString().toByteArray())
-            val infoOut  = openFileOutput(infoFileName, 0)
-            val info = path + "\n" + analysis.wordsCount.toString() + "\n" + analysis.finalMap.size.toString() + "\n" +
-                    analysis.avgSentenceLen.toString() + "\n" + analysis.avgWordLen.toString()
-            infoOut.write(info.toByteArray())
-            val inAll = openFileOutput("all", 0)
-            inAll.write((ind+1).toString().toByteArray())
-
-            val time2 = System.currentTimeMillis()
-            println("t algo=" + ((time2- time1).toDouble() / 1000 ).toString())
-
+            saveAnalyzedInfo(path!!, bookInd, imgFileName, listFileName, infoFileName)
             startActivity(intent1)
         }
     }
@@ -71,6 +57,26 @@ class LoaderActivity : AppCompatActivity() {
     override fun onStop() {
         super.onStop()
         job.cancel()
+    }
+
+    private fun saveAnalyzedInfo(sourceFilePath:String, ind:Int, imgFileName:String, listFileName:String, infoFileName:String){
+        try {
+            analysis.img?.let {
+                val imgOut = openFileOutput(imgFileName, 0)
+                imgOut.write(it)
+            }
+            val lstOut = openFileOutput(listFileName, 0)
+            lstOut.write(analysis.normalizedWordMap.toString().toByteArray())
+
+            val infoOut = openFileOutput(infoFileName, 0)
+            val info = "$sourceFilePath\n${analysis.wordCount}\n${analysis.uniqWordCount}\n${analysis.avgSentenceLen}\n${analysis.avgWordLen}"
+            infoOut.write(info.toByteArray())
+
+            val inAll = openFileOutput("all", 0)
+            inAll.write((ind + 1).toString().toByteArray())
+        }catch (e:IOException){
+            println("saving error")
+        }
     }
 
     @SuppressLint("Recycle")
@@ -90,7 +96,7 @@ class LoaderActivity : AppCompatActivity() {
             result = uri.path
             val cut = result?.lastIndexOf('/')?:return (null)
             if (cut != -1) {
-                result = result?.substring(cut + 1)
+                result = result.substring(cut + 1)
             }
         }
         return result

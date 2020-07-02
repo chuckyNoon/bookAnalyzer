@@ -1,29 +1,27 @@
 package com.example.bookanalyzer
 
-import android.content.Context
-import android.graphics.Bitmap
-import com.kursx.parser.fb2.Element
-import com.kursx.parser.fb2.FictionBook
+
 import nl.siegmann.epublib.domain.Book
 import nl.siegmann.epublib.epub.EpubReader
 import org.jsoup.Jsoup
-import org.jsoup.select.Elements
 import java.io.*
-import kotlin.math.ceil
-import kotlin.math.floor
+import java.nio.charset.StandardCharsets
+
 
 enum class Format{
     FB2,TXT,EPUB
 }
 
-class FileParser(){
+class BookParser(){
     var img:ByteArray? = null
-    private fun isNumber(str:String):Boolean{
-        for (ch in str){
-            if(ch.isDigit())
-                return (true)
+
+    fun parseFile(inStream: InputStream, path:String):String?{
+        return when{
+            path.contains(".txt") -> parseTxt(inStream)
+            path.contains(".epub") -> parseEpub(inStream)
+            path.contains(".fb2") -> parseFb2(inStream)
+            else -> parseTxt(inStream)
         }
-        return (false)
     }
 
     fun parseWords(text:String):MutableMap<String,Int>{
@@ -32,7 +30,7 @@ class FileParser(){
         val map = mutableMapOf<String,Int>()
 
         for (word in words){
-            if (word != ""  && !isNumber(word)){
+            if (word.isNotEmpty()  && !isNumber(word)){
                 val lowerWord = word.toLowerCase()
                 map[lowerWord] = 1 + (map[lowerWord] ?: 0)
             }
@@ -40,29 +38,25 @@ class FileParser(){
         return (map)
     }
 
-    fun parseTxt(inStream: InputStream):String?{
-        val inputreader = InputStreamReader(inStream)
-        val buffreader = BufferedReader(inputreader)
-        var line: String? = ""
-        val text = java.lang.StringBuilder()
-        try {
-            while (buffreader.readLine().also { line = it } != null) {
-                text.append(line)
-                text.append('\n')
-            }
-        } catch (e: IOException) {
-            return null
+    private fun parseTxt(inStream: InputStream):String?{
+        val inputReader = InputStreamReader(inStream)
+        val buffReader = BufferedReader(inputReader)
+
+        return try{
+           val text = buffReader.readText()
+            (text)
+        }catch (e: IOException){
+            (null)
         }
-        return (text.toString())
     }
 
-    fun epubToTxt(inStream: InputStream):String{
+    private fun parseEpub(inStream: InputStream):String{
         val book: Book = EpubReader().readEpub(inStream)
-        var htmlText = java.lang.StringBuilder()
+        val htmlText = java.lang.StringBuilder()
         img = book?.coverImage?.data
         for (elem in book.contents) {
-            val st = elem.reader.readText()
-            htmlText = htmlText.append(st)
+            val text = elem.reader.readText()
+            htmlText.append(text)
         }
         val doc = Jsoup.parse(htmlText.toString())
         val htmlElements = doc.body()
@@ -81,7 +75,7 @@ class FileParser(){
         return (simpleText.toString())
     }
 
-    fun fb2ToTxt(inStream: InputStream):String?{
+    private fun parseFb2(inStream: InputStream):String?{
         val unhandledStr = parseTxt(inStream) ?: return (null)
         var imgNameStart = unhandledStr.indexOf( "xlink:href=")
         var name = ""
@@ -92,12 +86,10 @@ class FileParser(){
                 name = unhandledStr.substring(imgNameStart, imgNameEnd + 1).replace("#","")
             }
         }
-
-        val bodyStart = unhandledStr.indexOf("<body>")?:-1
-        val bodyEnd = unhandledStr.indexOf("</body>")?:-1
-        val time1 = System.currentTimeMillis()
+        val bodyStart = unhandledStr.indexOf("<body>")
+        val bodyEnd = unhandledStr.indexOf("</body>")
         val str = if (bodyStart >= 0 && bodyEnd >= 0){
-            val bodyStr = unhandledStr.substring(bodyStart + "<body>".length, bodyEnd - "</body>".length)
+            val bodyStr = unhandledStr.substring(bodyStart + "<body>".length, bodyEnd - 1)
             bodyStr.replace("(\\<(/?[^>]+)>)".toRegex(),"")
         }else{
             unhandledStr
@@ -109,4 +101,10 @@ class FileParser(){
         }
         return (str)
     }
+
+    private fun isNumber(str:String):Boolean{
+        str.forEach { if (it.isDigit()) return (true) }
+        return (false)
+    }
+
 }
