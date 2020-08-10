@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="180dp"
+    android:background="@drawable/book_shape">
+
+    <ImageView
+        android:id="@+id/bookImage"
+        android:layout_width="101dp"
+        android:layout_height="154dp"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:srcCompat="@drawable/ic_launcher_foreground" />
+
+    <TextView
+        android:id="@+id/bookNameView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="29dp"
+        android:layout_marginEnd="19dp"
+        android:text="Ulysses"
+        android:textColor="#673AB7"
+        android:textSize="19sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/bookImage"
+        app:layout_constraintTop_toTopOf="@+id/bookImage" />
+
+    <TextView
+        android:id="@+id/bookAuthorView"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:text="James Joyce"
+        android:textColor="#383838"
+        android:textSize="12sp"
+        app:layout_constraintEnd_toEndOf="@+id/bookNameView"
+        app:layout_constraintStart_toStartOf="@+id/bookNameView"
+        app:layout_constraintTop_toBottomOf="@+id/bookNameView" />
+
+    <TextView
+        android:id="@+id/bookFormatView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="EPUB, 801кб"
+        android:textColor="#383838"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="@+id/bookAuthorView"
+        app:layout_constraintTop_toBottomOf="@+id/bookAuthorView" />
+
+    <ProgressBar
+        android:id="@+id/progressBar2"
+        style="?android:attr/progressBarStyleHorizontal"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="18dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="@+id/bookFormatView" />
+
+    <TextView
+        android:id="@+id/wordCountView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="8000 words"
+        android:textColor="#383838"
+        app:layout_constraintBottom_toTopOf="@+id/progressBar2"
+        app:layout_constraintStart_toStartOf="@+id/progressBar2" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

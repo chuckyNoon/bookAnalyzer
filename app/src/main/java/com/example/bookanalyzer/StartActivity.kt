@@ -1,190 +1,100 @@
 package com.example.bookanalyzer
 
+import android.Manifest
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Point
-import android.graphics.drawable.BitmapDrawable
-import android.os.Build
-import android.os.Bundle
-import android.view.Gravity
-import android.widget.Button
-import android.widget.LinearLayout
-import android.widget.TableLayout
-import android.widget.TableRow
+import android.os.*
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.*
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.view.menu.MenuAdapter
+import androidx.core.app.ActivityCompat
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import java.io.FileInputStream
 import java.io.IOException
+import java.lang.StringBuilder
+import java.nio.charset.Charset
 import java.nio.charset.StandardCharsets
+import java.security.Permissions
 import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.concurrent.thread
 
 
 class StartActivity : AppCompatActivity() {
-    private lateinit var linLayout:LinearLayout
-    private lateinit var tableLayout:TableLayout
-    private  var bookCount = 0
-    private var tableWidth = 0
-    private var tableHeight = 0
+    private lateinit var listView: RecyclerView
+    private lateinit var menuContentLoader: MenuContentLoader
+    private var myAdapter: MyAdapter? = null
+    private var bookCount = 0
+    private lateinit var bookList:ArrayList<ABookInfo>
+    private val handler = Handler()
+    //private var loadingToast:Toast? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_start)
+        setContentView(R.layout.test_start)
 
-        linLayout = findViewById(R.id.linLayout)
-        bookCount = getBookCount()
-        createTable()
+        menuContentLoader = MenuContentLoader(this)
+        listView = findViewById(R.id.list_view)
+
+        val requiredPermissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        ActivityCompat.requestPermissions(this, requiredPermissions, 0)
+
     }
 
-    override fun onStart() {
-        super.onStart()
-        val newBookCount = getBookCount()
-        if (newBookCount != bookCount) {
-            linLayout.removeView(tableLayout)
-            bookCount = newBookCount
-            createTable()
-        }
-    }
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 0) {
+            val f = Environment.getExternalStorageDirectory()
 
-    private fun createTable(){
-        tableWidth = when(resources.configuration.orientation){
-            Configuration.ORIENTATION_PORTRAIT -> 3
-            else -> 6
-        }
-        tableHeight = (bookCount) / tableWidth + 1
-        tableLayout = TableLayout(this)
-        tableLayout.layoutParams = LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT)
 
-        var lastRow:TableRow? = null
-        for (i in 0 until tableHeight){
-            lastRow = createRow(i)
-            tableLayout.addView(lastRow)
-        }
-        val addButton = createAddButton()
-        lastRow?.addView(addButton)
-        linLayout.addView(tableLayout)
-    }
+            thread {
+                val paths = BookSearch.findAll(f!!)
 
-    private fun createRow(rowNumber:Int) : TableRow{
-        val tableRow = TableRow(this).apply {
-            layoutParams = TableLayout.LayoutParams(
-                TableLayout.LayoutParams.MATCH_PARENT,
-                TableLayout.LayoutParams.WRAP_CONTENT).apply {
-                setMargins(0,0,0,0)
+                val time1 = System.currentTimeMillis()
+                bookList = menuContentLoader.firstStage(paths)
+                handler.post{
+                    myAdapter = MyAdapter(this, bookList)
+                    listView.adapter = myAdapter
+                    listView.layoutManager = LinearLayoutManager(this);
+                }
+                for (i in bookList.indices) {
+                    val oldElem = bookList[i]
+                    val newElem = menuContentLoader.loadMoreInfo(paths[i])
+                    oldElem.name = newElem.name
+                    oldElem.author = newElem.author
+                    oldElem.bitmap = newElem.bitmap
+                    oldElem.wordCount = newElem.wordCount
+                }
+                val time2 = System.currentTimeMillis()
+                println("f = " + (time2 - time1).toDouble() / 1000)
+                handler.post{
+                    myAdapter?.notifyDataSetChanged()
+                   // loadingToast = Toast.makeText(this, "Download ended", Toast.LENGTH_LONG)
+                  //  loadingToast?.show()
+                    //loadingToast?.cancel()
+                }
             }
-            gravity = Gravity.TOP
         }
-        var currBookInd = rowNumber * tableWidth
-        for (j in 0 until tableWidth){
-            if (currBookInd == bookCount)
-                break
-            tableRow.addView(createBookButton(currBookInd))
-            currBookInd++
-        }
-        return (tableRow)
     }
 
-    private fun createBookButton(currBookInd:Int) :Button{
-        val button = Button(this).apply{
-            val img =  getBookImg("img$currBookInd")
-            if (img != null) {
-                val bitmapDrawable = BitmapDrawable(resources, img)
-                background = bitmapDrawable
-            }else {
-                val name = getBookName("info$currBookInd")
-                text = if (name != null && name.length > 20)
-                    name.substring(0..20) + "..." else name
+    override fun onRestart() {
+        for (book in bookList){
+            val newWordCount = menuContentLoader.searchSavedWordCount(book.path)
+            if (book.wordCount != newWordCount){
+                book.wordCount = newWordCount
+                myAdapter?.notifyDataSetChanged()
             }
-            val size = Point()
-            windowManager.defaultDisplay.getSize(size)
-            val margin = dpToPx(16)
-            val btnWidth = size.x / tableWidth - margin
-            val btnHeight = (btnWidth * 1.5).toInt()
-            val lytParams = TableRow.LayoutParams(btnWidth, btnHeight)
-            lytParams.setMargins(margin / 2, margin, margin / 2, margin/2)
-            layoutParams = lytParams
-            elevation = 8f
-            stateListAnimator = null
-            id = currBookInd
         }
-
-        button.setOnClickListener {
-            val btn:Button = it as Button
-            val bookInd = btn.id
-            val intentToBook = Intent(this, MainActivity::class.java)
-            intentToBook.putExtra("listPath", "list$bookInd")
-            intentToBook.putExtra("imgPath", "img$bookInd")
-            intentToBook.putExtra("infoPath", "info$bookInd")
-            startActivity(intentToBook)
-        }
-        return (button)
-    }
-
-    private fun createAddButton() : Button{
-        val addButton = Button(this).apply {
-            val lytParams = TableRow.LayoutParams(dpToPx(70),dpToPx(70))//TableRow.LayoutParams.WRAP_CONTENT, TableRow.LayoutParams.WRAP_CONTENT)
-            lytParams.setMargins(dpToPx(10),dpToPx(10),dpToPx(10),dpToPx(10))
-            gravity = Gravity.CENTER
-            layoutParams = lytParams
-            text = "+"
-        }
-        addButton.setOnClickListener {
-            val intent:Intent = Intent()
-                .setType("*/*")
-                .setAction(Intent.ACTION_GET_CONTENT);
-            startActivityForResult(Intent.createChooser(intent, "Select a file"), 123)
-        }
-        return (addButton)
-    }
-
-    private fun getBookCount() : Int{
-        var count = 0
-        try{
-            val scanner = Scanner(openFileInput("all"))
-            count = scanner.nextInt()
-            scanner.close()
-        }catch (e: IOException){
-            println("file not created nor found")
-        }
-        return (count)
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun getBookImg(path:String) : Bitmap?{
-        return try {
-            val fileInput = openFileInput(path)
-            val byteArray = fileInput.readBytes()
-            val base64Array = String(byteArray,StandardCharsets.UTF_8)
-            try {
-                val decodedByteArray = Base64.getMimeDecoder().decode(base64Array)
-                val bmp = BitmapFactory.decodeByteArray(decodedByteArray, 0, decodedByteArray.size)
-                (bmp)
-            }catch (e:java.lang.IllegalArgumentException){//if not in base64
-                val bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
-                (bmp)
-            }
-        }catch (e:IOException){
-            (null)
-        }
-    }
-
-    private fun getBookName(path: String) : String?{
-        return try {
-            val fileInput = openFileInput(path)
-            val scanner = Scanner(fileInput)
-            val name = scanner.nextLine()
-            scanner.close()
-            (name)
-        }catch (e:IOException){
-            null
-        }
-    }
-
-    private fun dpToPx(dp:Int):Int {
-        val scale: Float = this.resources.displayMetrics.density
-        return (dp * scale + 0.5f).toInt()
+        super.onRestart()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

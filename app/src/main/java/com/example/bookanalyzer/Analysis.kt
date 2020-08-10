@@ -8,14 +8,14 @@ import java.io.InputStream
 import java.text.Normalizer
 import kotlin.math.roundToInt
 
-
 class BookAnalysis(private val inStream: InputStream, val path:String, val ctx:Context)
-
 {
     var avgWordLen:Double = 0.0
     var avgSentenceLen:Double= 0.0
     var wordCount = 0
     var uniqWordCount = 0
+    var author:String? = null
+    var bookName:String? = null
     var img:ByteArray? = null
     lateinit var normalizedWordMap:Map<String,Int>
 
@@ -31,6 +31,8 @@ class BookAnalysis(private val inStream: InputStream, val path:String, val ctx:C
         }
         val time3 = System.currentTimeMillis()
         img = parser.img
+        author = parser.author
+        bookName = parser.bookName
         val sourceWordMap = parser.parseWords(simpleText)
         normalizedWordMap = normalizeWordMap(normalizer, sourceWordMap)
         val time4 = System.currentTimeMillis()
@@ -39,12 +41,6 @@ class BookAnalysis(private val inStream: InputStream, val path:String, val ctx:C
         calcAvgSentenceLen(simpleText)
         val time5 = System.currentTimeMillis()
         uniqWordCount = normalizedWordMap.size
-        println("t norm=" + ((time2- time1).toDouble() / 1000 ).toString())
-        println("t pars=" + ((time3- time2).toDouble() / 1000 ).toString())
-        println("t normmap=" + ((time4- time3).toDouble() / 1000 ).toString())
-        println("t last=" + ((time5- time4).toDouble() / 1000 ).toString())
-        println("t all=" + ((time5- time1).toDouble() / 1000 ).toString())
-        println(uniqWordCount)
     }
 
     private fun calcWordCount(sourceWordMap: MutableMap<String, Int>){
