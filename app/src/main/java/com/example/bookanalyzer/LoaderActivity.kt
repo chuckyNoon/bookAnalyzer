@@ -1,17 +1,19 @@
 package com.example.bookanalyzer
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.database.Cursor
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.renderscript.ScriptGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.*
 import kotlinx.coroutines.launch
-import java.io.IOException
+import java.io.*
 
 
 class LoaderActivity : AppCompatActivity() {
@@ -19,23 +21,20 @@ class LoaderActivity : AppCompatActivity() {
     private lateinit var job:Job
     private val scope = MainScope()
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_loader)
 
         val arguments = intent.extras
-        val uri = Uri.parse(arguments?.getString("uri"))
-        val inStream = contentResolver.openInputStream(uri)
-        val path = getFileName(uri)
-        val bookInd= arguments?.getInt("ind")?:0
+        val path = arguments?.getString("path")
+        val inStream = FileInputStream(path)
 
-        if (inStream == null || path == null){
+        if (path == null){
             finish()
         }else {
             analysis = BookAnalysis(inStream, path, this)
         }
-
+        val bookInd = arguments?.getInt("ind")?:0
         job = scope.launch(Dispatchers.IO){
             analysis.doit()
             yield()
@@ -49,7 +48,7 @@ class LoaderActivity : AppCompatActivity() {
             intent1.putExtra("listPath", listFileName)
             intent1.putExtra("infoPath", infoFileName)
 
-            saveAnalyzedInfo(path!!, bookInd, imgFileName, listFileName, infoFileName)
+            saveAnalyzedInfo(path!!, bookInd, imgFileName, listFileName, infoFileName, false)
             startActivity(intent1)
         }
     }
@@ -59,7 +58,24 @@ class LoaderActivity : AppCompatActivity() {
         job.cancel()
     }
 
-    private fun saveAnalyzedInfo(sourceFilePath:String, ind:Int, imgFileName:String, listFileName:String, infoFileName:String){
+    private fun findBookInAnalyzed(path:String) : Int{
+        try{
+            val inputStreamReader = InputStreamReader(openFileInput("all"))
+            val bufferedReader = BufferedReader(inputStreamReader)
+            val lines = bufferedReader.readText().split("\n")
+            lines.forEach {
+                val parts = it.split(" ",  limit = 2)
+                if (parts.size == 2 && parts[1] == path){
+                    return (parts[0].toInt())
+                }
+            }
+            return (-1)
+        }catch (e: IOException){
+            return (-1)
+        }
+    }
+
+    private fun saveAnalyzedInfo(sourceFilePath:String, ind:Int, imgFileName:String, listFileName:String, infoFileName:String, redo:Boolean){
         try {
             analysis.img?.let {
                 val imgOut = openFileOutput(imgFileName, 0)
@@ -68,12 +84,16 @@ class LoaderActivity : AppCompatActivity() {
             val lstOut = openFileOutput(listFileName, 0)
             lstOut.write(analysis.normalizedWordMap.toString().toByteArray())
 
+            println("wqw $infoFileName")
             val infoOut = openFileOutput(infoFileName, 0)
-            val info = "$sourceFilePath\n${analysis.wordCount}\n${analysis.uniqWordCount}\n${analysis.avgSentenceLen}\n${analysis.avgWordLen}"
+            val info = "$sourceFilePath\n${analysis.wordCount}\n${analysis.uniqWordCount}\n${analysis.avgSentenceLen}\n${analysis.avgWordLen}\n"
             infoOut.write(info.toByteArray())
 
-            val inAll = openFileOutput("all", 0)
-            inAll.write((ind + 1).toString().toByteArray())
+            if (!redo) {
+                val inAll = openFileOutput("all", Context.MODE_APPEND)
+                inAll.write("$ind\n$sourceFilePath\n".toByteArray())
+                inAll.close()
+            }
         }catch (e:IOException){
             println("saving error")
         }

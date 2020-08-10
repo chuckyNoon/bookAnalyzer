@@ -18,6 +18,7 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.android.synthetic.main.book_info.*
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
@@ -26,20 +27,20 @@ import kotlin.math.roundToInt
 
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var imageView:ImageView
-    private lateinit var bookView:TextView
+    private lateinit var bookNameView:TextView
     private lateinit var allWordView:TextView
+    private lateinit var textLengthView:TextView
     private lateinit var uniqueWordView:TextView
-    private lateinit var avgSentenceView:TextView
+    private lateinit var avgSentenceViewWrd:TextView
+    private lateinit var avgSentenceViewChr:TextView
     private lateinit var avgWordView:TextView
-    private lateinit var listButton:Button
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.book_info)
 
-        imageView = findViewById(R.id.imageView)
+        /*imageView = findViewById(R.id.imageView)
         bookView = findViewById(R.id.bookView)
         allWordView = findViewById(R.id.allWordView)
         uniqueWordView = findViewById(R.id.uniqueWordView)
@@ -48,27 +49,37 @@ class MainActivity : AppCompatActivity() {
         listButton = when(resources.configuration.orientation){
             Configuration.ORIENTATION_LANDSCAPE -> findViewById(R.id.listButton)
             else -> findViewById(R.id.listButton)
-        }
+        }*/
+
+        bookNameView = findViewById(R.id.bookNameView)
+        allWordView = findViewById(R.id.allWordCountView)
+        uniqueWordView = findViewById(R.id.uniqWordView)
+        textLengthView = findViewById(R.id.allCharsCountView)
+        avgSentenceViewWrd = findViewById(R.id.avgSentenceLenView1)
+        avgSentenceViewChr = findViewById(R.id.avgSentenceLenView2)
+        avgWordView = findViewById(R.id.avgWordLenView)
+
+
         val arguments = intent.extras
         val imgPath = arguments?.getString("imgPath")
         val listPath = arguments?.getString("listPath")
         val infoPath = arguments?.getString("infoPath")
 
      //   imgPath?.let { readImg(it) }
-        infoPath?.let { readInfo(it) }
+         infoPath?.let { readInfo(it) }
 
-        listButton.setOnClickListener {
+        /*listButton.setOnClickListener {
             val listIntent = Intent(this,ListActivity::class.java)
             listIntent.putExtra("listPath", listPath)
             startActivity(listIntent)
-        }
+        }*/
     }
 
     private fun readImg(path:String){
         val f = openFileInput(path)
         val byteArray = f.readBytes()
         val bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size?:0)
-        imageView.setImageBitmap(bmp)
+       // imageView.setImageBitmap(bmp)
     }
 
     private fun readInfo(path:String){
@@ -76,10 +87,11 @@ class MainActivity : AppCompatActivity() {
             val fileInput = openFileInput(path)
             val scanner = Scanner(fileInput)
 
-            bookView.text = scanner.nextLine()
+            bookNameView.text = scanner.nextLine().split("/").last()
             allWordView.text = scanner.nextLine()
             uniqueWordView.text = scanner.nextLine()
-            avgSentenceView.text = scanner.nextLine()
+            avgSentenceViewWrd.text = scanner.nextLine()
+            avgSentenceViewChr.text =  avgSentenceViewWrd.text
             avgWordView.text = scanner.nextLine()
         }catch (e:IOException){
             println("reading info error")

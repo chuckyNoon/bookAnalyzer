@@ -1,19 +1,15 @@
 package com.example.bookanalyzer
 
-
 import nl.siegmann.epublib.domain.Book
 import nl.siegmann.epublib.epub.EpubReader
 import org.jsoup.Jsoup
 import java.io.*
 import java.nio.charset.StandardCharsets
 
-
-enum class Format{
-    FB2,TXT,EPUB
-}
-
 class BookParser(){
     var img:ByteArray? = null
+    var author:String? = null
+    var bookName:String? = null
 
     fun parseFile(inStream: InputStream, path:String):String?{
         return when{
@@ -53,6 +49,9 @@ class BookParser(){
     private fun parseEpub(inStream: InputStream):String{
         val book: Book = EpubReader().readEpub(inStream)
         val htmlText = java.lang.StringBuilder()
+        author = book.metadata.authors[0].firstname + " " + book.metadata.authors[0].lastname
+        println("ff $author")
+        bookName = book.title
         img = book?.coverImage?.data
         for (elem in book.contents) {
             val text = elem.reader.readText()
@@ -60,7 +59,7 @@ class BookParser(){
         }
         val doc = Jsoup.parse(htmlText.toString())
         val htmlElements = doc.body()
-        var simpleText = StringBuilder("")
+        val simpleText = StringBuilder("")
         val texts = htmlElements.select("div")
         val ptexts = htmlElements.select("p")
         if (texts.size > ptexts.size) {

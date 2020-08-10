@@ -8,7 +8,7 @@ android {
 
     defaultConfig {
         applicationId "com.example.bookanalyzer"
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
@@ -25,6 +25,7 @@ android {
 }
 
 dependencies {
+    implementation 'com.android.support:recyclerview-v7:28.0.0'
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.19'
     implementation fileTree(dir: "libs", include: ["*.jar"])
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
