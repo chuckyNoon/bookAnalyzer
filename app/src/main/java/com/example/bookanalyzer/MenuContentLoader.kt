@@ -91,9 +91,48 @@ class MenuContentLoader(private val ctx: Context) {
         return (BookInfo(path, bookName, author, ebook.coverImage?.data))
     }
 
-    private fun parseFb2(path:String) :BookInfo{
-        val fileInputStream = FileInputStream(path)
-        val unhandledStr = fileInputStream.readBytes().toString(Charsets.UTF_8)
+    private fun getAuthorFromFb2(unhandledStr:String) : String?{
+        var fInd1 = unhandledStr.indexOf("<first-name>")
+        var fInd2 = unhandledStr.indexOf("</first-name>")
+        var mInd1 = unhandledStr.indexOf("<middle-name>")
+        var mInd2 = unhandledStr.indexOf("</middle-name>")
+        var lInd1 = unhandledStr.indexOf("<last-name>")
+        var lInd2 = unhandledStr.indexOf("</last-name>")
+
+        var firstName = ""
+        var middleName = ""
+        var lastName = ""
+
+        if (fInd1 in 0 until fInd2){
+            fInd1 += "<first-name>".length
+            if (fInd1 <= fInd2)
+                firstName = unhandledStr.substring(fInd1, fInd2)
+        }
+        if (mInd1 in 0 until mInd2){
+            mInd1 += "<middle-name>".length
+            if (mInd1 <= mInd2)
+                middleName = unhandledStr.substring(mInd1, mInd2)
+        }
+        if (lInd1 in 0 until lInd2){
+            lInd1 += "<last-name>".length
+            if (lInd1 <= lInd2)
+                lastName = unhandledStr.substring(lInd1, lInd2)
+        }
+        return ("$firstName $middleName $lastName")
+    }
+
+    private fun getBookTitleFromFb2(unhandledStr:String) : String?{
+        var bookTitle = ""
+        var ind1 = unhandledStr.indexOf("<book-title>")
+        var ind2 = unhandledStr.indexOf("</book-title>")
+        if (ind1 >=0 && ind2 >= 0){
+            ind1 += "<book-title>".length
+            bookTitle = unhandledStr.substring(ind1, ind2)
+        }
+        return bookTitle
+    }
+
+    private fun getImageFromFb2(unhandledStr:String) : ByteArray?{
         var imgNameStart = unhandledStr.indexOf( "xlink:href=")
         var name = ""
         if (imgNameStart >= 0) {
@@ -109,8 +148,19 @@ class MenuContentLoader(private val ctx: Context) {
         if (imgStart >=0 && imgEnd>= 0) {
             imgByteArray = unhandledStr.substring(imgStart, imgEnd).toByteArray()
         }
+        return imgByteArray
+    }
+
+    private fun parseFb2(path:String) :BookInfo{
+        val fileInputStream = FileInputStream(path)
+        val unhandledStr = fileInputStream.readBytes().toString(Charsets.UTF_8)
         fileInputStream.close()
-        return (BookInfo(path, null, null, imgByteArray))
+
+        val bookTitle= getBookTitleFromFb2(unhandledStr)
+        val author = getAuthorFromFb2(unhandledStr)
+        val imgByteArray = getImageFromFb2(unhandledStr)
+
+        return (BookInfo(path, bookTitle, author, imgByteArray))
     }
 
     private fun parseTxt(path:String) : BookInfo{

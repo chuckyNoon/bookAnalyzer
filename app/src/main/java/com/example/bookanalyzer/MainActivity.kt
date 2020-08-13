@@ -66,7 +66,12 @@ class MainActivity : AppCompatActivity() {
         val infoPath = arguments?.getString("infoPath")
 
      //   imgPath?.let { readImg(it) }
-         infoPath?.let { readInfo(it) }
+        infoPath?.let { readInfo(it) }
+        findViewById<Button>(R.id.toWordListButton).setOnClickListener{
+            val intent = Intent(this, ListActivity::class.java)
+            intent.putExtra("listPath", listPath)
+            startActivity(intent)
+        }
 
         /*listButton.setOnClickListener {
             val listIntent = Intent(this,ListActivity::class.java)
