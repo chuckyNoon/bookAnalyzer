@@ -6,15 +6,18 @@ import kotlin.concurrent.thread
 class BookSearch {
     companion object {
         private lateinit var foundFiles:ArrayList<String>
-        private val patterns: ArrayList<String> = arrayListOf("fb2", "epub", "txt")
-        fun findAll(dir: File): ArrayList<String> {
+        private var patterns: ArrayList<String>?=null
+        fun findAll(dir: File, specPatterns:ArrayList<String>? = null): ArrayList<String> {
             foundFiles = ArrayList()
+            patterns = specPatterns ?: arrayListOf("fb2", "epub", "txt")
             search(dir)
             return (foundFiles)
         }
 
         private fun fitsPattern(fileName: String): Boolean {
-            for (pattern in patterns) {
+            if (patterns.isNullOrEmpty())
+                return false
+            for (pattern in patterns!!) {
                 if (fileName.endsWith(pattern)) {
                     return true
                 }

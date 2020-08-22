@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="180dp"
-    android:background="@drawable/book_shape">
+    android:background="@drawable/book_transition">
 
     <ImageView
         android:id="@+id/bookImage"
@@ -22,6 +22,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="29dp"
         android:layout_marginEnd="19dp"
+        android:maxLines="3"
         android:text="Ulysses"
         android:textColor="#000000"
         android:textSize="16sp"
@@ -34,6 +35,7 @@
         android:id="@+id/bookAuthorView"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:maxLines="2"
         android:text="James Joyce"
         android:textColor="#383838"
         android:textSize="12sp"
@@ -45,6 +47,7 @@
         android:id="@+id/bookFormatView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:maxLines="2"
         android:text="EPUB, 801кб"
         android:textColor="#383838"
         android:textSize="12sp"
@@ -57,7 +60,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
-        android:layout_marginBottom="18dp"
+        android:layout_marginBottom="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
@@ -71,5 +74,15 @@
         android:textColor="#383838"
         app:layout_constraintBottom_toTopOf="@+id/progressBar2"
         app:layout_constraintStart_toStartOf="@+id/progressBar2" />
+
+    <ImageButton
+        android:id="@+id/imageButton"
+        android:layout_width="38dp"
+        android:layout_height="29dp"
+        android:layout_marginTop="55dp"
+        android:layout_marginEnd="15dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/bookAuthorView"
+        app:srcCompat="@drawable/baseline_folder_24" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

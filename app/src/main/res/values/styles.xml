@@ -6,10 +6,4 @@
         <item name="colorPrimaryDark">@color/colorPrimaryDark</item>
         <item name="colorAccent">@color/colorAccent</item>
     </style>
-     <declare-styleable name="AnimatedCircleLoadingView">
-         <attr name="animCircleLoadingView_mainColor" format="color" localization="suggested" />
-         <attr name="animCircleLoadingView_secondaryColor" format="color" localization="suggested" />
-         <attr name="animCircleLoadingView_checkMarkTintColor" format="color" localization="suggested" />
-         <attr name="animCircleLoadingView_failureMarkTintColor" format="color" localization="suggested" />
-         <attr name="animCircleLoadingView_textColor" format="color" localization="suggested" /> </declare-styleable>
 </resources>
