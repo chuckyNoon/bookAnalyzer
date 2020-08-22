@@ -9,7 +9,7 @@ import android.view.ViewGroup
 import android.widget.*
 import androidx.core.content.getSystemService
 
-class SideMenuElemModel(var action:String, var iconRes:Int?, var onClickListener: View.OnClickListener){
+class SideMenuElemModel(var action:String, var iconRes:Int?, var onTouchListener: View.OnTouchListener){
 
 }
 
@@ -27,7 +27,7 @@ class SideMenuAdapter(private val ctx:Context,private val ar:ArrayList<SideMenuE
         else imageView.visibility = ImageView.INVISIBLE
 
         view.findViewById<TextView>(R.id.actionTextView).text = model.action
-        view.setOnClickListener(model.onClickListener)
+        view.setOnTouchListener(model.onTouchListener)
         return (view)
     }
 

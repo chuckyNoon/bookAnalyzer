@@ -2,11 +2,9 @@ package com.example.bookanalyzer
 
 import android.app.Activity
 import android.content.Context
-import android.content.pm.ActivityInfo
-import android.opengl.Visibility
 import android.os.Bundle
-import android.view.Gravity
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
@@ -16,7 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.word_list_elem.view.*
 import java.io.IOException
 
-class ListActivity : AppCompatActivity() {
+class WordListActivity : AppCompatActivity() {
     private lateinit var wordList: RecyclerView
     private lateinit var linesList:ArrayList<WordListElemModel>
     private lateinit var seekBar: SeekBar
@@ -25,7 +23,9 @@ class ListActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_list)
+        setContentView(R.layout.activity_word_list)
+        setToolBar()
+
         wordList = findViewById(R.id.word_list)
         seekBar = findViewById(R.id.seekBar)
         seekTextView = findViewById(R.id.seekTextView)
@@ -58,6 +58,19 @@ class ListActivity : AppCompatActivity() {
         })
     }
 
+    private fun setToolBar(){
+        val toolBar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
+        toolBar?.title = "Word list"
+        toolBar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
+        setSupportActionBar(toolBar)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if(item.itemId == android.R.id.home ){
+            finish()
+        }
+        return super.onOptionsItemSelected(item)
+    }
     private fun readWordList(listPath:String):ArrayList<WordListElemModel>?{
         return try {
             val list = ArrayList<WordListElemModel>()

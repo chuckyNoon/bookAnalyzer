@@ -49,10 +49,14 @@ class BookParser(){
     private fun parseEpub(inStream: InputStream):String{
         val book: Book = EpubReader().readEpub(inStream)
         val htmlText = java.lang.StringBuilder()
-        author = book.metadata.authors[0].firstname + " " + book.metadata.authors[0].lastname
+        if (!book.metadata?.authors.isNullOrEmpty()){
+            val firstName = book.metadata?.authors?.first()?.firstname
+            val secondName = book.metadata?.authors?.first()?.lastname
+            author = (firstName?:"") + " " + (secondName?:"")
+        }
         println("ff $author")
         bookName = book.title
-        img = book?.coverImage?.data
+        img = book.coverImage?.data
         for (elem in book.contents) {
             val text = elem.reader.readText()
             htmlText.append(text)

@@ -8,17 +8,19 @@ import android.content.res.Configuration
 import android.database.Cursor
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.drawable.ColorDrawable
 import android.net.Uri
 import android.os.AsyncTask
 import android.os.Bundle
 import android.provider.OpenableColumns
 import android.text.Layout
+import android.view.MenuItem
 import android.webkit.WebView
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
+import android.widget.Toolbar
 import androidx.appcompat.app.AppCompatActivity
-import kotlinx.android.synthetic.main.book_info.*
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
@@ -26,7 +28,7 @@ import kotlin.concurrent.thread
 import kotlin.math.roundToInt
 
 
-class MainActivity : AppCompatActivity() {
+class BookInfoActivity : AppCompatActivity() {
     private lateinit var bookNameView:TextView
     private lateinit var allWordView:TextView
     private lateinit var textLengthView:TextView
@@ -38,7 +40,8 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.book_info)
+        setContentView(R.layout.activity_book_info)
+        setToolBar()
 
         /*imageView = findViewById(R.id.imageView)
         bookView = findViewById(R.id.bookView)
@@ -61,30 +64,30 @@ class MainActivity : AppCompatActivity() {
 
 
         val arguments = intent.extras
-        val imgPath = arguments?.getString("imgPath")
         val listPath = arguments?.getString("listPath")
         val infoPath = arguments?.getString("infoPath")
 
-     //   imgPath?.let { readImg(it) }
         infoPath?.let { readInfo(it) }
         findViewById<Button>(R.id.toWordListButton).setOnClickListener{
-            val intent = Intent(this, ListActivity::class.java)
+            val intent = Intent(this, WordListActivity::class.java)
             intent.putExtra("listPath", listPath)
             startActivity(intent)
         }
 
-        /*listButton.setOnClickListener {
-            val listIntent = Intent(this,ListActivity::class.java)
-            listIntent.putExtra("listPath", listPath)
-            startActivity(listIntent)
-        }*/
     }
 
-    private fun readImg(path:String){
-        val f = openFileInput(path)
-        val byteArray = f.readBytes()
-        val bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size?:0)
-       // imageView.setImageBitmap(bmp)
+   private fun setToolBar(){
+        val toolBar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
+        toolBar?.title = "Info"
+        toolBar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
+        setSupportActionBar(toolBar)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if(item.itemId == android.R.id.home ){
+            finish()
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     private fun readInfo(path:String){

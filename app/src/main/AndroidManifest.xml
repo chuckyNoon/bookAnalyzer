@@ -11,12 +11,6 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true">
 
-
-        <activity
-            android:name=".LoaderActivity"
-            android:noHistory="true"
-            android:theme="@style/Theme.MaterialComponents.DayNight.DarkActionBar" />
-        <activity android:name=".ListActivity" android:theme="@style/Theme.MaterialComponents.DayNight.DarkActionBar" />
         <activity android:name=".StartActivity" android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -24,7 +18,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".MainActivity" android:theme="@style/Theme.MaterialComponents.DayNight.DarkActionBar"/>
+        <activity
+            android:name=".LoaderScreenActivity"
+            android:noHistory="true"
+            android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge" />
+        <activity android:name=".BookInfoActivity" android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge"/>
+        <activity android:name=".WordListActivity" android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge" />
+
+
     </application>
 
 </manifest>

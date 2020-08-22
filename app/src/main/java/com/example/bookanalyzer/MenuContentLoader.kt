@@ -2,16 +2,42 @@ package com.example.bookanalyzer
 
 import android.content.Context
 import android.os.AsyncTask
+import android.os.Environment
 import nl.siegmann.epublib.domain.Book
 import nl.siegmann.epublib.epub.EpubReader
+import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.util.*
 import kotlin.collections.ArrayList
 
 class MenuContentLoader(private val ctx: Context) {
-    var ct = 0
-    fun firstStage(paths: ArrayList<String>) : ArrayList<ABookInfo>{
+    companion object{
+        val ALL_ANALYZED_PATH = "all"
+    }
+    private var paths:ArrayList<String> = ArrayList()
+
+    init{
+        try{
+            val input = ctx.openFileInput(PathSaver.SAVED_PATHS_FILE)
+            val saved = input.readBytes().toString(Charsets.UTF_8).split("\n")
+            for (s in saved){
+                if (s.isNotEmpty())
+                    paths.add(s)
+            }
+            input.close()
+        }catch (e:IOException){
+            /*val time4 = System.currentTimeMillis()
+            paths = BookSearch.findAll(dir)
+            val time5 = System.currentTimeMillis()
+            PathSaver(ctx).saveAll(paths)
+            val time6 = System.currentTimeMillis()
+            println("q = " + (time5 - time4).toDouble() / 1000)
+            println("q= " + (time6 - time5).toDouble() / 1000)*/
+        }
+    }
+
+    fun firstStage() : ArrayList<ABookInfo>{
         val bookList = ArrayList<ABookInfo>()
         for (path in paths){
             bookList.add(ABookInfo(path, null, null, null, 0))
@@ -20,10 +46,19 @@ class MenuContentLoader(private val ctx: Context) {
         return bookList
     }
 
+    /*fun finalStage() : ArrayList<ABookInfo>{
+        val bookList = ArrayList<ABookInfo>()
+        for (path in paths){
+            val book = getDetailedInfo(path)
+            bookList.add(book)
+        }
+        return bookList
+    }*/
+
     fun searchSavedWordCount(path:String) : Int{
         var ind = -1
         try{
-            val inputStream = ctx.openFileInput("all")
+            val inputStream = ctx.openFileInput(ALL_ANALYZED_PATH)
             val strs = inputStream.readBytes().toString(Charsets.UTF_8).split("\n")
             for (i in strs.indices){
                 if (strs[i] == path && i > 0){
@@ -55,21 +90,16 @@ class MenuContentLoader(private val ctx: Context) {
         }
     }
 
-    fun loadMoreInfo(path: String) : ABookInfo{
-        val ab = ABookInfo(getBookList(path))
-        ab.wordCount = searchSavedWordCount(path)
-        return ab
-    }
-
-
-    private fun getBookList(path:String) : BookInfo{
-        val bookInfo = when(getFormat(path)){
+    fun getDetailedInfo(path: String) : ABookInfo{
+        val book = when(getFormat(path)) {
             "epub" -> parseEpub(path)
             "fb2" -> parseFb2(path)
             else -> parseTxt(path)
         }
-        return bookInfo
+        book.wordCount = searchSavedWordCount(path)
+        return ABookInfo(book)
     }
+
 
     private fun getFormat(path:String) : String{
         return when{

@@ -1,0 +1,51 @@
+package com.example.bookanalyzer
+
+import android.content.Context
+import java.io.IOException
+
+class PathSaver(val ctx:Context) {
+    companion object {
+        public val SAVED_PATHS_FILE:String = "main"
+    }
+
+    fun saveAll(paths:ArrayList<String>){
+        writePaths(paths)
+    }
+
+    fun addPath(path:String){
+        val paths = findSavedPaths()
+        paths.add(path)
+        writePaths(paths)
+    }
+
+    fun deletePath(path:String){
+        val paths = findSavedPaths()
+        paths.remove(path)
+        writePaths(paths)
+    }
+
+    private fun writePaths(paths:ArrayList<String>){
+        try{
+            val output = ctx.openFileOutput(SAVED_PATHS_FILE, 0)
+            val stringBuilder = StringBuilder("")
+            for (path in paths){
+                stringBuilder.append(path)
+                stringBuilder.append("\n")
+            }
+            output.write(stringBuilder.toString().toByteArray())
+            output.close()
+        }catch (e:IOException){
+        }
+    }
+
+    private fun findSavedPaths() : ArrayList<String>{
+        return try{
+            val input = ctx.openFileInput(SAVED_PATHS_FILE)
+            val paths = input.readBytes().toString(Charsets.UTF_8).split("\n")
+            input.close()
+            (ArrayList<String>(paths))
+        }catch (e:IOException){
+            (ArrayList<String>())
+        }
+    }
+}
