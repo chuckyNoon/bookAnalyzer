@@ -171,6 +171,13 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
         }
     }
 
+    private fun showLoadingStateTextView(dur:Long){
+        ObjectAnimator.ofFloat(loadingStateTextView, "translationY", 0f).apply {
+            duration = dur
+            start()
+        }
+    }
+
     private fun updateLoadingStateTextView(str: String, downDuration: Long, upDuration: Long){
         val height = loadingStateTextView.height.toFloat()
         ObjectAnimator.ofFloat(loadingStateTextView, "translationY", height).apply {
@@ -181,10 +188,7 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
 
                 override fun onAnimationEnd(animation: Animator?) {
                     loadingStateTextView.text = str
-                    ObjectAnimator.ofFloat(loadingStateTextView, "translationY", 0f).apply {
-                        duration = upDuration
-                        start()
-                    }
+                    showLoadingStateTextView(upDuration)
                 }
 
                 override fun onAnimationCancel(animation: Animator?) {
@@ -226,9 +230,13 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
 
                 listView.adapter = newAdapter
                 listView.layoutManager = LinearLayoutManager(this)
-                loadingStateTextView.visibility = View.VISIBLE
-                loadingStateTextView.text = "Loading content"
+
             }
+        }
+        handler.post {
+            showLoadingStateTextView(400)
+            loadingStateTextView.visibility = View.VISIBLE
+            loadingStateTextView.text = "Loading content"
         }
     }
 

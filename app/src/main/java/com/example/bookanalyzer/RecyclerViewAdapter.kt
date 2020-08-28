@@ -37,10 +37,6 @@ class RecyclerListAdapter(val ctx: Context, val ar: ArrayList<ABookInfo>) :
         val bookFormat = book.path.split(".").last().toUpperCase()?:""
         val view = holder.view.view_foreground
 
-        if (holder.isAnimating){
-           // val tr = holder.view.background as TransitionDrawable
-           // tr.resetTransition()
-        }
         view.setOnTouchListener { v, event ->
             val tr = v?.background as TransitionDrawable
             when (event?.action) {
@@ -83,13 +79,10 @@ class RecyclerListAdapter(val ctx: Context, val ar: ArrayList<ABookInfo>) :
 
     override fun onItemMove(fromPosition: Int, toPosition: Int) {
         val prev = ar.removeAt(fromPosition)
-        //ar.add(if (toPosition  > fromPosition) toPosition - 1 else toPosition, prev)
         ar.add(toPosition, prev)
         PathSaver(ctx).saveAll(ar)
 
         notifyItemMoved(fromPosition, toPosition)
-        //notifyDataSetChanged()
-
     }
 
     override fun getItemCount(): Int {
@@ -143,16 +136,14 @@ class RecyclerListAdapter(val ctx: Context, val ar: ArrayList<ABookInfo>) :
     }
 
     class ItemViewHolder(val view: View) : RecyclerView.ViewHolder(view), ItemTouchHelperViewHolder {
-        var isAnimating = false
-
         override fun onItemSelected() {
-           // val tr = view.view_foreground.background as TransitionDrawable
-           // tr.startTransition(200)
+            val tr = view.view_foreground.background as TransitionDrawable
+            tr.startTransition(200)
         }
 
         override fun onItemClear() {
-            //val tr = view.view_foreground.background as TransitionDrawable
-          //  tr.reverseTransition(100)
+            val tr = view.view_foreground.background as TransitionDrawable
+            tr.reverseTransition(100)
         }
     }
 }
