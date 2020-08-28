@@ -71,23 +71,6 @@ class LoaderScreenActivity : AppCompatActivity() {
         job.cancel()
     }
 
-    private fun findBookInAnalyzed(path:String) : Int{
-        try{
-            val inputStreamReader = InputStreamReader(openFileInput("all"))
-            val bufferedReader = BufferedReader(inputStreamReader)
-            val lines = bufferedReader.readText().split("\n")
-            lines.forEach {
-                val parts = it.split(" ",  limit = 2)
-                if (parts.size == 2 && parts[1] == path){
-                    return (parts[0].toInt())
-                }
-            }
-            return (-1)
-        }catch (e: IOException){
-            return (-1)
-        }
-    }
-
     private fun saveAnalyzedInfo(sourceFilePath:String, ind:Int, imgFileName:String, listFileName:String, infoFileName:String, redo:Boolean){
         try {
             analysis.img?.let {
@@ -99,7 +82,8 @@ class LoaderScreenActivity : AppCompatActivity() {
 
 
             val infoOut = openFileOutput(infoFileName, 0)
-            val info = "$sourceFilePath\n${analysis.wordCount}\n${analysis.uniqWordCount}\n${analysis.avgSentenceLen}\n${analysis.avgWordLen}\n"
+            val info = "$sourceFilePath\n${analysis.wordCount}\n${analysis.uniqWordCount}\n${analysis.avgSentenceLen}\n${analysis.avgWordLen}\n"+
+                    "${analysis.avgSentenceLenChr}\n${analysis.charCount}\n"
             infoOut.write(info.toByteArray())
 
             if (!redo) {

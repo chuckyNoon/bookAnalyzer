@@ -71,6 +71,7 @@ class WordListActivity : AppCompatActivity() {
         }
         return super.onOptionsItemSelected(item)
     }
+
     private fun readWordList(listPath:String):ArrayList<WordListElemModel>?{
         return try {
             val list = ArrayList<WordListElemModel>()

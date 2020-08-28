@@ -18,7 +18,8 @@ class ABookInfo(var path:String,
                 var name:String?,
                 var author:String?,
                 var bitmap: Bitmap?,
-                var wordCount:Int = 0
+                var wordCount:Int = 0,
+                var selected:Boolean = false
 ){
     constructor(b:BookInfo):this(b.path, b.name, b.author,  Utils.byteArrayToBitmap(b.bitmap), b.wordCount){
     }

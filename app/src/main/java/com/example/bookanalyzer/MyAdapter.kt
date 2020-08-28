@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.book_list_elem.view.*
 import java.io.IOException
@@ -39,13 +40,6 @@ class MyAdapter(val ctx: Context, val ar: ArrayList<ABookInfo>) : RecyclerView.A
         val view = holder.view
 
         view.setOnTouchListener(MyTouchListener(position))
-        view.imageButton.setOnClickListener {
-            PathSaver(ctx).deletePath(ar[position].path)
-            ar.removeAt(position)
-            notifyItemRemoved(position);
-            notifyItemRangeChanged(position, ar.size)
-        }
-
         view.bookNameView.text = if (!book.name.isNullOrEmpty()) book.name else (relPath?:"")
         view.bookAuthorView.text = if (!book.author.isNullOrEmpty()) book.author else "Unknown"
         view.wordCountView.text = (if (book.wordCount != 0) book.wordCount.toString() else "?") + " words"
@@ -127,5 +121,7 @@ class MyAdapter(val ctx: Context, val ar: ArrayList<ABookInfo>) : RecyclerView.A
                 0
             }
         }
+
+
     }
 }

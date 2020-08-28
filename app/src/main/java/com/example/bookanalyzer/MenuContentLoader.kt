@@ -27,13 +27,7 @@ class MenuContentLoader(private val ctx: Context) {
             }
             input.close()
         }catch (e:IOException){
-            /*val time4 = System.currentTimeMillis()
-            paths = BookSearch.findAll(dir)
-            val time5 = System.currentTimeMillis()
-            PathSaver(ctx).saveAll(paths)
-            val time6 = System.currentTimeMillis()
-            println("q = " + (time5 - time4).toDouble() / 1000)
-            println("q= " + (time6 - time5).toDouble() / 1000)*/
+
         }
     }
 
@@ -45,15 +39,6 @@ class MenuContentLoader(private val ctx: Context) {
 
         return bookList
     }
-
-    /*fun finalStage() : ArrayList<ABookInfo>{
-        val bookList = ArrayList<ABookInfo>()
-        for (path in paths){
-            val book = getDetailedInfo(path)
-            bookList.add(book)
-        }
-        return bookList
-    }*/
 
     fun searchSavedWordCount(path:String) : Int{
         var ind = -1
@@ -100,6 +85,9 @@ class MenuContentLoader(private val ctx: Context) {
         return ABookInfo(book)
     }
 
+    private fun loadImage(path:String){
+
+    }
 
     private fun getFormat(path:String) : String{
         return when{
