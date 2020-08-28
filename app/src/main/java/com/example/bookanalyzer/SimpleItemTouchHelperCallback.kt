@@ -6,18 +6,9 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.book_list_elem.view.*
 
-
-/**
- * An implementation of [ItemTouchHelper.Callback] that enables basic drag & drop and
- * swipe-to-dismiss. Drag events are automatically started by an item long-press.<br></br>
- *
- * Expects the `RecyclerView.Adapter` to react to [ ] callbacks and the `RecyclerView.ViewHolder` to implement
- * [ItemTouchHelperViewHolder].
- *
- * @author Paul Burke (ipaulpro)
- */
 class SimpleItemTouchHelperCallback(private val mAdapter: ItemTouchHelperAdapter) :
     ItemTouchHelper.Callback() {
+    private var lastDraggedViewHolder:ItemTouchHelperViewHolder? = null
     override fun isLongPressDragEnabled(): Boolean {
         return true
     }
@@ -31,7 +22,7 @@ class SimpleItemTouchHelperCallback(private val mAdapter: ItemTouchHelperAdapter
         viewHolder: RecyclerView.ViewHolder
     ): Int {
         val dragFlags = ItemTouchHelper.UP or ItemTouchHelper.DOWN
-        val swipeFlags = ItemTouchHelper.START or ItemTouchHelper.END
+        val swipeFlags = ItemTouchHelper.START
         return makeMovementFlags(dragFlags, swipeFlags)
     }
 
@@ -49,10 +40,13 @@ class SimpleItemTouchHelperCallback(private val mAdapter: ItemTouchHelperAdapter
     }
 
     override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
+        if (lastDraggedViewHolder != null  && actionState == ItemTouchHelper.ACTION_STATE_IDLE){
+            lastDraggedViewHolder?.onItemClear()
+        }
         if (actionState != ItemTouchHelper.ACTION_STATE_IDLE) {
             val itemViewHolder = viewHolder as ItemTouchHelperViewHolder?
-            itemViewHolder!!.onItemSelected()
-            println("ff")
+            itemViewHolder?.onItemSelected()
+            lastDraggedViewHolder = itemViewHolder
         }
         super.onSelectedChanged(viewHolder, actionState)
     }
@@ -61,7 +55,7 @@ class SimpleItemTouchHelperCallback(private val mAdapter: ItemTouchHelperAdapter
         val backgroundView: View = viewHolder.itemView.view_background
         val foregroundView: View = viewHolder.itemView.view_foreground
 
-        backgroundView.right = 0
+            // backgroundView.right = 0
 
         getDefaultUIUtil().clearView(foregroundView)
     }
