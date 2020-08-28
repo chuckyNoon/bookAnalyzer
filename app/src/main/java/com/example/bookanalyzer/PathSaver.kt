@@ -3,9 +3,17 @@ package com.example.bookanalyzer
 import android.content.Context
 import java.io.IOException
 
-class PathSaver(val ctx:Context) {
+class PathSaver(private val ctx:Context) {
     companion object {
-        public val SAVED_PATHS_FILE:String = "main"
+        val SAVED_PATHS_FILE:String = "main"
+    }
+
+    fun saveAll(books:ArrayList<ABookInfo>, gb:Int = 0){
+        val paths = ArrayList<String>()
+        for(book in books){
+            paths.add(book.path)
+        }
+        writePaths(paths)
     }
 
     fun saveAll(paths:ArrayList<String>){
@@ -43,9 +51,9 @@ class PathSaver(val ctx:Context) {
             val input = ctx.openFileInput(SAVED_PATHS_FILE)
             val paths = input.readBytes().toString(Charsets.UTF_8).split("\n")
             input.close()
-            (ArrayList<String>(paths))
+            (ArrayList(paths))
         }catch (e:IOException){
-            (ArrayList<String>())
+            (ArrayList())
         }
     }
 }

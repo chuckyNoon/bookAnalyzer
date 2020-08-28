@@ -43,17 +43,6 @@ class BookInfoActivity : AppCompatActivity() {
         setContentView(R.layout.activity_book_info)
         setToolBar()
 
-        /*imageView = findViewById(R.id.imageView)
-        bookView = findViewById(R.id.bookView)
-        allWordView = findViewById(R.id.allWordView)
-        uniqueWordView = findViewById(R.id.uniqueWordView)
-        avgSentenceView = findViewById(R.id.avgSentenceView)
-        avgWordView = findViewById(R.id.avgWordView)
-        listButton = when(resources.configuration.orientation){
-            Configuration.ORIENTATION_LANDSCAPE -> findViewById(R.id.listButton)
-            else -> findViewById(R.id.listButton)
-        }*/
-
         bookNameView = findViewById(R.id.bookNameView)
         allWordView = findViewById(R.id.allWordCountView)
         uniqueWordView = findViewById(R.id.uniqWordView)
@@ -99,8 +88,10 @@ class BookInfoActivity : AppCompatActivity() {
             allWordView.text = scanner.nextLine()
             uniqueWordView.text = scanner.nextLine()
             avgSentenceViewWrd.text = scanner.nextLine()
-            avgSentenceViewChr.text =  avgSentenceViewWrd.text
             avgWordView.text = scanner.nextLine()
+            avgSentenceViewChr.text = scanner.nextLine()
+            textLengthView.text = scanner.nextLine()
+
         }catch (e:IOException){
             println("reading info error")
         }

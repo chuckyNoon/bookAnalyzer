@@ -1,7 +1,9 @@
 package com.example.bookanalyzer
 
 import android.Manifest
+import android.animation.Animator
 import android.animation.ArgbEvaluator
+import android.animation.ObjectAnimator
 import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
@@ -23,10 +25,12 @@ import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
 import android.widget.ListView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import java.io.File
@@ -44,21 +48,27 @@ interface ISelectedSearchSettings {
 
 class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLaunch{
     private lateinit var listView: RecyclerView
-    private var drawerLayout:DrawerLayout?=null
-    private var myAdapter: MyAdapter? = null
+    private lateinit var drawerLayout:DrawerLayout
     private lateinit var bookList:ArrayList<ABookInfo>
+    private lateinit var loadingStateTextView:TextView
+    private var newAdapter:RecyclerListAdapter?= null
     private val handler = Handler()
     private var isListCreating = false
     private var pathSaver:PathSaver = PathSaver(this)
+    private var mItemTouchHelper:ItemTouchHelper?=null
+
+    private fun initFields(){
+        listView = findViewById(R.id.list_view)
+        drawerLayout = findViewById(R.id.drawerLayout)
+        loadingStateTextView = findViewById(R.id.textview_loading_state)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_start)
+        initFields()
         setToolBar()
         setSideMenu()
-
-        listView = findViewById(R.id.list_view)
-        drawerLayout = findViewById(R.id.drawerLayout)
 
         /*val a = TypedValue()
         theme.resolveAttribute(android.R.attr.windowBackground, a, true)
@@ -90,7 +100,7 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if(item.itemId == android.R.id.home ){
-            drawerLayout?.open()
+            drawerLayout.open()
         }
         return super.onOptionsItemSelected(item)
     }
@@ -101,7 +111,7 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
             val newWordCount = menuContentLoader.searchSavedWordCount(book.path)
             if (book.wordCount != newWordCount){
                 book.wordCount = newWordCount
-                myAdapter?.notifyDataSetChanged()
+                newAdapter?.notifyDataSetChanged()
             }
         }
         super.onRestart()
@@ -113,8 +123,8 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
             val filePath: String? = FileUtils().getPath(this, data!!.data!!)
             filePath?.let{
                 bookList.add(MenuContentLoader(this).getDetailedInfo(filePath))
-                myAdapter?.notifyItemInserted((bookList.size ?: 0) - 1)
-                myAdapter?.notifyDataSetChanged()
+                newAdapter?.notifyItemInserted((bookList.size ?: 0) - 1)
+                newAdapter?.notifyDataSetChanged()
                 thread {
                     pathSaver.addPath(filePath)
                 }
@@ -132,7 +142,11 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
         }
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == 0) {
             SearchSettingsDialog().show(supportFragmentManager, "124")
@@ -149,47 +163,95 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
         }
     }
 
+    private fun hideLoadingStateTextView(dur: Long){
+        val height = loadingStateTextView.height.toFloat()
+        ObjectAnimator.ofFloat(loadingStateTextView, "translationY", height).apply{
+            duration = dur
+            start()
+        }
+    }
+
+    private fun updateLoadingStateTextView(str: String, downDuration: Long, upDuration: Long){
+        val height = loadingStateTextView.height.toFloat()
+        ObjectAnimator.ofFloat(loadingStateTextView, "translationY", height).apply {
+            duration = downDuration
+            addListener(object : Animator.AnimatorListener {
+                override fun onAnimationStart(animation: Animator?) {
+                }
+
+                override fun onAnimationEnd(animation: Animator?) {
+                    loadingStateTextView.text = str
+                    ObjectAnimator.ofFloat(loadingStateTextView, "translationY", 0f).apply {
+                        duration = upDuration
+                        start()
+                    }
+                }
+
+                override fun onAnimationCancel(animation: Animator?) {
+                }
+
+                override fun onAnimationRepeat(animation: Animator?) {
+                }
+            })
+            start()
+        }
+    }
+
     private fun createBookList(){
         isListCreating = true
-        println("here")
+
         thread {
-            val time1 = System.currentTimeMillis()
             val menuContentLoader = MenuContentLoader(this)
-            val time2 = System.currentTimeMillis()
-
-            bookList = menuContentLoader.firstStage()
-            val time3 = System.currentTimeMillis()
-
-            myAdapter = MyAdapter(this, bookList)
-            handler.post{
-
-                listView.adapter = myAdapter
-                listView.layoutManager = LinearLayoutManager(this);
-            }
-            val time4 = System.currentTimeMillis()
-
-            for (i in bookList.indices ) {
-                val oldElem = bookList[i]
-                val newElem = menuContentLoader.getDetailedInfo(oldElem.path)
-
-                oldElem.name = newElem.name
-                oldElem.author = newElem.author
-                oldElem.bitmap = newElem.bitmap
-                oldElem.wordCount = newElem.wordCount
-            }
-
-            val time5 = System.currentTimeMillis()
-            println("activity_book_info = " + (time2 - time1).toDouble() / 1000)
-            println("activity_book_info = " + (time3 - time2).toDouble() / 1000)
-            println("activity_book_info = " + (time4 - time3).toDouble() / 1000)
-            println("activity_book_info = " + (time5 - time4).toDouble() / 1000)
-            println("activity_book_info = " + (time5 - time1).toDouble() / 1000)
-            handler.post{
-                myAdapter?.notifyDataSetChanged()
-            }
+            createPrimaryList(menuContentLoader)
+            addMoreInfoToPrimaryList(menuContentLoader)
             isListCreating = false
         }
     }
+
+    private fun createPrimaryList(menuContentLoader:MenuContentLoader){
+        if (newAdapter != null){
+            val oldSize = bookList.size
+            bookList.clear()
+            newAdapter?.notifyItemRangeRemoved(0, oldSize)
+            bookList.addAll(menuContentLoader.firstStage())
+            newAdapter?.notifyItemRangeInserted(0, bookList.size)
+        }else{
+            bookList = menuContentLoader.firstStage()
+            newAdapter = RecyclerListAdapter(this,bookList)
+            handler.post{
+                listView.setHasFixedSize(true)
+                val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(newAdapter!!)
+                mItemTouchHelper = ItemTouchHelper(callback)
+                mItemTouchHelper?.attachToRecyclerView(listView)
+
+                listView.adapter = newAdapter
+                listView.layoutManager = LinearLayoutManager(this)
+                loadingStateTextView.visibility = View.VISIBLE
+                loadingStateTextView.text = "Loading content"
+            }
+        }
+    }
+
+    private fun addMoreInfoToPrimaryList(menuContentLoader:MenuContentLoader){
+        for (i in bookList.indices ) {
+            val oldElem = bookList[i]
+            val newElem = menuContentLoader.getDetailedInfo(oldElem.path)
+
+            oldElem.name = newElem.name
+            oldElem.author = newElem.author
+            oldElem.bitmap = newElem.bitmap
+            oldElem.wordCount = newElem.wordCount
+            handler.post {
+                newAdapter?.notifyDataSetChanged()
+            }
+        }
+
+        handler.post{
+            updateLoadingStateTextView("Loading ended", 400, 400)
+        }
+        handler.postDelayed({hideLoadingStateTextView(400)}, 3000)
+    }
+
 
     interface OnSideMenuElemTouchListener : View.OnTouchListener {
         fun doAction()
@@ -247,7 +309,7 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
             R.drawable.baseline_folder_24,
             object : OnSideMenuElemTouchListener {
                 override fun doAction() {
-                    drawerLayout?.close()
+                    drawerLayout.close()
                     val intent = Intent().setAction(Intent.ACTION_GET_CONTENT).setType("*/*")
                     startActivityForResult(intent, 123)
                 }
@@ -260,7 +322,7 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
             object : OnSideMenuElemTouchListener {
                 override fun doAction() {
                     if (!isListCreating) {
-                        drawerLayout?.close()
+                        drawerLayout.close()
                         SearchSettingsDialog().show(supportFragmentManager, "124")
                     }
                 }

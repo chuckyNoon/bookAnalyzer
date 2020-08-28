@@ -64,7 +64,7 @@
                 android:layout_marginStart="20dp"
                 android:layout_weight="1"
                 android:gravity="start|center_vertical"
-                android:text="Uniq word count"
+                android:text="Unique word count"
                 android:textColor="#000000"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -94,7 +94,7 @@
                 android:layout_marginStart="20dp"
                 android:layout_weight="1"
                 android:gravity="start|center_vertical"
-                android:text="Words in text"
+                android:text="Word count"
                 android:textColor="#000000"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -124,7 +124,7 @@
                 android:layout_marginStart="20dp"
                 android:layout_weight="1"
                 android:gravity="start|center_vertical"
-                android:text="Chars in text"
+                android:text="Character count"
                 android:textColor="#000000"
                 android:textSize="18sp"
                 android:textStyle="bold" />

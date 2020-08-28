@@ -12,7 +12,9 @@ class BookAnalysis(private val inStream: InputStream, val path:String, val ctx:C
 {
     var avgWordLen:Double = 0.0
     var avgSentenceLen:Double= 0.0
+    var avgSentenceLenChr:Double = 0.0
     var wordCount = 0
+    var charCount = 0
     var uniqWordCount = 0
     var author:String? = null
     var bookName:String? = null
@@ -29,6 +31,7 @@ class BookAnalysis(private val inStream: InputStream, val path:String, val ctx:C
             normalizedWordMap = mapOf()
             return
         }
+        charCount = simpleText.length
         val time3 = System.currentTimeMillis()
         img = parser.img
         author = parser.author
@@ -39,6 +42,7 @@ class BookAnalysis(private val inStream: InputStream, val path:String, val ctx:C
         calcWordCount(sourceWordMap)
         calcAvgWordLen(sourceWordMap)
         calcAvgSentenceLen(simpleText)
+
         val time5 = System.currentTimeMillis()
         uniqWordCount = normalizedWordMap.size
     }
@@ -63,6 +67,8 @@ class BookAnalysis(private val inStream: InputStream, val path:String, val ctx:C
         val sentences = simpleText.split(".")
         val sentenceCount = sentences.size
         avgSentenceLen = if (sentenceCount != 0) roundDouble(wordCount.toDouble() / sentenceCount) else 0.0
+        if (wordCount != 0)
+            avgSentenceLenChr = roundDouble((charCount.toDouble()) / sentences.size)
     }
 
     private fun roundDouble(d:Double):Double{
@@ -74,7 +80,7 @@ class BookAnalysis(private val inStream: InputStream, val path:String, val ctx:C
         for ((a, b) in sourceMap){
             val newWord = normalizer.getLemma(a)
             if (newWord == null){
-                ansMap[a] = (ansMap[a]?:0) + b
+                //ansMap[a] = (ansMap[a]?:0) + b
             }else{
                 ansMap[newWord] = (ansMap[newWord]?:0) + b
             }
