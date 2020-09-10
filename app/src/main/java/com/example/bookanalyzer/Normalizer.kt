@@ -135,8 +135,9 @@ class WordNormalizer(private val ctx: Context)
         for ((oldEnding,newEnding) in rules){
             if (word.endsWith(oldEnding)){
                 val normalizedWord = word.substring(0, word.length - oldEnding.length) + newEnding
-                if (map.contains(normalizedWord))
+                if (map.contains(normalizedWord)) {
                     return (normalizedWord)
+                }
             }
         }
         return (null)

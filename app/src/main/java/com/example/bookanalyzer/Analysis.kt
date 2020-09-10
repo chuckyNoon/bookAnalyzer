@@ -25,18 +25,20 @@ class BookAnalysis(private val inStream: InputStream, val path:String, val ctx:C
         val parser = BookParser()
         val time1 = System.currentTimeMillis()
         val normalizer = WordNormalizer(ctx)
-        val time2 = System.currentTimeMillis()
+
         val simpleText = parser.parseFile(inStream, path)?:""
+        val time2 = System.currentTimeMillis()
         if (simpleText.isEmpty()){
             normalizedWordMap = mapOf()
             return
         }
         charCount = simpleText.length
-        val time3 = System.currentTimeMillis()
+
         img = parser.img
         author = parser.author
         bookName = parser.bookName
         val sourceWordMap = parser.parseWords(simpleText)
+        val time3 = System.currentTimeMillis()
         normalizedWordMap = normalizeWordMap(normalizer, sourceWordMap)
         val time4 = System.currentTimeMillis()
         calcWordCount(sourceWordMap)
@@ -45,6 +47,11 @@ class BookAnalysis(private val inStream: InputStream, val path:String, val ctx:C
 
         val time5 = System.currentTimeMillis()
         uniqWordCount = normalizedWordMap.size
+        println((time2.toDouble() - time1) / 1000)
+        println((time3.toDouble() - time2) / 1000)
+        println((time4.toDouble() - time3) / 1000)
+        println((time5.toDouble() - time4) / 1000)
+        println((time5.toDouble() - time1) / 1000)
     }
 
     private fun calcWordCount(sourceWordMap: MutableMap<String, Int>){
