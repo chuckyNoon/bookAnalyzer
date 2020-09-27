@@ -21,14 +21,38 @@ import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toolbar
 import androidx.appcompat.app.AppCompatActivity
+import kotlinx.android.synthetic.main.activity_book_info.*
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
 import kotlin.concurrent.thread
 import kotlin.math.roundToInt
 
+interface IBookInfoContract{
+    interface View{
+        fun finishActivity()
+        fun setViewsText(path:String,
+                         uniqWordCount:String,
+                         allWordCount:String,
+                         allCharsCount:String,
+                         avgSentenceLenInWrd:String,
+                         avgSentenceLenInChr: String,
+                         avgWordLen:String)
 
-class BookInfoActivity : AppCompatActivity() {
+
+    }
+    interface Presenter{
+        fun onOptionsItemSelected(item: MenuItem)
+        fun onWordListButtonClicked(listPath: String)
+        fun fillViews(path:String)
+    }
+    interface Repository{
+        fun readInfo(path:String) : BookInfoModel
+    }
+}
+
+class BookInfoActivity : AppCompatActivity(),
+                        IBookInfoContract.View{
     private lateinit var bookNameView:TextView
     private lateinit var allWordView:TextView
     private lateinit var textLengthView:TextView
@@ -37,7 +61,7 @@ class BookInfoActivity : AppCompatActivity() {
     private lateinit var avgSentenceViewChr:TextView
     private lateinit var avgWordView:TextView
 
-
+    private lateinit var presenter: IBookInfoContract.Presenter
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_book_info)
@@ -50,19 +74,18 @@ class BookInfoActivity : AppCompatActivity() {
         avgSentenceViewWrd = findViewById(R.id.avgSentenceLenView1)
         avgSentenceViewChr = findViewById(R.id.avgSentenceLenView2)
         avgWordView = findViewById(R.id.avgWordLenView)
-
+        presenter = BookInfoPresenter(this, this.applicationContext)
 
         val arguments = intent.extras
         val listPath = arguments?.getString("listPath")
         val infoPath = arguments?.getString("infoPath")
 
-        infoPath?.let { readInfo(it) }
         findViewById<Button>(R.id.toWordListButton).setOnClickListener{
-            val intent = Intent(this, WordListActivity::class.java)
-            intent.putExtra("listPath", listPath)
-            startActivity(intent)
+            presenter.onWordListButtonClicked(listPath?:"")
         }
-
+        infoPath?.let {
+            presenter.fillViews(infoPath)
+        }
     }
 
    private fun setToolBar(){
@@ -73,27 +96,29 @@ class BookInfoActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if(item.itemId == android.R.id.home ){
-            finish()
-        }
+        presenter.onOptionsItemSelected(item)
         return super.onOptionsItemSelected(item)
     }
 
-    private fun readInfo(path:String){
-        try {
-            val fileInput = openFileInput(path)
-            val scanner = Scanner(fileInput)
+    override fun finishActivity() {
+        finish()
+    }
 
-            bookNameView.text = scanner.nextLine().split("/").last()
-            allWordView.text = scanner.nextLine()
-            uniqueWordView.text = scanner.nextLine()
-            avgSentenceViewWrd.text = scanner.nextLine()
-            avgWordView.text = scanner.nextLine()
-            avgSentenceViewChr.text = scanner.nextLine()
-            textLengthView.text = scanner.nextLine()
-
-        }catch (e:IOException){
-            println("reading info error")
-        }
+    override fun setViewsText(
+        path: String,
+        uniqWordCount: String,
+        allWordCount: String,
+        allCharsCount: String,
+        avgSentenceLenInWrd: String,
+        avgSentenceLenInChr: String,
+        avgWordLen: String
+    ) {
+        bookNameView.text = path
+        uniqWordView.text = uniqWordCount
+        allWordView.text = allWordCount
+        allCharsCountView.text = allCharsCount
+        avgSentenceViewWrd.text = avgSentenceLenInWrd
+        avgSentenceViewChr.text = avgSentenceLenInChr
+        avgWordView.text = avgWordLen
     }
 }
