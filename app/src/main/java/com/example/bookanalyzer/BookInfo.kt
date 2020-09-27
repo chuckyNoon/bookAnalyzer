@@ -29,3 +29,14 @@ class ABookInfo(var path:String,
         return out.toByteArray()
     }
 }
+
+class BookInfoModel(var path:String,
+                    var uniqueWordCount:String,
+                    var allWordCount:String,
+                    var allCharsCount:String,
+                    var avgSentenceLenInWrd:String,
+                    var avgSentenceLenInChr:String,
+                    var avgWordLen:String)
+{
+
+}

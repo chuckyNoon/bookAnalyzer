@@ -15,9 +15,9 @@ class MenuContentLoader(private val ctx: Context) {
     companion object{
         val ALL_ANALYZED_PATH = "all"
     }
-    private var paths:ArrayList<String> = ArrayList()
 
-    init{
+    private fun getPaths():ArrayList<String>{
+        val paths = ArrayList<String>()
         try{
             val input = ctx.openFileInput(PathSaver.SAVED_PATHS_FILE)
             val saved = input.readBytes().toString(Charsets.UTF_8).split("\n")
@@ -29,9 +29,11 @@ class MenuContentLoader(private val ctx: Context) {
         }catch (e:IOException){
 
         }
+        return paths
     }
 
     fun firstStage() : ArrayList<ABookInfo>{
+        val paths = getPaths()
         val bookList = ArrayList<ABookInfo>()
         for (path in paths){
             bookList.add(ABookInfo(path, null, null, null, 0))

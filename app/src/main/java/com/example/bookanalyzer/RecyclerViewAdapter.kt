@@ -28,7 +28,6 @@ class RecyclerListAdapter(val ctx: Context, val ar: ArrayList<ABookInfo>) :
         return ItemViewHolder(view)
     }
 
-
     @SuppressLint("ClickableViewAccessibility")
     override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
         val book = ar[position]

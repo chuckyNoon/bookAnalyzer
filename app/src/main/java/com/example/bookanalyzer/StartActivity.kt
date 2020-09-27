@@ -13,6 +13,7 @@ import android.content.Intent
 import android.database.Cursor
 import android.graphics.Color
 import android.net.Uri
+import android.opengl.Visibility
 import android.os.Build
 import android.os.Bundle
 import android.os.Environment
@@ -38,6 +39,35 @@ import java.io.FileOutputStream
 import java.io.InputStream
 import kotlin.concurrent.thread
 
+
+interface IStartContract{
+    interface View{
+        fun setLoadingStateViewText(text:String)
+        fun hideLoadingStateView()
+        fun showLoadingStateView()
+        fun updateLoadingStateView(str: String, downDuration: Long, upDuration: Long)
+        fun showSideMenu()
+
+        fun showSearchSettingsDialog()
+        fun initRecyclerView(adapter: RecyclerListAdapter)
+    }
+    interface Presenter{
+        fun createBookList()
+        fun onSelectedSearchSettings(formats: ArrayList<String>, dir: File)
+        fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray)
+        fun onOptionsItemSelected(item: MenuItem)
+        fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?)
+        fun onRestart()
+    }
+    interface Repository{
+        fun getPrimaryList() : ArrayList<ABookInfo>
+        fun getDetailedList() : ArrayList<ABookInfo>
+        fun getNewDetailedModel(path:String) : ABookInfo
+        fun saveAllBookPaths(paths: ArrayList<String>)
+        fun saveBookPath(path:String)
+    }
+}
+
 interface ISelectedLaunch{
     fun onSelectedLaunch(ifScan: Boolean)
 }
@@ -46,29 +76,21 @@ interface ISelectedSearchSettings {
     fun onSelectedSearchSettings(formats: ArrayList<String>, dir: File)
 }
 
-class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLaunch{
+class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLaunch, IStartContract.View{
     private lateinit var listView: RecyclerView
     private lateinit var drawerLayout:DrawerLayout
-    private lateinit var bookList:ArrayList<ABookInfo>
     private lateinit var loadingStateTextView:TextView
-    private var newAdapter:RecyclerListAdapter?= null
-    private val handler = Handler()
-    private var isListCreating = false
-    private var pathSaver:PathSaver = PathSaver(this)
-    private var mItemTouchHelper:ItemTouchHelper?=null
 
-    private fun initFields(){
-        listView = findViewById(R.id.list_view)
-        drawerLayout = findViewById(R.id.drawerLayout)
-        loadingStateTextView = findViewById(R.id.textview_loading_state)
-    }
+    private lateinit var presenter: IStartContract.Presenter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_start)
+
         initFields()
         setToolBar()
         setSideMenu()
+        presenter = StartActivityPresenter(this, this.applicationContext)
 
         /*val a = TypedValue()
         theme.resolveAttribute(android.R.attr.windowBackground, a, true)
@@ -87,8 +109,24 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
             prefs.edit().putBoolean("firstLaunch", true).apply()
             FirstLaunchDialog().show(supportFragmentManager, "123")
         }else{
-            createBookList()
+            presenter.createBookList()
         }
+    }
+
+    override fun initRecyclerView(adapter: RecyclerListAdapter) {
+        listView.setHasFixedSize(true)
+        val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
+        val mItemTouchHelper = ItemTouchHelper(callback)
+        mItemTouchHelper.attachToRecyclerView(listView)
+
+        listView.adapter = adapter
+        listView.layoutManager = LinearLayoutManager(this)
+    }
+
+    private fun initFields(){
+        listView = findViewById(R.id.list_view)
+        drawerLayout = findViewById(R.id.drawerLayout)
+        loadingStateTextView = findViewById(R.id.textview_loading_state)
     }
 
     private fun setToolBar(){
@@ -99,38 +137,18 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if(item.itemId == android.R.id.home ){
-            drawerLayout.open()
-        }
+        presenter.onOptionsItemSelected(item)
         return super.onOptionsItemSelected(item)
     }
 
     override fun onRestart() {
-        val menuContentLoader = MenuContentLoader(this)
-        for (book in bookList){
-            val newWordCount = menuContentLoader.searchSavedWordCount(book.path)
-            if (book.wordCount != newWordCount){
-                book.wordCount = newWordCount
-                newAdapter?.notifyDataSetChanged()
-            }
-        }
+        presenter.onRestart()
         super.onRestart()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 123 && resultCode == Activity.RESULT_OK) {
-            val filePath: String? = FileUtils().getPath(this, data!!.data!!)
-            filePath?.let{
-                bookList.add(MenuContentLoader(this).getDetailedInfo(filePath))
-                newAdapter?.notifyItemInserted((bookList.size ?: 0) - 1)
-                newAdapter?.notifyDataSetChanged()
-                thread {
-                    pathSaver.addPath(filePath)
-                }
-                println("ok $filePath")
-            }
-        }
+        presenter.onActivityResult(requestCode,resultCode, data)
     }
 
     override fun onSelectedLaunch(ifScan: Boolean) {
@@ -148,37 +166,37 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 0) {
-            SearchSettingsDialog().show(supportFragmentManager, "124")
-        }
+        presenter.onRequestPermissionsResult(requestCode,permissions,grantResults)
+    }
+
+    override fun showSearchSettingsDialog() {
+        SearchSettingsDialog().show(supportFragmentManager, "124")
     }
 
     override fun onSelectedSearchSettings(formats: ArrayList<String>, dir: File) {
-        thread {
-            val paths = BookSearch.findAll(dir, formats)
-            pathSaver.saveAll(paths)
-            handler.post {
-                createBookList()
-            }
-        }
+        presenter.onSelectedSearchSettings(formats, dir)
     }
 
-    private fun hideLoadingStateTextView(dur: Long){
-        val height = loadingStateTextView.height.toFloat()
+
+
+    override fun hideLoadingStateView(){
+      /*  val height = loadingStateTextView.height.toFloat()
         ObjectAnimator.ofFloat(loadingStateTextView, "translationY", height).apply{
             duration = dur
             start()
-        }
+        }*/
+        loadingStateTextView.visibility = View.INVISIBLE
     }
 
-    private fun showLoadingStateTextView(dur:Long){
-        ObjectAnimator.ofFloat(loadingStateTextView, "translationY", 0f).apply {
-            duration = dur
-            start()
-        }
+    override fun showLoadingStateView(){
+        loadingStateTextView.visibility = View.VISIBLE
     }
 
-    private fun updateLoadingStateTextView(str: String, downDuration: Long, upDuration: Long){
+    override fun setLoadingStateViewText(text: String) {
+        loadingStateTextView.text = text
+    }
+
+    override fun updateLoadingStateView(str: String, downDuration: Long, upDuration: Long){
         val height = loadingStateTextView.height.toFloat()
         ObjectAnimator.ofFloat(loadingStateTextView, "translationY", height).apply {
             duration = downDuration
@@ -188,7 +206,10 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
 
                 override fun onAnimationEnd(animation: Animator?) {
                     loadingStateTextView.text = str
-                    showLoadingStateTextView(upDuration)
+                    ObjectAnimator.ofFloat(loadingStateTextView, "translationY", 0f).apply {
+                        duration = upDuration
+                        start()
+                    }
                 }
 
                 override fun onAnimationCancel(animation: Animator?) {
@@ -201,65 +222,9 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
         }
     }
 
-    private fun createBookList(){
-        isListCreating = true
-
-        thread {
-            val menuContentLoader = MenuContentLoader(this)
-            createPrimaryList(menuContentLoader)
-            addMoreInfoToPrimaryList(menuContentLoader)
-            isListCreating = false
-        }
+    override fun showSideMenu() {
+        drawerLayout.open()
     }
-
-    private fun createPrimaryList(menuContentLoader:MenuContentLoader){
-        if (newAdapter != null){
-            val oldSize = bookList.size
-            bookList.clear()
-            newAdapter?.notifyItemRangeRemoved(0, oldSize)
-            bookList.addAll(menuContentLoader.firstStage())
-            newAdapter?.notifyItemRangeInserted(0, bookList.size)
-        }else{
-            bookList = menuContentLoader.firstStage()
-            newAdapter = RecyclerListAdapter(this,bookList)
-            handler.post{
-                listView.setHasFixedSize(true)
-                val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(newAdapter!!)
-                mItemTouchHelper = ItemTouchHelper(callback)
-                mItemTouchHelper?.attachToRecyclerView(listView)
-
-                listView.adapter = newAdapter
-                listView.layoutManager = LinearLayoutManager(this)
-
-            }
-        }
-        handler.post {
-            showLoadingStateTextView(400)
-            loadingStateTextView.visibility = View.VISIBLE
-            loadingStateTextView.text = "Loading content"
-        }
-    }
-
-    private fun addMoreInfoToPrimaryList(menuContentLoader:MenuContentLoader){
-        for (i in bookList.indices ) {
-            val oldElem = bookList[i]
-            val newElem = menuContentLoader.getDetailedInfo(oldElem.path)
-
-            oldElem.name = newElem.name
-            oldElem.author = newElem.author
-            oldElem.bitmap = newElem.bitmap
-            oldElem.wordCount = newElem.wordCount
-            handler.post {
-                newAdapter?.notifyDataSetChanged()
-            }
-        }
-
-        handler.post{
-            updateLoadingStateTextView("Loading ended", 400, 400)
-        }
-        handler.postDelayed({hideLoadingStateTextView(400)}, 3000)
-    }
-
 
     interface OnSideMenuElemTouchListener : View.OnTouchListener {
         fun doAction()
@@ -302,6 +267,8 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
         }
     }
 
+
+
     @SuppressLint("ClickableViewAccessibility")
     private fun setSideMenu(){
         val ar = ArrayList<SideMenuElemModel>()
@@ -329,7 +296,7 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
             R.drawable.baseline_search_24,
             object : OnSideMenuElemTouchListener {
                 override fun doAction() {
-                    if (!isListCreating) {
+                    if (true) {
                         drawerLayout.close()
                         SearchSettingsDialog().show(supportFragmentManager, "124")
                     }
@@ -341,320 +308,5 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
     }
 }
 
-class FileUtils() {
-    private var contentUri: Uri? = null
 
-    fun getPath(context: Context, uri: Uri): String? {
-        // check here to KITKAT or new version
-        val isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
-        var selection: String? = null
-        var selectionArgs: Array<String>? = null
-        // DocumentProvider
-        if (isKitKat && DocumentsContract.isDocumentUri(context, uri)) {
-            // ExternalStorageProvider
-            if (isExternalStorageDocument(uri)) {
-                val docId = DocumentsContract.getDocumentId(uri)
-                val split = docId.split(":".toRegex()).toTypedArray()
-                val type = split[0]
-                val fullPath = getPathFromExtSD(split)
-                return if (fullPath !== "") {
-                    fullPath
-                } else {
-                    null
-                }
-            } else if (isDownloadsDocument(uri)) {
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                    val id: String
-                    var cursor: Cursor? = null
-                    try {
-                        cursor = context.contentResolver.query(
-                            uri,
-                            arrayOf(MediaStore.MediaColumns.DISPLAY_NAME),
-                            null,
-                            null,
-                            null
-                        )
-                        if (cursor != null && cursor.moveToFirst()) {
-                            val fileName = cursor.getString(0)
-                            val path =
-                                Environment.getExternalStorageDirectory()
-                                    .toString() + "/Download/" + fileName
-                            if (!TextUtils.isEmpty(path)) {
-                                return path
-                            }
-                        }
-                    } finally {
-                        cursor?.close()
-                    }
-                    id = DocumentsContract.getDocumentId(uri)
-                    if (!TextUtils.isEmpty(id)) {
-                        if (id.startsWith("raw:")) {
-                            return id.replaceFirst("raw:".toRegex(), "")
-                        }
-                        val contentUriPrefixesToTry =
-                            arrayOf(
-                                "content://downloads/public_downloads",
-                                "content://downloads/my_downloads"
-                            )
-                        for (contentUriPrefix in contentUriPrefixesToTry) {
-                            return try {
-                                val contentUri = ContentUris.withAppendedId(
-                                    Uri.parse(contentUriPrefix),
-                                    java.lang.Long.valueOf(id)
-                                )
-
-                                /*   final Uri contentUri = ContentUris.withAppendedId(
-                                                            Uri.parse("content://downloads/public_downloads"), Long.valueOf(id));*/
-                                getDataColumn(context, contentUri, null, null)
-                            } catch (e: NumberFormatException) {
-                                //In Android 8 and Android P the id is not a number
-                                uri.path!!.replaceFirst("^/document/raw:".toRegex(), "")
-                                    .replaceFirst("^raw:".toRegex(), "")
-                            }
-                        }
-                    }
-                } else {
-                    val id = DocumentsContract.getDocumentId(uri)
-                    val isOreo = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-                    if (id.startsWith("raw:")) {
-                        return id.replaceFirst("raw:".toRegex(), "")
-                    }
-                    try {
-                        contentUri = ContentUris.withAppendedId(
-                            Uri.parse("content://downloads/public_downloads"),
-                            java.lang.Long.valueOf(id)
-                        )
-                    } catch (e: NumberFormatException) {
-                        e.printStackTrace()
-                    }
-                    if (contentUri != null) {
-                        return getDataColumn(context, contentUri, null, null)
-                    }
-                }
-            } else if (isMediaDocument(uri)) {
-                val docId = DocumentsContract.getDocumentId(uri)
-                val split = docId.split(":".toRegex()).toTypedArray()
-                val type = split[0]
-                var contentUri: Uri? = null
-                if ("image" == type) {
-                    contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI
-                } else if ("video" == type) {
-                    contentUri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI
-                } else if ("audio" == type) {
-                    contentUri = MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-                }
-                selection = "_id=?"
-                selectionArgs = arrayOf(split[1])
-                return getDataColumn(
-                    context, contentUri, selection,
-                    selectionArgs
-                )
-            } else if (isGoogleDriveUri(uri)) {
-                return getDriveFilePath(uri, context)
-            }
-        } else if ("content".equals(uri.scheme, ignoreCase = true)) {
-            if (isGooglePhotosUri(uri)) {
-                return uri.lastPathSegment
-            }
-            if (isGoogleDriveUri(uri)) {
-                return getDriveFilePath(uri, context)
-            }
-            return if (Build.VERSION.SDK_INT == Build.VERSION_CODES.N) {
-                // return getFilePathFromURI(context,uri);
-                getMediaFilePathForN(uri, context)
-                // return getRealPathFromURI(context,uri);
-            } else {
-                getDataColumn(context, uri, null, null)
-            }
-        } else if ("file".equals(uri.scheme, ignoreCase = true)) {
-            return uri.path
-        }
-        return null
-    }
-
-    /**
-     * Check if a file exists on device
-     *
-     * @param filePath The absolute file path
-     */
-    private fun fileExists(filePath: String): Boolean {
-        val file = File(filePath)
-        return file.exists()
-    }
-
-    /**
-     * Get full file path from external storage
-     *
-     * @param pathData The storage type and the relative path
-     */
-    private fun getPathFromExtSD(pathData: Array<String>): String {
-        val type = pathData[0]
-        val relativePath = "/" + pathData[1]
-        var fullPath = ""
-
-        // on my Sony devices (4.4.4 & 5.1.1), `type` is a dynamic string
-        // something like "71F8-2C0A", some kind of unique id per storage
-        // don't know any API that can get the root path of that storage based on its id.
-        //
-        // so no "primary" type, but let the check here for other devices
-        if ("primary".equals(type, ignoreCase = true)) {
-            fullPath =
-                Environment.getExternalStorageDirectory().toString() + relativePath
-            if (fileExists(fullPath)) {
-                return fullPath
-            }
-        }
-
-        // Environment.isExternalStorageRemovable() is `true` for external and internal storage
-        // so we cannot relay on it.
-        //
-        // instead, for each possible path, check if file exists
-        // we'll start with secondary storage as this could be our (physically) removable sd card
-        fullPath = System.getenv("SECONDARY_STORAGE") + relativePath
-        if (fileExists(fullPath)) {
-            return fullPath
-        }
-        fullPath = System.getenv("EXTERNAL_STORAGE") + relativePath
-        return if (fileExists(fullPath)) {
-            fullPath
-        } else fullPath
-    }
-
-    private fun getDriveFilePath(
-        uri: Uri,
-        context: Context
-    ): String {
-        val returnCursor =
-            context.contentResolver.query(uri, null, null, null, null)
-        /*
-         * Get the column indexes of the data in the Cursor,
-         *     * move to the first row in the Cursor, get the data,
-         *     * and display it.
-         * */
-        val nameIndex = returnCursor!!.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-        val sizeIndex = returnCursor.getColumnIndex(OpenableColumns.SIZE)
-        returnCursor.moveToFirst()
-        val name = returnCursor.getString(nameIndex)
-        val size = java.lang.Long.toString(returnCursor.getLong(sizeIndex))
-        val file = File(context.cacheDir, name)
-        try {
-            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
-            val outputStream = FileOutputStream(file)
-            var read = 0
-            val maxBufferSize = 1 * 1024 * 1024
-            val bytesAvailable: Int = inputStream!!.available()
-
-            //int bufferSize = 1024;
-            val bufferSize = Math.min(bytesAvailable, maxBufferSize)
-            val buffers = ByteArray(bufferSize)
-            while (inputStream.read(buffers).also({ read = it }) != -1) {
-                outputStream.write(buffers, 0, read)
-            }
-            inputStream.close()
-            outputStream.close()
-        } catch (e: Exception) {
-
-        }
-        return file.getPath()
-    }
-
-    private fun getMediaFilePathForN(
-        uri: Uri,
-        context: Context
-    ): String {
-        val returnCursor =
-            context.contentResolver.query(uri, null, null, null, null)
-        /*
-         * Get the column indexes of the data in the Cursor,
-         *     * move to the first row in the Cursor, get the data,
-         *     * and display it.
-         * */
-        val nameIndex = returnCursor!!.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-        val sizeIndex = returnCursor.getColumnIndex(OpenableColumns.SIZE)
-        returnCursor.moveToFirst()
-        val name = returnCursor.getString(nameIndex)
-        val size = java.lang.Long.toString(returnCursor.getLong(sizeIndex))
-        val file = File(context.filesDir, name)
-        try {
-            val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
-            val outputStream = FileOutputStream(file)
-            var read = 0
-            val maxBufferSize = 1 * 1024 * 1024
-            val bytesAvailable: Int = inputStream!!.available()
-
-            //int bufferSize = 1024;
-            val bufferSize = Math.min(bytesAvailable, maxBufferSize)
-            val buffers = ByteArray(bufferSize)
-            while (inputStream.read(buffers).also({ read = it }) != -1) {
-                outputStream.write(buffers, 0, read)
-            }
-            inputStream.close()
-            outputStream.close()
-        } catch (e: Exception) {
-        }
-        return file.getPath()
-    }
-
-    private fun getDataColumn(
-        context: Context, uri: Uri?,
-        selection: String?, selectionArgs: Array<String>?
-    ): String? {
-        var cursor: Cursor? = null
-        val column = "_data"
-        val projection = arrayOf(column)
-        try {
-            cursor = context.contentResolver.query(
-                uri!!, projection,
-                selection, selectionArgs, null
-            )
-            if (cursor != null && cursor.moveToFirst()) {
-                val index = cursor.getColumnIndexOrThrow(column)
-                return cursor.getString(index)
-            }
-        } finally {
-            cursor?.close()
-        }
-        return null
-    }
-
-    /**
-     * @param uri - The Uri to check.
-     * @return - Whether the Uri authority is ExternalStorageProvider.
-     */
-    private fun isExternalStorageDocument(uri: Uri): Boolean {
-        return "com.android.externalstorage.documents" == uri.authority
-    }
-
-    /**
-     * @param uri - The Uri to check.
-     * @return - Whether the Uri authority is DownloadsProvider.
-     */
-    private fun isDownloadsDocument(uri: Uri): Boolean {
-        return "com.android.providers.downloads.documents" == uri.authority
-    }
-
-    /**
-     * @param uri - The Uri to check.
-     * @return - Whether the Uri authority is MediaProvider.
-     */
-    private fun isMediaDocument(uri: Uri): Boolean {
-        return "com.android.providers.media.documents" == uri.authority
-    }
-
-    /**
-     * @param uri - The Uri to check.
-     * @return - Whether the Uri authority is Google Photos.
-     */
-    private fun isGooglePhotosUri(uri: Uri): Boolean {
-        return "com.google.android.apps.photos.content" == uri.authority
-    }
-
-    /**
-     * @param uri The Uri to check.
-     * @return Whether the Uri authority is Google Drive.
-     */
-    private fun isGoogleDriveUri(uri: Uri): Boolean {
-        return "com.google.android.apps.docs.storage" == uri.authority || "com.google.android.apps.docs.storage.legacy" == uri.authority
-    }
-}
 
