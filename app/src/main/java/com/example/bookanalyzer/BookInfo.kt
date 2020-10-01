@@ -1,6 +1,7 @@
 package com.example.bookanalyzer
 
 import android.graphics.Bitmap
+import com.example.bookanalyzer.common.Utils
 
 class BookInfo(var path:String,
                var name:String?,

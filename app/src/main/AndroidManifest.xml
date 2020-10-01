@@ -11,7 +11,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true">
 
-        <activity android:name=".StartActivity" android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge" >
+        <activity android:name="com.example.bookanalyzer.ui.activities.StartActivity" android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -19,11 +19,11 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".LoaderScreenActivity"
+            android:name="com.example.bookanalyzer.ui.activities.LoaderScreenActivity"
             android:noHistory="true"
             android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge" />
-        <activity android:name=".BookInfoActivity" android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge"/>
-        <activity android:name=".WordListActivity" android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge" />
+        <activity android:name="com.example.bookanalyzer.ui.activities.BookInfoActivity" android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge"/>
+        <activity android:name="com.example.bookanalyzer.ui.activities.WordListActivity" android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge" />
 
 
     </application>
