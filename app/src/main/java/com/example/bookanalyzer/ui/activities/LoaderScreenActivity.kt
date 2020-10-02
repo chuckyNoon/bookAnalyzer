@@ -28,10 +28,9 @@ class LoaderScreenActivity : MvpAppCompatActivity(),LoaderScreenView {
         val arguments = intent.extras
         val path = arguments?.getString("path")
 
-
         if (path == null){
             finish()
-        }else {
+        }else if(savedInstanceState == null){
             val bookInd = arguments.getInt("ind")
             try {
                 val inStream = FileInputStream(path)

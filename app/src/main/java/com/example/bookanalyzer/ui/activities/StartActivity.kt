@@ -32,6 +32,8 @@ import com.example.bookanalyzer.mvp.views.StartView
 import com.example.bookanalyzer.ui.adapters.BookListAdapter
 import com.example.bookanalyzer.ui.adapters.SideMenuItemModel
 import com.example.bookanalyzer.ui.fragments.FirstLaunchDialog
+import io.reactivex.rxjava3.core.Flowable
+import io.reactivex.rxjava3.core.Single
 import moxy.MvpAppCompatActivity
 import moxy.ktx.moxyPresenter
 
@@ -123,6 +125,7 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
         super.onRestart()
     }
 
+
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 123 && resultCode == Activity.RESULT_OK) {
@@ -213,6 +216,7 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
         drawerLayout.open()
     }
 
+
     @SuppressLint("ClickableViewAccessibility")
     private fun setSideMenu(){
         val ar = ArrayList<SideMenuItemModel>()
@@ -248,6 +252,7 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
         val sideMenuAdapter = SideMenuAdapter(this, ar)
         sideMenuListView.adapter = sideMenuAdapter
     }
+
 
 }
 

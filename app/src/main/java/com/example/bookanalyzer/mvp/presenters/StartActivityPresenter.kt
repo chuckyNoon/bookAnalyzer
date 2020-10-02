@@ -5,20 +5,23 @@ import com.example.bookanalyzer.*
 import com.example.bookanalyzer.common.BookSearch
 import com.example.bookanalyzer.mvp.repositories.StartActivityRepository
 import com.example.bookanalyzer.mvp.views.StartView
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.schedulers.Schedulers
+import kotlinx.coroutines.*
 import moxy.MvpPresenter
 import java.io.File
+import kotlin.collections.ArrayList
 import kotlin.concurrent.thread
 
 class StartActivityPresenter( private val repository: StartActivityRepository) : MvpPresenter<StartView>(){
-    private var isListCreating = false
     private var books:ArrayList<MenuBookModel>? = null
-    private var handler = Handler()
+    private val handler = Handler()
 
     fun onViewCreated(){
-        isListCreating = true
         viewState.showLoadingStateView()
         thread {
             books = repository.getPreviewList()
+
             handler.post {
                 viewState.setupBooks(books!!)
                 viewState.moveLoadingStateViewUp(300)
@@ -35,22 +38,24 @@ class StartActivityPresenter( private val repository: StartActivityRepository) :
                 viewState.updateLoadingStateView("Loading ended", 250, 300)
             }
             handler.postDelayed({
-                viewState.moveLoadingStateViewDown(250)
-                viewState.hideLoadingStateView()
-            },4000)
-            isListCreating = false
+                 viewState.moveLoadingStateViewDown(250)
+                 viewState.hideLoadingStateView()
+             },4000)
         }
     }
 
     private fun addBookToList(bookPath:String) {
-        val view = viewState
-        thread {
-            val book = repository.getDetailedBookInfo(bookPath)
-            handler.post {
-                view.addBook(book)
-            }
+        Observable.fromCallable {
             repository.saveBookPath(bookPath)
+            val book = repository.getDetailedBookInfo(bookPath)
+            (book)
         }
+            .subscribeOn(Schedulers.io())
+            .observeOn(Schedulers.newThread())
+            .subscribe {
+                viewState.addBook(it)
+            }
+
     }
 
     fun onSelectedSearchSettings(formats: ArrayList<String>, dir: File) {
@@ -64,14 +69,12 @@ class StartActivityPresenter( private val repository: StartActivityRepository) :
         grantResults: IntArray
     ) {
         if (requestCode == 0) {
-            val view = viewState
-            view.showSearchSettingsDialog()
+            viewState.showSearchSettingsDialog()
         }
     }
 
     fun onOptionsItemSelected() {
-        val view = viewState
-        view.showSideMenu()
+        viewState.showSideMenu()
     }
 
     fun onActivityResult(bookPath:String) {
@@ -79,13 +82,12 @@ class StartActivityPresenter( private val repository: StartActivityRepository) :
     }
 
     fun onRestart() {
-        val view = viewState
         thread {
             books?.let {
                 for (book in it) {
                     if (book.wordCount != repository.getUniqueWordCount(book.path)) {
                         handler.post {
-                            view.updateBook(repository.getDetailedBookInfo(book.path))
+                            viewState.updateBook(repository.getDetailedBookInfo(book.path))
                         }
                         break
                     }
@@ -93,4 +95,5 @@ class StartActivityPresenter( private val repository: StartActivityRepository) :
             }
         }
     }
+
 }

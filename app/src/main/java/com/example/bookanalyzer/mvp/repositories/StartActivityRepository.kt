@@ -18,9 +18,6 @@ class StartActivityRepository(private val ctx:Context){
 
     fun getPreviewList() : ArrayList<MenuBookModel>{
         val savedPaths = pathSaver.getSavedPaths()
-        for (book in savedPaths){
-            println("t${book}")
-        }
         bookList = menuContentLoader.getPreviewList(savedPaths)
         return bookList
     }

@@ -48,7 +48,8 @@ class BookInfoActivity : MvpAppCompatActivity(),
         findViewById<Button>(R.id.toWordListButton).setOnClickListener {
             presenter.onWordListButtonClicked(ind!!)
         }
-        presenter.onViewCreated(ind!!)
+        if (savedInstanceState == null)
+            presenter.onViewCreated(ind!!)
 
     }
 
