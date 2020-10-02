@@ -19,6 +19,7 @@ import com.example.bookanalyzer.R
 import com.example.bookanalyzer.data.AnalyzedPathsSaver
 import com.example.bookanalyzer.data.FoundPathsSaver
 import kotlinx.android.synthetic.main.book_list_elem.view.*
+import kotlin.concurrent.thread
 
 
 class BookListAdapter(private val ctx:Context) :
@@ -109,8 +110,8 @@ class BookListAdapter(private val ctx:Context) :
     override fun onItemDismiss(position: Int) {
         println(position.toString() + " " + ar[position].path)
         FoundPathsSaver(ctx).deletePath(ar[position].path)
-
         deleteBook(position)
+
     }
 
     override fun onItemMove(fromPosition: Int, toPosition: Int) {

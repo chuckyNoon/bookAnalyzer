@@ -53,9 +53,8 @@ class WordListActivity : MvpAppCompatActivity(), WordListView {
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
             }
         })
-        ind?.let{
-            presenter.onViewCreated(it)
-        }
+        if (ind != null && savedInstanceState == null)
+            presenter.onViewCreated(ind)
     }
 
     private fun setRecyclerView() {
