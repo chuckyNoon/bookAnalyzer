@@ -10,22 +10,56 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.example.bookanalyzer.ABookInfo
+import com.example.bookanalyzer.MenuBookModel
 import com.example.bookanalyzer.ui.activities.BookInfoActivity
 import com.example.bookanalyzer.ui.activities.LoaderScreenActivity
 import com.example.bookanalyzer.interfaces.ItemTouchHelperAdapter
 import com.example.bookanalyzer.interfaces.ItemTouchHelperViewHolder
-import com.example.bookanalyzer.data.MenuContentLoader
-import com.example.bookanalyzer.data.PathSaver
 import com.example.bookanalyzer.R
+import com.example.bookanalyzer.data.AnalyzedPathsSaver
+import com.example.bookanalyzer.data.FoundPathsSaver
 import kotlinx.android.synthetic.main.book_list_elem.view.*
-import java.io.IOException
 
 
-class RecyclerListAdapter(val ctx: Context, val ar: ArrayList<ABookInfo>) :
-    RecyclerView.Adapter<RecyclerListAdapter.ItemViewHolder>(),
+class BookListAdapter(private val ctx:Context) :
+    RecyclerView.Adapter<BookListAdapter.ItemViewHolder>(),
     ItemTouchHelperAdapter {
+    private var ar:ArrayList<MenuBookModel> = ArrayList()
     private val defBitmap = BitmapFactory.decodeResource(ctx.resources, R.drawable.book)
+    private var firstSetup = true
+
+    fun setupBooks(arrayList: ArrayList<MenuBookModel>){
+        if (firstSetup){
+            ar = arrayList
+            firstSetup = false
+        }else{
+            val oldSize = ar.size
+            ar.clear()
+            notifyItemRangeRemoved(0, oldSize)
+            ar.addAll(arrayList)
+            notifyItemRangeInserted(0, ar.size)
+        }
+    }
+
+    fun addBook(bookModel: MenuBookModel){
+        ar.add(bookModel)
+        notifyItemInserted(ar.size  - 1)
+    }
+
+    fun updateBook(newBookModel:MenuBookModel ){
+        val ind =ar.indexOfFirst { it.path == newBookModel.path }
+        if (ind >= 0){
+            ar[ind] = newBookModel
+            notifyDataSetChanged()
+        }else{
+            addBook(newBookModel)
+        }
+    }
+
+    fun deleteBook(position: Int){
+        ar.removeAt(position)
+        notifyItemRemoved(position)
+    }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
         val view: View =
@@ -61,7 +95,6 @@ class RecyclerListAdapter(val ctx: Context, val ar: ArrayList<ABookInfo>) :
                 }
             }
         }
-
         view.bookNameView.text = if (!book.name.isNullOrEmpty()) book.name else (relPath?:"")
         view.bookAuthorView.text = if (!book.author.isNullOrEmpty()) book.author else "Unknown"
         view.wordCountView.text = (if (book.wordCount != 0) book.wordCount.toString() else "?") + " words"
@@ -75,16 +108,15 @@ class RecyclerListAdapter(val ctx: Context, val ar: ArrayList<ABookInfo>) :
 
     override fun onItemDismiss(position: Int) {
         println(position.toString() + " " + ar[position].path)
-        PathSaver(ctx).deletePath(ar[position].path)
+        FoundPathsSaver(ctx).deletePath(ar[position].path)
 
-        ar.removeAt(position)
-        notifyItemRemoved(position)
+        deleteBook(position)
     }
 
     override fun onItemMove(fromPosition: Int, toPosition: Int) {
         val prev = ar.removeAt(fromPosition)
         ar.add(toPosition, prev)
-        PathSaver(ctx).saveAll(ar)
+        FoundPathsSaver(ctx).saveAll(ar)
 
         notifyItemMoved(fromPosition, toPosition)
     }
@@ -95,15 +127,14 @@ class RecyclerListAdapter(val ctx: Context, val ar: ArrayList<ABookInfo>) :
 
     private fun goToBook(position: Int){
         val book = ar[position]
-        var ind = isAnalyzed(ar[position].path)
+        val analyzedPathsSaver = AnalyzedPathsSaver(ctx)
+        var ind = analyzedPathsSaver.getIndByPath(ar[position].path)
         if (ind != -1){
             val intentToBook = Intent(ctx, BookInfoActivity::class.java)
-            intentToBook.putExtra("listPath", "list$ind")
-            intentToBook.putExtra("imgPath", "img$ind")
-            intentToBook.putExtra("infoPath", "info$ind")
+            intentToBook.putExtra("ind", ind)
             ctx.startActivity(intentToBook)
         }else{
-            ind = countFiles()
+            ind = analyzedPathsSaver.getAnalyzedCount()
             val intent = Intent(ctx, LoaderScreenActivity::class.java)
             intent.putExtra("path", book.path)
             intent.putExtra("ind", ind)
@@ -111,33 +142,6 @@ class RecyclerListAdapter(val ctx: Context, val ar: ArrayList<ABookInfo>) :
         }
     }
 
-    private fun isAnalyzed(path: String) : Int{
-        var ind = -1
-        try{
-            val inputStream = ctx.openFileInput(MenuContentLoader.ALL_ANALYZED_PATH)
-            val strs = inputStream.readBytes().toString(Charsets.UTF_8).split("\n")
-            for (i in strs.indices){
-                if (strs[i] == path && i > 0){
-                    ind = strs[i - 1].toInt()
-                    break
-                }
-            }
-            inputStream.close()
-        }catch (e: IOException){
-        }
-        return ind
-    }
-
-    private fun countFiles():Int{
-        return try{
-            val inputStream = ctx.openFileInput(MenuContentLoader.ALL_ANALYZED_PATH)
-            val strs = inputStream.readBytes().toString(Charsets.UTF_8).split("\n")
-            inputStream.close()
-            strs.size
-        }catch (e: IOException){
-            0
-        }
-    }
 
     class ItemViewHolder(val view: View) : RecyclerView.ViewHolder(view),
         ItemTouchHelperViewHolder {

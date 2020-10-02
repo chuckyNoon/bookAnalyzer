@@ -1,15 +1,11 @@
 package com.example.bookanalyzer.data
 
 import android.content.Context
-import com.example.bookanalyzer.ABookInfo
+import com.example.bookanalyzer.MenuBookModel
 import java.io.IOException
 
-class PathSaver(private val ctx:Context) {
-    companion object {
-        val SAVED_PATHS_FILE:String = "main"
-    }
-
-    fun saveAll(books:ArrayList<ABookInfo>, gb:Int = 0){
+class FoundPathsSaver(private val ctx:Context) : FileDataStorage() {
+    fun saveAll(books:ArrayList<MenuBookModel>, gb:Int = 0){
         val paths = ArrayList<String>()
         for(book in books){
             paths.add(book.path)
@@ -22,20 +18,20 @@ class PathSaver(private val ctx:Context) {
     }
 
     fun addPath(path:String){
-        val paths = findSavedPaths()
+        val paths = getSavedPaths()
         paths.add(path)
         writePaths(paths)
     }
 
     fun deletePath(path:String){
-        val paths = findSavedPaths()
+        val paths = getSavedPaths()
         paths.remove(path)
         writePaths(paths)
     }
 
     private fun writePaths(paths:ArrayList<String>){
         try{
-            val output = ctx.openFileOutput(SAVED_PATHS_FILE, 0)
+            val output = ctx.openFileOutput(FOUND_BOOKS_LIST, 0)
             val stringBuilder = StringBuilder("")
             for (path in paths){
                 stringBuilder.append(path)
@@ -47,12 +43,18 @@ class PathSaver(private val ctx:Context) {
         }
     }
 
-    private fun findSavedPaths() : ArrayList<String>{
+    fun getSavedPaths() : ArrayList<String>{
         return try{
-            val input = ctx.openFileInput(SAVED_PATHS_FILE)
+            val input = ctx.openFileInput(FOUND_BOOKS_LIST)
             val paths = input.readBytes().toString(Charsets.UTF_8).split("\n")
             input.close()
-            (ArrayList(paths))
+            val ar = ArrayList<String>()
+            for (path in paths){
+                if (path.isNotEmpty()){
+                    ar.add(path)
+                }
+            }
+            (ar)
         }catch (e:IOException){
             (ArrayList())
         }

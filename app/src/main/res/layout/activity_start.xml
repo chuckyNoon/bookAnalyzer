@@ -53,10 +53,11 @@
         android:id="@+id/navigationView"
         android:fitsSystemWindows="true"
         android:layout_gravity="start">
+
         <include
+            layout="@layout/side_menu"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            layout="@layout/side_menu" />
+            android:layout_height="match_parent" />
     </com.google.android.material.navigation.NavigationView>
 </androidx.drawerlayout.widget.DrawerLayout>
 

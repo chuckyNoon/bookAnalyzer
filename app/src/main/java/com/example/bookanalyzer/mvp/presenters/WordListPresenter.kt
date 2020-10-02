@@ -1,36 +1,27 @@
 package com.example.bookanalyzer.mvp.presenters
 
-import android.content.Context
-import android.view.MenuItem
-import android.widget.SeekBar
-import com.example.bookanalyzer.ui.adapters.WordListAdapter
 import com.example.bookanalyzer.mvp.repositories.WordListRepository
 import com.example.bookanalyzer.mvp.views.WordListView
 
-class WordListPresenter(val view: WordListView, val ctx: Context){
-    private val repository = WordListRepository(ctx)
+class WordListPresenter(private val view: WordListView, private val repository: WordListRepository){
     private var wordListSize = 0
-    fun onOptionsItemSelected(item: MenuItem) {
-        if(item.itemId == android.R.id.home ){
-            view.finishActivity()
-        }
+    fun onOptionsItemSelected() {
+        view.finishActivity()
     }
 
-    fun onStopTrackingTouch(seekBar: SeekBar?) {
-        var progress = seekBar?.progress
+    fun onProgressChanged(Progress:Int) {
+        var progress = Progress
         if (progress == 0)
             progress++
-        view.setPositionText("${progress.toString()} from $wordListSize")
-        if (progress != null)
-            view.scrollToPosition(progress - 1)
+        view.setPositionText("$progress from $wordListSize")
+        view.scrollToPosition(progress - 1)
     }
 
-    fun createWordList(listPath:String) {
-        val linesList = repository.readWordList(listPath) ?: return
-        val wordListAdapter = WordListAdapter(ctx, linesList)
+    fun onViewCreated(bookInd:Int) {
+        val linesList = repository.getWordList(bookInd) ?: return
         wordListSize = linesList.size
-        view.initRecyclerView(wordListAdapter)
-        view.initSeekBar(wordListSize)
+        view.setupWordLines(linesList)
+        view.setSeekBarMaxValue(wordListSize)
         view.setPositionText("1 from $wordListSize")
     }
 }

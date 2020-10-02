@@ -1,11 +1,11 @@
 package com.example.bookanalyzer.mvp.views
 
-import com.example.bookanalyzer.ui.adapters.WordListAdapter
+import com.example.bookanalyzer.ui.adapters.WordListElemModel
 
 interface WordListView {
     fun finishActivity()
     fun scrollToPosition(position: Int)
     fun setPositionText(text:String)
-    fun initRecyclerView(adapter: WordListAdapter)
-    fun initSeekBar(maxVal:Int)
+    fun setSeekBarMaxValue(maxVal:Int)
+    fun setupWordLines(linesList:ArrayList<WordListElemModel>)
 }

@@ -1,93 +1,30 @@
 package com.example.bookanalyzer.data
 
 import android.content.Context
-import com.example.bookanalyzer.ABookInfo
-import com.example.bookanalyzer.BookInfo
+import com.example.bookanalyzer.MenuBookModel
+import com.example.bookanalyzer.common.Utils
 import nl.siegmann.epublib.domain.Book
 import nl.siegmann.epublib.epub.EpubReader
 import java.io.FileInputStream
-import java.io.IOException
-import java.util.*
 import kotlin.collections.ArrayList
 
-class MenuContentLoader(private val ctx: Context) {
-    companion object{
-        val ALL_ANALYZED_PATH = "all"
-    }
-
-    private fun getPaths():ArrayList<String>{
-        val paths = ArrayList<String>()
-        try{
-            val input = ctx.openFileInput(PathSaver.SAVED_PATHS_FILE)
-            val saved = input.readBytes().toString(Charsets.UTF_8).split("\n")
-            for (s in saved){
-                if (s.isNotEmpty())
-                    paths.add(s)
-            }
-            input.close()
-        }catch (e:IOException){
-
-        }
-        return paths
-    }
-
-    fun firstStage() : ArrayList<ABookInfo>{
-        val paths = getPaths()
-        val bookList = ArrayList<ABookInfo>()
-        for (path in paths){
-            bookList.add(ABookInfo(path, null, null, null, 0))
+class PresentationInfoLoader(private val ctx: Context) : FileDataStorage(){
+    fun getPreviewList(savedPaths:ArrayList<String>) : ArrayList<MenuBookModel>{
+        val bookList = ArrayList<MenuBookModel>()
+        for (path in savedPaths){
+            bookList.add(MenuBookModel(path, null, null, null, 0))
         }
 
         return bookList
     }
 
-    fun searchSavedWordCount(path:String) : Int{
-        var ind = -1
-        try{
-            val inputStream = ctx.openFileInput(ALL_ANALYZED_PATH)
-            val strs = inputStream.readBytes().toString(Charsets.UTF_8).split("\n")
-            for (i in strs.indices){
-                if (strs[i] == path && i > 0){
-                    ind = strs[i-1].toInt()
-                    break
-                }
-            }
-            inputStream.close()
-            if (ind == -1)
-                return (0)
-        }catch (e:IOException){
-            return 0
-        }
-        try{
-            val scanner = Scanner(ctx.openFileInput("info$ind"))
-            var wordCount = 0
-            if (scanner.hasNextLine()){
-                scanner.nextLine()
-                if(scanner.hasNextLine()){
-                    scanner.nextLine()
-                    if (scanner.hasNextLine())
-                        wordCount = scanner.nextLine().toInt()
-                }
-            }
-            scanner.close()
-            return wordCount
-        }catch (e:IOException){
-            return (0)
-        }
-    }
-
-    fun getDetailedInfo(path: String) : ABookInfo {
+    fun getDetailedBookInfo(path:String) : MenuBookModel {
         val book = when(getFormat(path)) {
             "epub" -> parseEpub(path)
             "fb2" -> parseFb2(path)
             else -> parseTxt(path)
         }
-        book.wordCount = searchSavedWordCount(path)
-        return ABookInfo(book)
-    }
-
-    private fun loadImage(path:String){
-
+        return book
     }
 
     private fun getFormat(path:String) : String{
@@ -98,7 +35,7 @@ class MenuContentLoader(private val ctx: Context) {
         }
     }
 
-    private fun parseEpub(path:String) : BookInfo {
+    private fun parseEpub(path:String) : MenuBookModel {
         val inStream = FileInputStream(path)
         val ebook: Book = EpubReader().readEpub(inStream)
 
@@ -107,7 +44,23 @@ class MenuContentLoader(private val ctx: Context) {
             else ""
         val bookName = ebook.title
 
-        return (BookInfo(path, bookName, author, ebook.coverImage?.data))
+        return (MenuBookModel(path, bookName, author, Utils.byteArrayToBitmap(ebook.coverImage?.data)))
+    }
+
+    private fun parseFb2(path:String) : MenuBookModel{
+        val fileInputStream = FileInputStream(path)
+        val unhandledStr = fileInputStream.readBytes().toString(Charsets.UTF_8)
+        fileInputStream.close()
+
+        val bookTitle = getBookTitleFromFb2(unhandledStr)
+        val author = getAuthorFromFb2(unhandledStr)
+        val imgByteArray = getImageFromFb2(unhandledStr)
+
+        return (MenuBookModel(path, bookTitle, author, Utils.byteArrayToBitmap(imgByteArray)))
+    }
+
+    private fun parseTxt(path:String) : MenuBookModel {
+        return MenuBookModel(path, null, null, null)
     }
 
     private fun getAuthorFromFb2(unhandledStr:String) : String?{
@@ -170,19 +123,4 @@ class MenuContentLoader(private val ctx: Context) {
         return imgByteArray
     }
 
-    private fun parseFb2(path:String) : BookInfo {
-        val fileInputStream = FileInputStream(path)
-        val unhandledStr = fileInputStream.readBytes().toString(Charsets.UTF_8)
-        fileInputStream.close()
-
-        val bookTitle= getBookTitleFromFb2(unhandledStr)
-        val author = getAuthorFromFb2(unhandledStr)
-        val imgByteArray = getImageFromFb2(unhandledStr)
-
-        return (BookInfo(path, bookTitle, author, imgByteArray))
-    }
-
-    private fun parseTxt(path:String) : BookInfo {
-        return BookInfo(path, null, null, null)
-    }
 }
