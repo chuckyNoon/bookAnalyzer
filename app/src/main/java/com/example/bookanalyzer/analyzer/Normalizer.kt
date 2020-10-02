@@ -1,4 +1,4 @@
-package com.example.bookanalyzer.mvp.repositories.analyzer
+package com.example.bookanalyzer.analyzer
 
 import android.content.Context
 import com.example.bookanalyzer.R

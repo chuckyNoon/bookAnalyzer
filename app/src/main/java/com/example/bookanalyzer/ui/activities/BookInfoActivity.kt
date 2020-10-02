@@ -1,5 +1,6 @@
 package com.example.bookanalyzer.ui.activities
 
+import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Button
@@ -7,6 +8,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.mvp.presenters.BookInfoPresenter
+import com.example.bookanalyzer.mvp.repositories.BookInfoRepository
 import com.example.bookanalyzer.mvp.views.BookInfoView
 
 class BookInfoActivity : AppCompatActivity(),
@@ -19,11 +21,12 @@ class BookInfoActivity : AppCompatActivity(),
     private lateinit var avgSentenceViewChr: TextView
     private lateinit var avgWordView: TextView
 
-    private lateinit var presenter: BookInfoPresenter
+    private var repository = BookInfoRepository(this)
+    private var presenter = BookInfoPresenter(this, repository)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_book_info)
-        setToolBar()
 
         bookNameView = findViewById(R.id.bookNameView)
         allWordView = findViewById(R.id.allWordCountView)
@@ -32,18 +35,18 @@ class BookInfoActivity : AppCompatActivity(),
         avgSentenceViewWrd = findViewById(R.id.avgSentenceLenView1)
         avgSentenceViewChr = findViewById(R.id.avgSentenceLenView2)
         avgWordView = findViewById(R.id.avgWordLenView)
-        presenter = BookInfoPresenter(this, this.applicationContext)
 
+        setToolBar()
         val arguments = intent.extras
-        val listPath = arguments?.getString("listPath")
-        val infoPath = arguments?.getString("infoPath")
+        val ind = arguments?.getInt("ind")
 
+        if (ind == null)
+            finish()
         findViewById<Button>(R.id.toWordListButton).setOnClickListener {
-            presenter.onWordListButtonClicked(listPath ?: "")
+            presenter.onWordListButtonClicked(ind!!)
         }
-        infoPath?.let {
-            presenter.fillViews(infoPath)
-        }
+        presenter.onViewCreated(ind!!)
+
     }
 
     private fun setToolBar() {
@@ -54,7 +57,9 @@ class BookInfoActivity : AppCompatActivity(),
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        presenter.onOptionsItemSelected(item)
+        if(item.itemId == android.R.id.home ){
+            presenter.onOptionsItemSelected()
+        }
         return super.onOptionsItemSelected(item)
     }
 
@@ -78,5 +83,11 @@ class BookInfoActivity : AppCompatActivity(),
         avgSentenceViewWrd.text = avgSentenceLenInWrd
         avgSentenceViewChr.text = avgSentenceLenInChr
         avgWordView.text = avgWordLen
+    }
+
+    override fun startWordListActivity(ind: Int) {
+        val newIntent = Intent(this, WordListActivity::class.java)
+        newIntent.putExtra("ind", ind)
+        startActivity(newIntent)
     }
 }

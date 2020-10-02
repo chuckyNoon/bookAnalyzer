@@ -9,4 +9,5 @@ interface BookInfoView {
                      avgSentenceLenInWrd:String,
                      avgSentenceLenInChr: String,
                      avgWordLen:String)
+    fun startWordListActivity(ind:Int)
 }

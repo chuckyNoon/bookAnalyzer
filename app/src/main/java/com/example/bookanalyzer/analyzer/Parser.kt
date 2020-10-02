@@ -1,17 +1,17 @@
-package com.example.bookanalyzer.mvp.repositories.analyzer
+package com.example.bookanalyzer.analyzer
 
 import nl.siegmann.epublib.domain.Book
 import nl.siegmann.epublib.epub.EpubReader
 import org.jsoup.Jsoup
 import java.io.*
 
-class BookParser(){
-    var img:ByteArray? = null
-    var author:String? = null
-    var bookName:String? = null
 
-    fun parseFile(inStream: InputStream, path:String):String?{
-        return when{
+class ParserInfo(var text:String = "", var img:ByteArray? = null){
+}
+
+class BookParser(){
+    fun parseFile(inStream: InputStream, path:String):ParserInfo{
+         return when{
             path.contains(".txt") -> parseTxt(inStream)
             path.contains(".epub") -> parseEpub(inStream)
             path.contains(".fb2") -> parseFb2(inStream)
@@ -33,29 +33,25 @@ class BookParser(){
         return (map)
     }
 
-    private fun parseTxt(inStream: InputStream):String?{
+    private fun parseTxt(inStream: InputStream):ParserInfo{
         val inputReader = InputStreamReader(inStream)
         val buffReader = BufferedReader(inputReader)
+        val parserInfo = ParserInfo()
 
         return try{
-           val text = buffReader.readText()
-            (text)
+            parserInfo.text = buffReader.readText()
+            (parserInfo)
         }catch (e: IOException){
-            (null)
+            (parserInfo)
         }
     }
 
-    private fun parseEpub(inStream: InputStream):String{
+    private fun parseEpub(inStream: InputStream):ParserInfo{
         val book: Book = EpubReader().readEpub(inStream)
         val htmlText = java.lang.StringBuilder()
-        if (!book.metadata?.authors.isNullOrEmpty()){
-            val firstName = book.metadata?.authors?.first()?.firstname
-            val secondName = book.metadata?.authors?.first()?.lastname
-            author = (firstName?:"") + " " + (secondName?:"")
-        }
-        println("ff $author")
-        bookName = book.title
-        img = book.coverImage?.data
+        val parserInfo = ParserInfo()
+
+        parserInfo.img = book.coverImage?.data
         for (elem in book.contents) {
             val text = elem.reader.readText()
             htmlText.append(text)
@@ -74,11 +70,14 @@ class BookParser(){
                 simpleText.append(p.text() +  "\n")
             }
         }
-        return (simpleText.toString())
+        parserInfo.text = simpleText.toString()
+        return parserInfo
     }
 
-    private fun parseFb2(inStream: InputStream):String?{
-        val unhandledStr = parseTxt(inStream) ?: return (null)
+    private fun parseFb2(inStream: InputStream): ParserInfo{
+        val parserInfo = parseTxt(inStream)
+        val unhandledStr = parserInfo.text?: return parserInfo
+
         var imgNameStart = unhandledStr.indexOf( "xlink:href=")
         var name = ""
         if (imgNameStart >= 0) {
@@ -90,18 +89,20 @@ class BookParser(){
         }
         val bodyStart = unhandledStr.indexOf("<body>")
         val bodyEnd = unhandledStr.indexOf("</body>")
-        val str = if (bodyStart >= 0 && bodyEnd >= 0){
-            val bodyStr = unhandledStr.substring(bodyStart + "<body>".length, bodyEnd - 1)
-            bodyStr.replace("(\\<(/?[^>]+)>)".toRegex(),"")
-        }else{
-            unhandledStr
-        }
         val imgStart = unhandledStr.indexOf(">",unhandledStr.indexOf("<binary id=$name")) + 1
         val imgEnd = unhandledStr.indexOf("</binary", imgStart) - 1
         if (imgStart >=0 && imgEnd>= 0) {
-            img = unhandledStr.substring(imgStart, imgEnd).toByteArray()
+            parserInfo.img = unhandledStr.substring(imgStart, imgEnd).toByteArray()
         }
-        return (str)
+
+        val handledStr = if (bodyStart >= 0 && bodyEnd >= 0){
+            val bodyStr = unhandledStr.substring(bodyStart + "<body>".length, bodyEnd - 1)
+            bodyStr.replace("(\\<(/?[^>]+)>)".toRegex(),"")
+        }else{
+            (unhandledStr)
+        }
+        parserInfo.text = handledStr
+        return (parserInfo)
     }
 
     private fun isNumber(str:String):Boolean{

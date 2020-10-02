@@ -1,35 +1,39 @@
 package com.example.bookanalyzer.mvp.repositories
 
 import android.content.Context
-import com.example.bookanalyzer.ABookInfo
-import com.example.bookanalyzer.data.MenuContentLoader
-import com.example.bookanalyzer.data.PathSaver
+import com.example.bookanalyzer.MenuBookModel
+import com.example.bookanalyzer.data.AnalyzedInfoSaver
+import com.example.bookanalyzer.data.AnalyzedPathsSaver
+import com.example.bookanalyzer.data.FoundPathsSaver
+import com.example.bookanalyzer.data.PresentationInfoLoader
+import kotlin.collections.ArrayList
 
-class StartActivityRepository(private val context:Context){
-    private var pathSaver: PathSaver = PathSaver(context)
-    private var menuContentLoader = MenuContentLoader(context)
-    private lateinit var bookList:ArrayList<ABookInfo>
+class StartActivityRepository(private val ctx:Context){
+    private var pathSaver: FoundPathsSaver = FoundPathsSaver(ctx)
+    private var menuContentLoader = PresentationInfoLoader(ctx)
+    private var analyzedInfoSaver = AnalyzedInfoSaver(ctx)
+    private var analyzedPathsSaver = AnalyzedPathsSaver(ctx)
 
-    fun getPrimaryList() : ArrayList<ABookInfo>{
-        bookList = menuContentLoader.firstStage()
-        return bookList
-    }
+    private lateinit var bookList:ArrayList<MenuBookModel>
 
-    fun getDetailedList() :ArrayList<ABookInfo>{
-        for (i in bookList.indices ) {
-            val oldElem = bookList[i]
-            val newElem = menuContentLoader.getDetailedInfo(oldElem.path)
-
-            oldElem.name = newElem.name
-            oldElem.author = newElem.author
-            oldElem.bitmap = newElem.bitmap
-            oldElem.wordCount = newElem.wordCount
+    fun getPreviewList() : ArrayList<MenuBookModel>{
+        val savedPaths = pathSaver.getSavedPaths()
+        for (book in savedPaths){
+            println("t${book}")
         }
+        bookList = menuContentLoader.getPreviewList(savedPaths)
         return bookList
     }
 
-    fun getNewDetailedModel(path:String) : ABookInfo {
-        return menuContentLoader.getDetailedInfo(path)
+    fun getDetailedBookInfo(path:String) : MenuBookModel{
+        val model = menuContentLoader.getDetailedBookInfo(path)
+        val ind = analyzedPathsSaver.getIndByPath(path)
+        model.wordCount = analyzedInfoSaver.getSavedWordCount(ind)
+        return model
+    }
+
+    fun getUniqueWordCount(path:String): Int{
+        return analyzedInfoSaver.getSavedWordCount(analyzedPathsSaver.getIndByPath(path))
     }
 
     fun saveAllBookPaths(paths:ArrayList<String>) {
@@ -39,5 +43,4 @@ class StartActivityRepository(private val context:Context){
     fun saveBookPath(path: String) {
         pathSaver.addPath(path)
     }
-
 }

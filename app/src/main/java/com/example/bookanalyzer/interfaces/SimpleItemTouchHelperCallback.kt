@@ -4,7 +4,9 @@ import android.graphics.Canvas
 import android.view.View
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import com.example.bookanalyzer.ui.adapters.RecyclerListAdapter
+import com.example.bookanalyzer.interfaces.ItemTouchHelperAdapter
+import com.example.bookanalyzer.interfaces.ItemTouchHelperViewHolder
+import com.example.bookanalyzer.ui.adapters.BookListAdapter
 import kotlinx.android.synthetic.main.book_list_elem.view.*
 
 class SimpleItemTouchHelperCallback(private val mAdapter: ItemTouchHelperAdapter) :
@@ -68,7 +70,7 @@ class SimpleItemTouchHelperCallback(private val mAdapter: ItemTouchHelperAdapter
     ) {
        if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
            val foregroundView: View =
-               (viewHolder as RecyclerListAdapter.ItemViewHolder).view.view_foreground
+               (viewHolder as BookListAdapter.ItemViewHolder).view.view_foreground
            drawBackground(viewHolder, dX, actionState)
            getDefaultUIUtil().onDraw(
                c, recyclerView, foregroundView, dX, dY,
@@ -84,7 +86,7 @@ class SimpleItemTouchHelperCallback(private val mAdapter: ItemTouchHelperAdapter
         viewHolder: RecyclerView.ViewHolder, dX: Float, dY: Float,
         actionState: Int, isCurrentlyActive: Boolean
     ) {
-        val foregroundView: View = (viewHolder as RecyclerListAdapter.ItemViewHolder).view.view_foreground
+        val foregroundView: View = (viewHolder as BookListAdapter.ItemViewHolder).view.view_foreground
         drawBackground(viewHolder, dX, actionState)
         getDefaultUIUtil().onDrawOver(
             c, recyclerView, foregroundView, dX, dY,
@@ -93,7 +95,7 @@ class SimpleItemTouchHelperCallback(private val mAdapter: ItemTouchHelperAdapter
     }
 
     private fun drawBackground(viewHolder: RecyclerView.ViewHolder, dX: Float, actionState: Int) {
-        val backgroundView: View = (viewHolder as RecyclerListAdapter.ItemViewHolder).view.view_background
+        val backgroundView: View = (viewHolder as BookListAdapter.ItemViewHolder).view.view_background
         if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
             backgroundView.left = Math.max(dX, 0f).toInt()
         }

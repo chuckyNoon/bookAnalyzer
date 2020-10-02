@@ -2,49 +2,71 @@ package com.example.bookanalyzer.ui.activities
 
 import android.os.Bundle
 import android.view.MenuItem
-import android.widget.*
+import android.view.View
+import android.widget.AdapterView
+import android.widget.SeekBar
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bookanalyzer.R
-import com.example.bookanalyzer.ui.adapters.WordListAdapter
 import com.example.bookanalyzer.mvp.presenters.WordListPresenter
+import com.example.bookanalyzer.mvp.repositories.WordListRepository
 import com.example.bookanalyzer.mvp.views.WordListView
+import com.example.bookanalyzer.ui.adapters.WordListAdapter
+import com.example.bookanalyzer.ui.adapters.WordListElemModel
 
 
 class WordListActivity : AppCompatActivity(), WordListView {
     private lateinit var wordList: RecyclerView
     private lateinit var seekBar: SeekBar
     private lateinit var seekTextView: TextView
-    private lateinit var presenter: WordListPresenter
+    private lateinit var bottomPanel:View
+    private lateinit var wordListAdapter: WordListAdapter
+
+    private var repository = WordListRepository(this)
+    private var presenter = WordListPresenter(this, repository)
 
     override fun onCreate(savedInstanceState: Bundle?){
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_word_list)
-        setToolBar()
 
         wordList = findViewById(R.id.word_list)
+        bottomPanel = findViewById(R.id.bottomPanel)
         seekBar = findViewById(R.id.seekBar)
         seekTextView = findViewById(R.id.seekTextView)
 
-        presenter = WordListPresenter(this, this)
+        setToolBar()
+        setRecyclerView()
+
         val arguments = intent.extras
-        val listPath = arguments?.getString("listPath") ?: return
-
-        presenter.createWordList(listPath)
-
-        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener{
+        val ind = arguments?.getInt("ind")
+        seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                presenter.onStopTrackingTouch(seekBar)
+                presenter.onProgressChanged(seekBar?.progress ?: 0)
             }
-
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
             }
-
             override fun onStopTrackingTouch(seekBar: SeekBar?) {
-
             }
         })
+        ind?.let{
+            presenter.onViewCreated(it)
+        }
+    }
+
+    private fun setRecyclerView() {
+        wordListAdapter = WordListAdapter()
+        wordListAdapter.setOnItemClickListener(View.OnClickListener {
+            bottomPanel.visibility = if (bottomPanel.visibility == View.VISIBLE) {
+                View.INVISIBLE
+            }else{
+                View.VISIBLE
+            }
+        })
+        wordList.adapter = wordListAdapter
+        wordList.layoutManager = LinearLayoutManager(this)
+
     }
 
     private fun setToolBar(){
@@ -55,7 +77,9 @@ class WordListActivity : AppCompatActivity(), WordListView {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        presenter.onOptionsItemSelected(item)
+        if(item.itemId == android.R.id.home ){
+            presenter.onOptionsItemSelected()
+        }
         return super.onOptionsItemSelected(item)
     }
 
@@ -71,12 +95,11 @@ class WordListActivity : AppCompatActivity(), WordListView {
         seekTextView.text = text
     }
 
-    override fun initRecyclerView(adapter: WordListAdapter) {
-        wordList.adapter = adapter
-        wordList.layoutManager = LinearLayoutManager(this)
+    override fun setSeekBarMaxValue(maxVal: Int) {
+        seekBar.max = maxVal
     }
 
-    override fun initSeekBar(maxVal: Int) {
-        seekBar.max = maxVal
+    override fun setupWordLines(linesList: ArrayList<WordListElemModel>) {
+        wordListAdapter.setupData(linesList)
     }
 }

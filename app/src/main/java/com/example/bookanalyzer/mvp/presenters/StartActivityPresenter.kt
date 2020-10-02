@@ -1,84 +1,60 @@
 package com.example.bookanalyzer.mvp.presenters
 
-import android.app.Activity
-import android.content.Context
-import android.content.Intent
 import android.os.Handler
-import android.view.MenuItem
 import com.example.bookanalyzer.*
 import com.example.bookanalyzer.common.BookSearch
-import com.example.bookanalyzer.ui.adapters.RecyclerListAdapter
 import com.example.bookanalyzer.mvp.repositories.StartActivityRepository
-import com.example.bookanalyzer.common.FileUtils
-import com.example.bookanalyzer.data.MenuContentLoader
 import com.example.bookanalyzer.mvp.views.StartView
 import java.io.File
 import kotlin.concurrent.thread
 
-class StartActivityPresenter(private val view: StartView, private val context:Context){
+class StartActivityPresenter(private val view: StartView, private val repository: StartActivityRepository){
     private var isListCreating = false
-    private lateinit var bookList:ArrayList<ABookInfo>
-    private var newAdapter: RecyclerListAdapter?= null
-
-    private var repository= StartActivityRepository(context)
+    private var books:ArrayList<MenuBookModel>? = null
     private var handler = Handler()
 
-    fun createBookList(){
+    fun onViewCreated(){
         isListCreating = true
+        view.showLoadingStateView()
+
         thread {
-            buildList()
-            addDetailsToList()
+            books = repository.getPreviewList()
+            handler.post {
+                view.setupBooks(books!!)
+                view.moveLoadingStateViewUp(300)
+                view.setLoadingStateViewText("Loading content...")
+            }
+
+            for (book in books!!){
+                val detailedBook = repository.getDetailedBookInfo(book.path)
+                handler.post {
+                    view.updateBook(detailedBook)
+                }
+            }
+            handler.post {
+                view.updateLoadingStateView("Loading ended", 250, 300)
+            }
+            handler.postDelayed({
+                view.moveLoadingStateViewDown(250)
+                view.hideLoadingStateView()
+            },4000)
             isListCreating = false
         }
     }
 
-    private fun buildList(){
-        val bookList = repository.getPrimaryList()
-        if (newAdapter == null) {
-            this.bookList = bookList
-            newAdapter = RecyclerListAdapter(context, bookList)
+    private fun addBookToList(bookPath:String) {
+        thread {
+            val book = repository.getDetailedBookInfo(bookPath)
             handler.post {
-                view.initRecyclerView(newAdapter!!)
+                view.addBook(book)
             }
-        }
-        else {
-            val size = this.bookList.size
-            this.bookList.clear()
-            handler.post {
-                newAdapter!!.notifyItemRangeRemoved(0, size)
-            }
-            this.bookList.addAll(bookList)
-            handler.post{
-                newAdapter!!.notifyItemRangeInserted(0, bookList.size)
-            }
-        }
-    }
-
-    private fun addDetailsToList(){
-        val detailedBookList = repository.getDetailedList()
-        if (bookList.size == detailedBookList.size){
-            for (i in bookList.indices){
-                bookList[i] = detailedBookList[i]
-            }
-        }
-        handler.post {
-            newAdapter!!.notifyDataSetChanged()
-        }
-    }
-
-    private fun addBookToList(data: Intent) {
-        val filePath: String? = FileUtils().getPath(context, data.data!!)
-        filePath?.let{
-            bookList.add(repository.getNewDetailedModel(filePath))
-            newAdapter?.notifyItemInserted((bookList.size ?: 0) - 1)
-            newAdapter?.notifyDataSetChanged()
-            repository.saveBookPath(filePath)
+            repository.saveBookPath(bookPath)
         }
     }
 
     fun onSelectedSearchSettings(formats: ArrayList<String>, dir: File) {
         repository.saveAllBookPaths(BookSearch.findAll(dir, formats))
-        createBookList()
+        onViewCreated()
     }
 
     fun onRequestPermissionsResult(
@@ -91,58 +67,26 @@ class StartActivityPresenter(private val view: StartView, private val context:Co
         }
     }
 
-    fun onOptionsItemSelected(item: MenuItem) {
-        if(item.itemId == android.R.id.home ){
-            view.showSideMenu()
-        }
+    fun onOptionsItemSelected() {
+        view.showSideMenu()
     }
-    fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == 123 && resultCode == Activity.RESULT_OK) {
-            addBookToList(data!!)
-        }
+
+    fun onActivityResult(bookPath:String) {
+        addBookToList(bookPath)
     }
 
     fun onRestart() {
-        /*val menuContentLoader = MenuContentLoader(this)
-        for (book in bookList) {
-            val newWordCount = menuContentLoader.searchSavedWordCount(book.path)
-            if (book.wordCount != newWordCount) {
-                book.wordCount = newWordCount
-                newAdapter?.notifyDataSetChanged()
-
+        thread {
+            books?.let {
+                for (book in it) {
+                    if (book.wordCount != repository.getUniqueWordCount(book.path)) {
+                        handler.post {
+                            view.updateBook(repository.getDetailedBookInfo(book.path))
+                        }
+                        break
+                    }
+                }
             }
-        }*/
-    }
-
-    private fun createPrimaryList(menuContentLoader: MenuContentLoader){
-        /*if (newAdapter != null){
-            val oldSize = bookList.size
-            bookList.clear()
-            newAdapter?.notifyItemRangeRemoved(0, oldSize)
-            bookList.addAll(menuContentLoader.firstStage())
-            newAdapter?.notifyItemRangeInserted(0, bookList.size)
-        }else{
-            bookList = menuContentLoader.firstStage()
-            newAdapter = RecyclerListAdapter(context,bookList)
-            handler.post{
-                listView.setHasFixedSize(true)
-                val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(newAdapter!!)
-                mItemTouchHelper = ItemTouchHelper(callback)
-                mItemTouchHelper?.attachToRecyclerView(listView)
-
-                listView.adapter = newAdapter
-                listView.layoutManager = LinearLayoutManager(this)
-
-            }
-        }*/
-        bookList = repository.getPrimaryList()
-        newAdapter = RecyclerListAdapter(context, bookList)
-
-        handler.post {
-            view.showLoadingStateView()
-            view.setLoadingStateViewText("Loading content")
         }
-
     }
-
 }

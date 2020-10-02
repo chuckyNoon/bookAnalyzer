@@ -2,18 +2,15 @@ package com.example.bookanalyzer.ui.activities
 
 import android.Manifest
 import android.animation.Animator
-import android.animation.ArgbEvaluator
 import android.animation.ObjectAnimator
-import android.animation.ValueAnimator
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.graphics.Color
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
-import android.widget.Button
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
@@ -24,14 +21,16 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bookanalyzer.*
-import com.example.bookanalyzer.ui.adapters.RecyclerListAdapter
+import com.example.bookanalyzer.common.FileUtils
+import com.example.bookanalyzer.interfaces.OnSideMenuItemTouchListener
 import com.example.bookanalyzer.ui.adapters.SideMenuAdapter
-import com.example.bookanalyzer.ui.adapters.SideMenuElemModel
 import com.example.bookanalyzer.ui.fragments.SearchSettingsDialog
 import com.example.bookanalyzer.interfaces.SimpleItemTouchHelperCallback
-import com.example.bookanalyzer.mvp.presenters.BookInfoPresenter
 import com.example.bookanalyzer.mvp.presenters.StartActivityPresenter
+import com.example.bookanalyzer.mvp.repositories.StartActivityRepository
 import com.example.bookanalyzer.mvp.views.StartView
+import com.example.bookanalyzer.ui.adapters.BookListAdapter
+import com.example.bookanalyzer.ui.adapters.SideMenuItemModel
 import com.example.bookanalyzer.ui.fragments.FirstLaunchDialog
 import java.io.File
 
@@ -47,8 +46,11 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
     private lateinit var listView: RecyclerView
     private lateinit var drawerLayout:DrawerLayout
     private lateinit var loadingStateTextView:TextView
+    private lateinit var adapter: BookListAdapter
+    private lateinit var sideMenuListView:ListView
 
-    private lateinit var presenter: StartActivityPresenter
+    private var repository = StartActivityRepository(this)
+    private var presenter = StartActivityPresenter(this, repository)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,43 +59,22 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
         initFields()
         setToolBar()
         setSideMenu()
-        presenter = StartActivityPresenter(this, this.applicationContext)
-
-        /*val a = TypedValue()
-        theme.resolveAttribute(android.R.attr.windowBackground, a, true)
-        if (a.type >= TypedValue.TYPE_FIRST_COLOR_INT && a.type <= TypedValue.TYPE_LAST_COLOR_INT) {
-            // windowBackground is a color
-            val color: Int = a.data
-            val hexColor = java.lang.String.format("#%06X", 0xFFFFFF and color)
-            println("w " + hexColor)
-        } else {
-            // windowBackground is not a color, probably a drawable
-            val d: Drawable = getResources().getDrawable(a.resourceId)
-        }*/
+        setRecyclerView()
 
         val prefs = getSharedPreferences("APP_PREFERENCES", Context.MODE_PRIVATE)
         if (!prefs.contains("firstLaunch")) {
             prefs.edit().putBoolean("firstLaunch", true).apply()
             FirstLaunchDialog().show(supportFragmentManager, "123")
         }else{
-            presenter.createBookList()
+            presenter.onViewCreated()
         }
-    }
-
-    override fun initRecyclerView(adapter: RecyclerListAdapter) {
-        listView.setHasFixedSize(true)
-        val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
-        val mItemTouchHelper = ItemTouchHelper(callback)
-        mItemTouchHelper.attachToRecyclerView(listView)
-
-        listView.adapter = adapter
-        listView.layoutManager = LinearLayoutManager(this)
     }
 
     private fun initFields(){
         listView = findViewById(R.id.list_view)
         drawerLayout = findViewById(R.id.drawerLayout)
         loadingStateTextView = findViewById(R.id.textview_loading_state)
+        sideMenuListView = findViewById(R.id.sideMenuListView)
     }
 
     private fun setToolBar(){
@@ -103,8 +84,33 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
         setSupportActionBar(toolBar)
     }
 
+    private fun setRecyclerView() {
+        adapter = BookListAdapter(this)
+        listView.setHasFixedSize(true)
+        val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
+        val mItemTouchHelper = ItemTouchHelper(callback)
+        mItemTouchHelper.attachToRecyclerView(listView)
+
+        listView.adapter = adapter
+        listView.layoutManager = LinearLayoutManager(this)
+    }
+
+    override fun setupBooks(bookList: ArrayList<MenuBookModel>) {
+        adapter.setupBooks(bookList)
+    }
+
+    override fun addBook(book: MenuBookModel) {
+        adapter.addBook(book)
+    }
+
+    override fun updateBook(book: MenuBookModel) {
+        adapter.updateBook(book)
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        presenter.onOptionsItemSelected(item)
+        if(item.itemId == android.R.id.home ){
+            presenter.onOptionsItemSelected()
+        }
         return super.onOptionsItemSelected(item)
     }
 
@@ -115,7 +121,12 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        presenter.onActivityResult(requestCode,resultCode, data)
+        if (requestCode == 123 && resultCode == Activity.RESULT_OK) {
+            val bookPath = FileUtils().getPath(this, data!!.data!!)
+            bookPath?.let{
+                presenter.onActivityResult(bookPath)
+            }
+        }
     }
 
     override fun onSelectedLaunch(ifScan: Boolean) {
@@ -144,15 +155,23 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
         presenter.onSelectedSearchSettings(formats, dir)
     }
 
-
-
     override fun hideLoadingStateView(){
-      /*  val height = loadingStateTextView.height.toFloat()
-        ObjectAnimator.ofFloat(loadingStateTextView, "translationY", height).apply{
-            duration = dur
-            start()
-        }*/
         loadingStateTextView.visibility = View.INVISIBLE
+    }
+
+    override fun moveLoadingStateViewUp(dur:Int){
+        ObjectAnimator.ofFloat(loadingStateTextView, "translationY", 0f).apply{
+            duration = dur.toLong()
+            start()
+        }
+    }
+
+    override fun moveLoadingStateViewDown(dur:Int){
+        val height = loadingStateTextView.height.toFloat()
+        ObjectAnimator.ofFloat(loadingStateTextView, "translationY", height).apply{
+            duration = dur.toLong()
+            start()
+        }
     }
 
     override fun showLoadingStateView(){
@@ -170,7 +189,6 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationStart(animation: Animator?) {
                 }
-
                 override fun onAnimationEnd(animation: Animator?) {
                     loadingStateTextView.text = str
                     ObjectAnimator.ofFloat(loadingStateTextView, "translationY", 0f).apply {
@@ -178,10 +196,8 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
                         start()
                     }
                 }
-
                 override fun onAnimationCancel(animation: Animator?) {
                 }
-
                 override fun onAnimationRepeat(animation: Animator?) {
                 }
             })
@@ -193,63 +209,20 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
         drawerLayout.open()
     }
 
-    interface OnSideMenuElemTouchListener : View.OnTouchListener {
-        fun doAction()
-
-        private fun createValueAnimator(v: View?, colorFrom: Int, colorTo: Int) : ValueAnimator {
-            val colorAnimation: ValueAnimator = ValueAnimator.ofObject(
-                ArgbEvaluator(),
-                colorFrom,
-                colorTo
-            )
-            colorAnimation.duration = 250 // milliseconds
-
-            colorAnimation.addUpdateListener { animator ->
-                v?.setBackgroundColor(animator.animatedValue as Int)
-            }
-            return colorAnimation
-        }
-
-        override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-            val defColor = Color.parseColor("#303030")
-            val pressedColor = Color.parseColor("#AB84F2")
-
-            when (event?.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    createValueAnimator(v, defColor, pressedColor).start()
-                    return true
-                }
-                MotionEvent.ACTION_CANCEL -> {
-                    createValueAnimator(v, pressedColor, defColor).start()
-                    return true
-                }
-                MotionEvent.ACTION_UP -> {
-                    createValueAnimator(v, defColor, pressedColor).start()
-                    doAction()
-                    createValueAnimator(v, pressedColor, defColor).start()
-                    return true
-                }
-            }
-            return false
-        }
-    }
-
-
-
     @SuppressLint("ClickableViewAccessibility")
     private fun setSideMenu(){
-        val ar = ArrayList<SideMenuElemModel>()
-        ar.add(SideMenuElemModel(
+        val ar = ArrayList<SideMenuItemModel>()
+        ar.add(SideMenuItemModel(
             "",
             null,
             View.OnTouchListener { view: View, motionEvent: MotionEvent ->
                 false
             }
         ))
-        ar.add(SideMenuElemModel(
+        ar.add(SideMenuItemModel(
             "Select new file...",
             R.drawable.baseline_folder_24,
-            object : OnSideMenuElemTouchListener {
+            object : OnSideMenuItemTouchListener {
                 override fun doAction() {
                     drawerLayout.close()
                     val intent = Intent().setAction(Intent.ACTION_GET_CONTENT).setType("*/*")
@@ -258,20 +231,19 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
             }
         ))
 
-        ar.add(SideMenuElemModel(
+        ar.add(SideMenuItemModel(
             "Search files...",
             R.drawable.baseline_search_24,
-            object : OnSideMenuElemTouchListener {
+            object : OnSideMenuItemTouchListener {
                 override fun doAction() {
-                    if (true) {
-                        drawerLayout.close()
-                        SearchSettingsDialog().show(supportFragmentManager, "124")
-                    }
+                    drawerLayout.close()
+                    SearchSettingsDialog().show(supportFragmentManager, "124")
                 }
             }
         ))
         val sideMenuAdapter = SideMenuAdapter(this, ar)
-        findViewById<ListView>(R.id.sideMenuListView).adapter = sideMenuAdapter
+        sideMenuListView.adapter = sideMenuAdapter
     }
+
 }
 

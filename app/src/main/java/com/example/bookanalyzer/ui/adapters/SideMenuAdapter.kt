@@ -7,11 +7,11 @@ import android.view.ViewGroup
 import android.widget.*
 import com.example.bookanalyzer.R
 
-class SideMenuElemModel(var action:String, var iconRes:Int?, var onTouchListener: View.OnTouchListener){
+class SideMenuItemModel(var action:String, var iconRes:Int?, var onTouchListener: View.OnTouchListener){
 
 }
 
-class SideMenuAdapter(private val ctx:Context,private val ar:ArrayList<SideMenuElemModel>) : BaseAdapter() {
+class SideMenuAdapter(private val ctx:Context,private val ar:ArrayList<SideMenuItemModel>) : BaseAdapter() {
     private val layoutInflater = ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         val view = convertView ?: layoutInflater.inflate(R.layout.sidemenu_list_elem, parent, false)
