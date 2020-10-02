@@ -10,14 +10,17 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bookanalyzer.R
+import com.example.bookanalyzer.mvp.presenters.BookInfoPresenter
 import com.example.bookanalyzer.mvp.presenters.WordListPresenter
 import com.example.bookanalyzer.mvp.repositories.WordListRepository
 import com.example.bookanalyzer.mvp.views.WordListView
 import com.example.bookanalyzer.ui.adapters.WordListAdapter
 import com.example.bookanalyzer.ui.adapters.WordListElemModel
+import moxy.MvpAppCompatActivity
+import moxy.ktx.moxyPresenter
 
 
-class WordListActivity : AppCompatActivity(), WordListView {
+class WordListActivity : MvpAppCompatActivity(), WordListView {
     private lateinit var wordList: RecyclerView
     private lateinit var seekBar: SeekBar
     private lateinit var seekTextView: TextView
@@ -25,7 +28,7 @@ class WordListActivity : AppCompatActivity(), WordListView {
     private lateinit var wordListAdapter: WordListAdapter
 
     private var repository = WordListRepository(this)
-    private var presenter = WordListPresenter(this, repository)
+    private val presenter by moxyPresenter{ WordListPresenter(repository) }
 
     override fun onCreate(savedInstanceState: Bundle?){
         super.onCreate(savedInstanceState)

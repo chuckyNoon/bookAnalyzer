@@ -1,7 +1,11 @@
 package com.example.bookanalyzer.mvp.views
 import com.example.bookanalyzer.MenuBookModel
+import moxy.MvpView
+import moxy.viewstate.strategy.alias.AddToEnd
+import moxy.viewstate.strategy.alias.AddToEndSingle
 
-interface StartView {
+@AddToEnd
+interface StartView : MvpView{
     fun setLoadingStateViewText(text:String)
     fun hideLoadingStateView()
     fun showLoadingStateView()

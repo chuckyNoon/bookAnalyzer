@@ -1,6 +1,10 @@
 package com.example.bookanalyzer.mvp.views
 
-interface BookInfoView {
+import moxy.MvpView
+import moxy.viewstate.strategy.alias.AddToEnd
+
+@AddToEnd
+interface BookInfoView : MvpView {
     fun finishActivity()
     fun setViewsText(path:String,
                      uniqWordCount:String,
