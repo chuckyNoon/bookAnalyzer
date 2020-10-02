@@ -6,15 +6,19 @@ import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.data.AnalyzedInfoSaver
+import com.example.bookanalyzer.mvp.presenters.BookInfoPresenter
 import com.example.bookanalyzer.mvp.presenters.LoaderScreenPresenter
 import com.example.bookanalyzer.mvp.repositories.LoaderScreenRepository
 import com.example.bookanalyzer.mvp.views.LoaderScreenView
+import moxy.MvpAppCompatActivity
+import moxy.ktx.moxyPresenter
 import java.io.*
 
 
-class LoaderScreenActivity : AppCompatActivity(),LoaderScreenView {
+class LoaderScreenActivity : MvpAppCompatActivity(),LoaderScreenView {
     private val repository = LoaderScreenRepository(this)
-    private val presenter = LoaderScreenPresenter(this, repository)
+    //private val presenter = LoaderScreenPresenter(this, repository)
+    private val presenter by moxyPresenter{ LoaderScreenPresenter(repository) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

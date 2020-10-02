@@ -8,10 +8,13 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.mvp.presenters.BookInfoPresenter
+import com.example.bookanalyzer.mvp.presenters.StartActivityPresenter
 import com.example.bookanalyzer.mvp.repositories.BookInfoRepository
 import com.example.bookanalyzer.mvp.views.BookInfoView
+import moxy.MvpAppCompatActivity
+import moxy.ktx.moxyPresenter
 
-class BookInfoActivity : AppCompatActivity(),
+class BookInfoActivity : MvpAppCompatActivity(),
     BookInfoView {
     private lateinit var bookNameView: TextView
     private lateinit var allWordView: TextView
@@ -22,7 +25,7 @@ class BookInfoActivity : AppCompatActivity(),
     private lateinit var avgWordView: TextView
 
     private var repository = BookInfoRepository(this)
-    private var presenter = BookInfoPresenter(this, repository)
+    private val presenter by moxyPresenter{BookInfoPresenter(repository)}
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

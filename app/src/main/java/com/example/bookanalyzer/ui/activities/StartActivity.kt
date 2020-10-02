@@ -32,17 +32,20 @@ import com.example.bookanalyzer.mvp.views.StartView
 import com.example.bookanalyzer.ui.adapters.BookListAdapter
 import com.example.bookanalyzer.ui.adapters.SideMenuItemModel
 import com.example.bookanalyzer.ui.fragments.FirstLaunchDialog
+import moxy.MvpAppCompatActivity
+import moxy.ktx.moxyPresenter
+
 import java.io.File
 
 interface ISelectedLaunch{
     fun onSelectedLaunch(ifScan: Boolean)
 }
 
-interface ISelectedSearchSettings {
+interface ISelectedSearchSettings  {
     fun onSelectedSearchSettings(formats: ArrayList<String>, dir: File)
 }
 
-class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLaunch, StartView{
+class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelectedLaunch, StartView{
     private lateinit var listView: RecyclerView
     private lateinit var drawerLayout:DrawerLayout
     private lateinit var loadingStateTextView:TextView
@@ -50,7 +53,7 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
     private lateinit var sideMenuListView:ListView
 
     private var repository = StartActivityRepository(this)
-    private var presenter = StartActivityPresenter(this, repository)
+    private val presenter by moxyPresenter { StartActivityPresenter(repository) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,7 +69,8 @@ class StartActivity : AppCompatActivity(), ISelectedSearchSettings, ISelectedLau
             prefs.edit().putBoolean("firstLaunch", true).apply()
             FirstLaunchDialog().show(supportFragmentManager, "123")
         }else{
-            presenter.onViewCreated()
+            if (savedInstanceState == null)
+                presenter.onViewCreated()
         }
     }
 

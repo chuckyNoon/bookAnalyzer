@@ -1,11 +1,19 @@
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-android-extensions'
 
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
     defaultConfig {
         applicationId "com.example.bookanalyzer"
         minSdkVersion 24
@@ -29,10 +37,20 @@ apply plugin: 'androidx.navigation.safeargs'
 dependencies {
     def navigationVersion = "2.3.0"
     def drawerLayoutVersion = "1.1.0"
-
     implementation "androidx.drawerlayout:drawerlayout:$drawerLayoutVersion"
     implementation "androidx.navigation:navigation-fragment-ktx:$navigationVersion"
     implementation "androidx.navigation:navigation-ui-ktx:$navigationVersion"
+
+    def x = '0'
+    def y = '6'
+    implementation "io.reactivex.rxjava3:rxjava:3.$x.$y"
+
+    def moxyVersion = '2.2.0'
+    implementation "com.github.moxy-community:moxy:$moxyVersion"
+    implementation "com.github.moxy-community:moxy-android:$moxyVersion"
+    implementation "com.github.moxy-community:moxy-app-compat:$moxyVersion"
+    implementation "com.github.moxy-community:moxy-ktx:$moxyVersion"
+    kapt "com.github.moxy-community:moxy-compiler:$moxyVersion"
 
     implementation 'com.github.jlmd:AnimatedCircleLoadingView:1.1.5@aar'
     implementation 'androidx.recyclerview:recyclerview:1.1.0'

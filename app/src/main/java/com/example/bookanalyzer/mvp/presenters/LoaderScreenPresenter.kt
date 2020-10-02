@@ -3,14 +3,15 @@ package com.example.bookanalyzer.mvp.presenters
 import com.example.bookanalyzer.mvp.repositories.LoaderScreenRepository
 import com.example.bookanalyzer.mvp.views.LoaderScreenView
 import kotlinx.coroutines.*
+import moxy.MvpPresenter
 import java.io.FileInputStream
 
-class LoaderScreenPresenter(private val view:LoaderScreenView, private val repository: LoaderScreenRepository) {
+class LoaderScreenPresenter(private val repository: LoaderScreenRepository) :MvpPresenter<LoaderScreenView>(){
     private lateinit var job: Job
     private val scope = MainScope()
 
     fun onOptionsItemSelected(){
-        view.finishActivity()
+        viewState.finishActivity()
     }
 
     fun onViewCreated(bookInd:Int, inStream:FileInputStream, path:String){
@@ -19,7 +20,7 @@ class LoaderScreenPresenter(private val view:LoaderScreenView, private val repos
             yield()
 
             repository.saveAnalysis(path, bookInd,  info, false)
-            view.goToInfoActivity(bookInd)
+            viewState.goToInfoActivity(bookInd)
         }
     }
 
