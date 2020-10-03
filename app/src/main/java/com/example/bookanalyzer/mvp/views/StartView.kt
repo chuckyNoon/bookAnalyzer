@@ -3,6 +3,7 @@ import com.example.bookanalyzer.MenuBookModel
 import moxy.MvpView
 import moxy.viewstate.strategy.alias.AddToEnd
 import moxy.viewstate.strategy.alias.AddToEndSingle
+import moxy.viewstate.strategy.alias.Skip
 
 @AddToEnd
 interface StartView : MvpView{
@@ -12,6 +13,8 @@ interface StartView : MvpView{
     fun moveLoadingStateViewUp(dur:Int)
     fun moveLoadingStateViewDown(dur:Int)
     fun updateLoadingStateView(str: String, downDuration: Long, upDuration: Long)
+
+    @Skip
     fun showSideMenu()
 
     fun showSearchSettingsDialog()
