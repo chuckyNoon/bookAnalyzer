@@ -12,7 +12,7 @@ class SimpleItemTouchHelperCallback(private val presenter:StartScreenPresenter) 
     ItemTouchHelper.Callback() {
     private var lastDraggedViewHolder: ItemTouchHelperViewHolder? = null
     override fun isLongPressDragEnabled(): Boolean {
-        return true
+        return false //need to fix
     }
 
     override fun isItemViewSwipeEnabled(): Boolean {
@@ -56,8 +56,6 @@ class SimpleItemTouchHelperCallback(private val presenter:StartScreenPresenter) 
     override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
         val backgroundView: View = viewHolder.itemView.view_background
         val foregroundView: View = viewHolder.itemView.view_foreground
-
-            // backgroundView.right = 0
 
         getDefaultUIUtil().clearView(foregroundView)
     }
