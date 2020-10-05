@@ -4,12 +4,11 @@ import android.graphics.Canvas
 import android.view.View
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import com.example.bookanalyzer.interfaces.ItemTouchHelperAdapter
-import com.example.bookanalyzer.interfaces.ItemTouchHelperViewHolder
+import com.example.bookanalyzer.mvp.presenters.StartScreenPresenter
 import com.example.bookanalyzer.ui.adapters.BookListAdapter
 import kotlinx.android.synthetic.main.book_list_elem.view.*
 
-class SimpleItemTouchHelperCallback(private val mAdapter: ItemTouchHelperAdapter) :
+class SimpleItemTouchHelperCallback(private val presenter:StartScreenPresenter) :
     ItemTouchHelper.Callback() {
     private var lastDraggedViewHolder: ItemTouchHelperViewHolder? = null
     override fun isLongPressDragEnabled(): Boolean {
@@ -34,12 +33,12 @@ class SimpleItemTouchHelperCallback(private val mAdapter: ItemTouchHelperAdapter
         source: RecyclerView.ViewHolder,
         target: RecyclerView.ViewHolder
     ): Boolean {
-        mAdapter.onItemMove(source.adapterPosition, target.adapterPosition)
+        presenter.onBookMove(source.adapterPosition, target.adapterPosition)
         return true
     }
 
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, i: Int) {
-        mAdapter.onItemDismiss(viewHolder.adapterPosition)
+        presenter.onBookDismiss(viewHolder.adapterPosition)
     }
 
     override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {

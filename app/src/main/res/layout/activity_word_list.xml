@@ -36,5 +36,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
+        android:visibility="invisible"
         layout="@layout/bottom_seek_bar_panel" />
 </android.widget.RelativeLayout>

@@ -17,7 +17,6 @@ import java.io.*
 
 class LoaderScreenActivity : MvpAppCompatActivity(),LoaderScreenView {
     private val repository = LoaderScreenRepository(this)
-    //private val presenter = LoaderScreenPresenter(this, repository)
     private val presenter by moxyPresenter{ LoaderScreenPresenter(repository) }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -11,6 +11,7 @@ import android.widget.RadioGroup
 import androidx.fragment.app.DialogFragment
 import com.example.bookanalyzer.ui.activities.ISelectedSearchSettings
 import com.example.bookanalyzer.R
+import java.io.FileInputStream
 
 
 class SearchSettingsDialog : DialogFragment(){
@@ -32,8 +33,12 @@ class SearchSettingsDialog : DialogFragment(){
                 selectedFormats.add("fb2")
             if (txtSelected)
                 selectedFormats.add("txt")
-            val dir = if (dirId == 0) Environment.getExternalStorageDirectory()
-                else Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+            val dir = if (dirId == R.id.radioButton2) {
+                Environment.getExternalStorageDirectory()
+
+            }else {
+                 Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            }
             mCallback?.onSelectedSearchSettings(selectedFormats, dir)
             dismiss()
         }
