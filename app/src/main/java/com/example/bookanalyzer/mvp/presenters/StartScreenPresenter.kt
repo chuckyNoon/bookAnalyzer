@@ -99,10 +99,11 @@ class StartScreenPresenter(private val repository: StartScreenRepository) : MvpP
     }
 
     fun onBookMove(fromPosition: Int, toPosition: Int){
-        books = copyList(books)
-        val prev = books.removeAt(fromPosition)
-        books.add(toPosition, prev)
-        viewState.showList(books)
+        val newList = copyList(books)
+        val prev = newList.removeAt(fromPosition)
+        newList.add(toPosition, prev)
+        books = newList
+        viewState.showList(newList)
     }
 
     fun onBookClicked(position:Int){
@@ -119,7 +120,6 @@ class StartScreenPresenter(private val repository: StartScreenRepository) : MvpP
                 }
             }
         }
-
     }
 
     fun onRestart() {
