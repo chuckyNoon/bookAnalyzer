@@ -12,7 +12,7 @@ class WordListElemModel(var word:String, var frequency:String, var pos:String){
 
 class WordListAdapter : RecyclerView.Adapter<WordListAdapter.MyViewHolder>() {
     class MyViewHolder(val view: View) : RecyclerView.ViewHolder(view)
-    private lateinit var ar:ArrayList<WordListElemModel>
+    private var ar:ArrayList<WordListElemModel> = ArrayList()
     private var onItemClickListener:View.OnClickListener? = null
 
     fun setupData(rowsList:ArrayList<WordListElemModel>){

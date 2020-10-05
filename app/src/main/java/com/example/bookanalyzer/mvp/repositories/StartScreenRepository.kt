@@ -6,9 +6,11 @@ import com.example.bookanalyzer.data.AnalyzedInfoSaver
 import com.example.bookanalyzer.data.AnalyzedPathsSaver
 import com.example.bookanalyzer.data.FoundPathsSaver
 import com.example.bookanalyzer.data.PresentationInfoLoader
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.collections.ArrayList
 
-class StartActivityRepository(private val ctx:Context){
+class StartScreenRepository(private val ctx:Context){
     private var pathSaver: FoundPathsSaver = FoundPathsSaver(ctx)
     private var menuContentLoader = PresentationInfoLoader(ctx)
     private var analyzedInfoSaver = AnalyzedInfoSaver(ctx)
@@ -16,28 +18,36 @@ class StartActivityRepository(private val ctx:Context){
 
     private lateinit var bookList:ArrayList<MenuBookModel>
 
-    fun getPreviewList() : ArrayList<MenuBookModel>{
+    suspend fun getPreviewList() = withContext(Dispatchers.Default){
         val savedPaths = pathSaver.getSavedPaths()
         bookList = menuContentLoader.getPreviewList(savedPaths)
-        return bookList
+        (bookList)
     }
 
-    fun getDetailedBookInfo(path:String) : MenuBookModel{
-        val model = menuContentLoader.getDetailedBookInfo(path)
+    suspend fun getDetailedBookInfo(path:String) = withContext(Dispatchers.Default){
+        val model =  menuContentLoader.getDetailedBookInfo(path)
         val ind = analyzedPathsSaver.getIndByPath(path)
         model.wordCount = analyzedInfoSaver.getSavedWordCount(ind)
-        return model
+        (model)
     }
 
-    fun getUniqueWordCount(path:String): Int{
-        return analyzedInfoSaver.getSavedWordCount(analyzedPathsSaver.getIndByPath(path))
+    suspend fun getUniqueWordCount(path:String) = withContext(Dispatchers.Default){
+        (analyzedInfoSaver.getSavedWordCount(analyzedPathsSaver.getIndByPath(path)))
     }
 
-    fun saveAllBookPaths(paths:ArrayList<String>) {
+    suspend fun saveAllBookPaths(paths:ArrayList<String>) = withContext(Dispatchers.Default){
         pathSaver.saveAll(paths)
     }
 
-    fun saveBookPath(path: String) {
+    suspend fun saveBookPath(path: String) = withContext(Dispatchers.Default){
         pathSaver.addPath(path)
+    }
+
+    suspend fun getAnalyzedBookCount() = withContext(Dispatchers.Default){
+        (analyzedPathsSaver.getAnalyzedCount())
+    }
+
+    suspend fun getBookIndByPath(path:String)= withContext(Dispatchers.Default){
+        (analyzedPathsSaver.getIndByPath(path))
     }
 }

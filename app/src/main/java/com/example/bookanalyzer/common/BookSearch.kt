@@ -26,8 +26,11 @@ class BookSearch {
 
         private fun search(dir: File) {
             val fileList: Array<File> = dir.listFiles() ?: return
-
+            println(fileList.isEmpty())
             for (j in fileList.indices) {
+
+                println(fileList[j].path)
+
                 if (fileList[j].isDirectory) {
                     search(fileList[j])
                 } else {

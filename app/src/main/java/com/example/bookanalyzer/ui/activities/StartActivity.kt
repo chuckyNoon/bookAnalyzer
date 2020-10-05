@@ -7,6 +7,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -14,7 +15,6 @@ import android.view.View
 import android.widget.ListView
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.ItemTouchHelper
@@ -26,14 +26,13 @@ import com.example.bookanalyzer.interfaces.OnSideMenuItemTouchListener
 import com.example.bookanalyzer.ui.adapters.SideMenuAdapter
 import com.example.bookanalyzer.ui.fragments.SearchSettingsDialog
 import com.example.bookanalyzer.interfaces.SimpleItemTouchHelperCallback
-import com.example.bookanalyzer.mvp.presenters.StartActivityPresenter
-import com.example.bookanalyzer.mvp.repositories.StartActivityRepository
+import com.example.bookanalyzer.mvp.presenters.StartScreenPresenter
+import com.example.bookanalyzer.mvp.repositories.StartScreenRepository
 import com.example.bookanalyzer.mvp.views.StartView
 import com.example.bookanalyzer.ui.adapters.BookListAdapter
 import com.example.bookanalyzer.ui.adapters.SideMenuItemModel
 import com.example.bookanalyzer.ui.fragments.FirstLaunchDialog
-import io.reactivex.rxjava3.core.Flowable
-import io.reactivex.rxjava3.core.Single
+import kotlinx.coroutines.*
 import moxy.MvpAppCompatActivity
 import moxy.ktx.moxyPresenter
 
@@ -54,8 +53,8 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
     private lateinit var adapter: BookListAdapter
     private lateinit var sideMenuListView:ListView
 
-    private var repository = StartActivityRepository(this)
-    private val presenter by moxyPresenter { StartActivityPresenter(repository) }
+    private var repository = StartScreenRepository(this)
+    private val presenter by moxyPresenter { StartScreenPresenter(repository) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,26 +90,15 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
     }
 
     private fun setRecyclerView() {
-        adapter = BookListAdapter(this)
+        val defaultBookImage = BitmapFactory.decodeResource(this.resources, R.drawable.book)
+        adapter = BookListAdapter(defaultBookImage, presenter)
         listView.setHasFixedSize(true)
-        val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(adapter)
+        val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(presenter)
         val mItemTouchHelper = ItemTouchHelper(callback)
         mItemTouchHelper.attachToRecyclerView(listView)
 
         listView.adapter = adapter
         listView.layoutManager = LinearLayoutManager(this)
-    }
-
-    override fun setupBooks(bookList: ArrayList<MenuBookModel>) {
-        adapter.setupBooks(bookList)
-    }
-
-    override fun addBook(book: MenuBookModel) {
-        adapter.addBook(book)
-    }
-
-    override fun updateBook(book: MenuBookModel) {
-        adapter.updateBook(book)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -121,17 +109,40 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
     }
 
     override fun onRestart() {
-        presenter.onRestart()
         super.onRestart()
+        presenter.onRestart()
+
     }
 
+    override fun onStop() {
+        super.onStop()
+        presenter.onStop()
+    }
+
+    override fun startLoadingActivity(bookPath:String, newBookInd:Int) {
+        val intent = Intent(this, LoaderScreenActivity::class.java)
+        intent.putExtra("path", bookPath)
+        intent.putExtra("ind", newBookInd)
+        startActivity(intent)
+    }
+
+    override fun startInfoActivity(bookInd:Int) {
+        val intentToBook = Intent(this, BookInfoActivity::class.java)
+        intentToBook.putExtra("ind", bookInd)
+        startActivity(intentToBook)
+    }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == 123 && resultCode == Activity.RESULT_OK) {
-            val bookPath = FileUtils().getPath(this, data!!.data!!)
-            bookPath?.let{
-                presenter.onActivityResult(bookPath)
+            val scope = CoroutineScope(Dispatchers.Main)
+            scope.launch {
+                val bookPath = withContext(Dispatchers.IO) {
+                    FileUtils().getPath(this@StartActivity, data!!.data!!)
+                }
+                bookPath?.let{
+                    presenter.onActivityResult(bookPath)
+                }
             }
         }
     }
@@ -216,6 +227,10 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
         drawerLayout.open()
     }
 
+    override fun showList(bookList: ArrayList<MenuBookModel>) {
+        adapter.setupBooks(bookList)
+    }
+
 
     @SuppressLint("ClickableViewAccessibility")
     private fun setSideMenu(){
@@ -252,7 +267,5 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
         val sideMenuAdapter = SideMenuAdapter(this, ar)
         sideMenuListView.adapter = sideMenuAdapter
     }
-
-
 }
 

@@ -13,12 +13,16 @@ interface StartView : MvpView{
     fun moveLoadingStateViewUp(dur:Int)
     fun moveLoadingStateViewDown(dur:Int)
     fun updateLoadingStateView(str: String, downDuration: Long, upDuration: Long)
+    @Skip
+    fun showSearchSettingsDialog()
 
     @Skip
     fun showSideMenu()
 
-    fun showSearchSettingsDialog()
-    fun setupBooks(bookList:ArrayList<MenuBookModel>)
-    fun addBook(book: MenuBookModel)
-    fun updateBook(book: MenuBookModel)
+    @AddToEndSingle
+    fun showList(bookList: ArrayList<MenuBookModel>)
+    @Skip
+    fun startLoadingActivity(bookPath:String, newBookInd:Int)
+    @Skip
+    fun startInfoActivity(bookInd:Int)
 }
