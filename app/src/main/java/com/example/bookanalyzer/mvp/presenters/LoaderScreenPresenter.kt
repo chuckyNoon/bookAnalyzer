@@ -6,9 +6,15 @@ import kotlinx.coroutines.*
 import moxy.MvpPresenter
 import java.io.FileInputStream
 
-class LoaderScreenPresenter(private val repository: LoaderScreenRepository) :MvpPresenter<LoaderScreenView>(){
+class LoaderScreenPresenter() :MvpPresenter<LoaderScreenView>(){
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Main + job)
+    private lateinit var repository: LoaderScreenRepository
+
+
+    fun setRep(rep:LoaderScreenRepository){
+        repository = rep
+    }
 
     fun onOptionsItemSelected(){
         viewState.finishActivity()

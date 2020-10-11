@@ -39,6 +39,7 @@ android {
 apply plugin: 'androidx.navigation.safeargs'
 
 dependencies {
+    implementation 'androidx.legacy:legacy-support-v4:1.0.0'
     def navigationVersion = "2.3.0"
     def drawerLayoutVersion = "1.1.0"
     implementation "androidx.drawerlayout:drawerlayout:$drawerLayoutVersion"

@@ -9,11 +9,16 @@ import moxy.MvpPresenter
 import java.io.File
 import kotlin.collections.ArrayList
 
-class StartScreenPresenter(private val repository: StartScreenRepository) : MvpPresenter<StartView>(){
+class StartScreenPresenter() : MvpPresenter<StartView>(){
     private lateinit var books:ArrayList<MenuBookModel>
+    private lateinit var repository:StartScreenRepository
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Main + job)
     private var startedActivityInd = -1
+
+    fun setRepository(rep:StartScreenRepository){
+        repository = rep
+    }
 
     fun onViewCreated(){
         scope.launch {
@@ -80,13 +85,10 @@ class StartScreenPresenter(private val repository: StartScreenRepository) : MvpP
         grantResults: IntArray
     ) {
         if (requestCode == 0) {
-            viewState.showSearchSettingsDialog()
+            //viewState.showSearchSettingsDialog()
         }
     }
 
-    fun onOptionsItemSelected() {
-        viewState.showSideMenu()
-    }
 
     fun onActivityResult(bookPath:String) {
         addBookToList(bookPath)
@@ -107,24 +109,21 @@ class StartScreenPresenter(private val repository: StartScreenRepository) : MvpP
     }
 
     fun onBookClicked(position:Int){
-        if (startedActivityInd == -1){
-            startedActivityInd = position
-            scope.launch {
-                val book = books[position]
-                val ind = repository.getBookIndByPath(book.path)
-                if (ind != -1){
-                    viewState.startInfoActivity(ind)
-                }else{
-                    val newInd = repository.getAnalyzedBookCount()
-                    viewState.startLoadingActivity(book.path, newInd)
-                }
+        startedActivityInd = position
+        scope.launch {
+            val book = books[position]
+            val ind = repository.getBookIndByPath(book.path)
+            if (ind != -1){
+                viewState.startInfoActivity(ind)
+            }else{
+                val newInd = repository.getAnalyzedBookCount()
+                viewState.startLoadingActivity(book.path, newInd)
             }
         }
     }
 
-    fun onRestart() {
+    fun onResume() {
         scope.launch {
-            println(startedActivityInd)
             if (startedActivityInd >= 0){
                 val wordCount = repository.getUniqueWordCount(books[startedActivityInd].path)
                 if (books[startedActivityInd].wordCount != wordCount){
@@ -136,6 +135,7 @@ class StartScreenPresenter(private val repository: StartScreenRepository) : MvpP
             startedActivityInd = -1
         }
     }
+
 
     fun onStop() {
         scope.launch{

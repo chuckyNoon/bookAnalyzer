@@ -15,9 +15,9 @@ import moxy.ktx.moxyPresenter
 import java.io.*
 
 
-class LoaderScreenActivity : MvpAppCompatActivity(),LoaderScreenView {
+class LoaderScreenActivity : MvpAppCompatActivity(){
     private val repository = LoaderScreenRepository(this)
-    private val presenter by moxyPresenter{ LoaderScreenPresenter(repository) }
+    //private val presenter by moxyPresenter{ LoaderScreenPresenter() }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,7 +33,7 @@ class LoaderScreenActivity : MvpAppCompatActivity(),LoaderScreenView {
             val bookInd = arguments.getInt("ind")
             try {
                 val inStream = FileInputStream(path)
-                presenter.onViewCreated(bookInd, inStream, path)
+               // presenter.onViewCreated(bookInd, inStream, path)
             }catch(e:IOException){
                 println("here")
             }
@@ -49,24 +49,14 @@ class LoaderScreenActivity : MvpAppCompatActivity(),LoaderScreenView {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if(item.itemId == android.R.id.home ){
-            presenter.onOptionsItemSelected()
+           // presenter.onOptionsItemSelected()
         }
         return super.onOptionsItemSelected(item)
     }
 
-    override fun finishActivity(){
-        finish()
-    }
-
-    override fun goToInfoActivity(bookInd:Int) {
-        val intent = Intent(this@LoaderScreenActivity, BookInfoActivity::class.java)
-        intent.putExtra("ind", bookInd)
-
-        startActivity(intent)
-    }
 
     override fun onStop() {
         super.onStop()
-        presenter.onStop()
+       // presenter.onStop()
     }
 }

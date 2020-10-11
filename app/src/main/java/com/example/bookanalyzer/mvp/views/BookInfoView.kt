@@ -6,7 +6,7 @@ import moxy.viewstate.strategy.alias.Skip
 
 @AddToEnd
 interface BookInfoView : MvpView {
-    fun finishActivity()
+    //fun finishActivity()
     fun setViewsText(path:String,
                      uniqWordCount:String,
                      allWordCount:String,

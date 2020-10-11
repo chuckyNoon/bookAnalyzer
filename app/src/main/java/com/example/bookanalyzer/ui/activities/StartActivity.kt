@@ -1,41 +1,32 @@
 package com.example.bookanalyzer.ui.activities
 
 import android.Manifest
-import android.animation.Animator
-import android.animation.ObjectAnimator
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Log
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.ListView
-import android.widget.TextView
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.recyclerview.widget.ItemTouchHelper
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.bookanalyzer.*
+import androidx.fragment.app.Fragment
+import com.example.bookanalyzer.R
 import com.example.bookanalyzer.common.FileUtils
 import com.example.bookanalyzer.interfaces.OnSideMenuItemTouchListener
 import com.example.bookanalyzer.ui.adapters.SideMenuAdapter
-import com.example.bookanalyzer.ui.fragments.SearchSettingsDialog
-import com.example.bookanalyzer.interfaces.SimpleItemTouchHelperCallback
-import com.example.bookanalyzer.mvp.presenters.StartScreenPresenter
-import com.example.bookanalyzer.mvp.repositories.StartScreenRepository
-import com.example.bookanalyzer.mvp.views.StartView
-import com.example.bookanalyzer.ui.adapters.BookListAdapter
 import com.example.bookanalyzer.ui.adapters.SideMenuItemModel
-import com.example.bookanalyzer.ui.fragments.FirstLaunchDialog
-import kotlinx.coroutines.*
+import com.example.bookanalyzer.ui.fragments.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import moxy.MvpAppCompatActivity
-import moxy.ktx.moxyPresenter
-
 import java.io.File
 
 interface ISelectedLaunch{
@@ -46,15 +37,22 @@ interface ISelectedSearchSettings  {
     fun onSelectedSearchSettings(formats: ArrayList<String>, dir: File)
 }
 
-class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelectedLaunch, StartView{
-    private lateinit var listView: RecyclerView
-    private lateinit var drawerLayout:DrawerLayout
-    private lateinit var loadingStateTextView:TextView
-    private lateinit var adapter: BookListAdapter
-    private lateinit var sideMenuListView:ListView
+interface IOnBookClicked{
+    fun onAnalyzedBookClicked(ind: Int)
+    fun onNewBookClicked(path: String, newInd: Int)
+}
 
-    private var repository = StartScreenRepository(this)
-    private val presenter by moxyPresenter { StartScreenPresenter(repository) }
+interface IOnLoadingCompleted{
+    fun onLoadingCompleted(ind: Int)
+}
+
+class StartActivity :MvpAppCompatActivity(),ISelectedSearchSettings,
+    ISelectedLaunch, IOnBookClicked, IOnLoadingCompleted{
+    private lateinit var drawerLayout:DrawerLayout
+    private lateinit var sideMenuListView:ListView
+    private lateinit var toolbar:  androidx.appcompat.widget.Toolbar
+    private var frameLayout:FrameLayout?=null
+    private var rightFragment:Fragment?=null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,73 +61,40 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
         initFields()
         setToolBar()
         setSideMenu()
-        setRecyclerView()
-
         val prefs = getSharedPreferences("APP_PREFERENCES", Context.MODE_PRIVATE)
+
         if (!prefs.contains("firstLaunch")) {
             prefs.edit().putBoolean("firstLaunch", true).apply()
             FirstLaunchDialog().show(supportFragmentManager, "123")
-        }else{
-            if (savedInstanceState == null)
-                presenter.onViewCreated()
+        }else if(savedInstanceState == null){
+            val bookListFragment = supportFragmentManager.findFragmentById(R.id.fragment4) as BookListFragment
+            bookListFragment.loadContentInFragment()
         }
+        val bookListFragment = supportFragmentManager.findFragmentById(R.id.fragment4) as BookListFragment
+        bookListFragment.loadMode(if (frameLayout == null)0 else 1)
     }
 
     private fun initFields(){
-        listView = findViewById(R.id.list_view)
         drawerLayout = findViewById(R.id.drawerLayout)
-        loadingStateTextView = findViewById(R.id.textview_loading_state)
+        toolbar = findViewById(R.id.toolbar)
         sideMenuListView = findViewById(R.id.sideMenuListView)
+        frameLayout = findViewById(R.id.frame)
     }
 
     private fun setToolBar(){
-        val toolBar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.products_toolbar)
-        toolBar.title = "Files"
-        toolBar.setNavigationIcon(R.drawable.baseline_menu_24)
-        setSupportActionBar(toolBar)
-    }
-
-    private fun setRecyclerView() {
-        val defaultBookImage = BitmapFactory.decodeResource(this.resources, R.drawable.book)
-        adapter = BookListAdapter(defaultBookImage, presenter)
-        listView.setHasFixedSize(true)
-        val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(presenter)
-        val mItemTouchHelper = ItemTouchHelper(callback)
-        mItemTouchHelper.attachToRecyclerView(listView)
-
-        listView.adapter = adapter
-        listView.layoutManager = LinearLayoutManager(this)
+        toolbar.title = "Files"
+        toolbar.setNavigationIcon(R.drawable.baseline_menu_24)
+        setSupportActionBar(toolbar)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if(item.itemId == android.R.id.home ){
-            presenter.onOptionsItemSelected()
-        }
+        if(item.itemId == android.R.id.home )
+            showSideMenu()
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onRestart() {
-        super.onRestart()
-        presenter.onRestart()
-
-    }
-
-    override fun onStop() {
-        super.onStop()
-        presenter.onStop()
-    }
-
-    override fun startLoadingActivity(bookPath:String, newBookInd:Int) {
-        val intent = Intent(this, LoaderScreenActivity::class.java)
-        intent.putExtra("path", bookPath)
-        intent.putExtra("ind", newBookInd)
-        startActivity(intent)
-    }
-
-    override fun startInfoActivity(bookInd:Int) {
-        val intentToBook = Intent(this, BookInfoActivity::class.java)
-        intentToBook.putExtra("ind", bookInd)
-        startActivity(intentToBook)
+    private fun showSideMenu() {
+        drawerLayout.open()
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -141,7 +106,8 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
                     FileUtils().getPath(this@StartActivity, data!!.data!!)
                 }
                 bookPath?.let{
-                    presenter.onActivityResult(bookPath)
+                    val f = supportFragmentManager.findFragmentById(R.id.fragment4) as BookListFragment
+                    f.onResult(bookPath)
                 }
             }
         }
@@ -162,75 +128,13 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        presenter.onRequestPermissionsResult(requestCode,permissions,grantResults)
-    }
-
-    override fun showSearchSettingsDialog() {
         SearchSettingsDialog().show(supportFragmentManager, "124")
     }
 
-    override fun onSelectedSearchSettings(formats: ArrayList<String>, dir: File) {
-        presenter.onSelectedSearchSettings(formats, dir)
+    override fun onSelectedSearchSettings(formats: ArrayList<String>, dir: File){
+        val f = supportFragmentManager.findFragmentById(R.id.fragment4) as BookListFragment
+        f.onSelectedSearchSettings(formats, dir)
     }
-
-    override fun hideLoadingStateView(){
-        loadingStateTextView.visibility = View.INVISIBLE
-    }
-
-    override fun moveLoadingStateViewUp(dur:Int){
-        ObjectAnimator.ofFloat(loadingStateTextView, "translationY", 0f).apply{
-            duration = dur.toLong()
-            start()
-        }
-    }
-
-    override fun moveLoadingStateViewDown(dur:Int){
-        val height = loadingStateTextView.height.toFloat()
-        ObjectAnimator.ofFloat(loadingStateTextView, "translationY", height).apply{
-            duration = dur.toLong()
-            start()
-        }
-    }
-
-    override fun showLoadingStateView(){
-        loadingStateTextView.visibility = View.VISIBLE
-    }
-
-    override fun setLoadingStateViewText(text: String) {
-        loadingStateTextView.text = text
-    }
-
-    override fun updateLoadingStateView(str: String, downDuration: Long, upDuration: Long){
-        val height = loadingStateTextView.height.toFloat()
-        ObjectAnimator.ofFloat(loadingStateTextView, "translationY", height).apply {
-            duration = downDuration
-            addListener(object : Animator.AnimatorListener {
-                override fun onAnimationStart(animation: Animator?) {
-                }
-                override fun onAnimationEnd(animation: Animator?) {
-                    loadingStateTextView.text = str
-                    ObjectAnimator.ofFloat(loadingStateTextView, "translationY", 0f).apply {
-                        duration = upDuration
-                        start()
-                    }
-                }
-                override fun onAnimationCancel(animation: Animator?) {
-                }
-                override fun onAnimationRepeat(animation: Animator?) {
-                }
-            })
-            start()
-        }
-    }
-
-    override fun showSideMenu() {
-        drawerLayout.open()
-    }
-
-    override fun showList(bookList: ArrayList<MenuBookModel>) {
-        adapter.setupBooks(bookList)
-    }
-
 
     @SuppressLint("ClickableViewAccessibility")
     private fun setSideMenu(){
@@ -248,7 +152,7 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
             object : OnSideMenuItemTouchListener {
                 override fun doAction() {
                     drawerLayout.close()
-                    val intent = Intent().setAction(Intent.ACTION_GET_CONTENT).setType("*/*")
+                    val intent = Intent().setAction(Intent.ACTION_GET_CONTENT).setType("* / *")
                     startActivityForResult(intent, 123)
                 }
             }
@@ -267,5 +171,39 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
         val sideMenuAdapter = SideMenuAdapter(this, ar)
         sideMenuListView.adapter = sideMenuAdapter
     }
-}
 
+    override fun onAnalyzedBookClicked(ind: Int) {
+        if (frameLayout != null) {
+            val f = BookInfoFragment.newInstance(ind)
+            replaceFragment(f)
+        }
+    }
+
+    override fun onNewBookClicked(path: String, newInd: Int) {
+        if (frameLayout != null){
+            val f = LoaderScreenFragment.newInstance(path, newInd)
+            replaceFragment(f)
+        }
+    }
+
+    private fun replaceFragment(f: Fragment){
+        supportFragmentManager.popBackStack()
+        val transaction = supportFragmentManager.beginTransaction()
+        transaction.addToBackStack(null).replace(R.id.frame, f)
+        transaction.commit()
+        rightFragment = f
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+        if (supportFragmentManager.backStackEntryCount == 0){
+            rightFragment = null
+        }
+    }
+
+    override fun onLoadingCompleted(ind: Int) {
+        onAnalyzedBookClicked(ind)
+        val f = supportFragmentManager.findFragmentById(R.id.fragment4) as BookListFragment
+        f.updateWordCount()
+    }
+}

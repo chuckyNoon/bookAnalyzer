@@ -22,20 +22,22 @@ import kotlinx.android.synthetic.main.book_list_elem.view.*
 class BookListAdapter(private val defBitmap:Bitmap,private val presenter:StartScreenPresenter) :
     RecyclerView.Adapter<BookListAdapter.ItemViewHolder>(){
 
+
+   // private var ar:ArrayList<MenuBookModel> = ArrayList()
     private val diffUtilCallback = object : DiffUtil.ItemCallback<MenuBookModel>(){
         override fun areItemsTheSame(oldItem: MenuBookModel, newItem: MenuBookModel): Boolean {
             return oldItem.path == newItem.path
         }
 
         override fun areContentsTheSame(oldItem: MenuBookModel, newItem: MenuBookModel): Boolean {
-           return when{
-                oldItem.path != newItem.path -> false
-                oldItem.author != newItem.author ->false
-                oldItem.name != newItem.name->false
-                oldItem.bitmap != newItem.bitmap->false
-                oldItem.wordCount != newItem.wordCount->false
-                oldItem.selected != newItem.selected ->false
-                else -> true
+           return when {
+               oldItem.path != newItem.path -> false
+               oldItem.author != newItem.author -> false
+               oldItem.name != newItem.name -> false
+               oldItem.bitmap != newItem.bitmap -> false
+               oldItem.wordCount != newItem.wordCount -> false
+               oldItem.selected != newItem.selected -> false
+               else -> true
            }
         }
     }
@@ -44,6 +46,7 @@ class BookListAdapter(private val defBitmap:Bitmap,private val presenter:StartSc
 
     fun setupBooks(arrayList: ArrayList<MenuBookModel>){
         differ.submitList(arrayList)
+        //ar = arrayList
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
@@ -60,7 +63,6 @@ class BookListAdapter(private val defBitmap:Bitmap,private val presenter:StartSc
         val relPath = book.path.split("/").last()
         val bookFormat = book.path.split(".").last().toUpperCase()?:""
         val view = holder.view.view_foreground
-
         view.setOnTouchListener { v, event ->
             val tr = v?.background as TransitionDrawable
             when (event?.action) {
@@ -94,6 +96,7 @@ class BookListAdapter(private val defBitmap:Bitmap,private val presenter:StartSc
 
     override fun getItemCount(): Int {
         return differ.currentList.size
+        //return ar.size
     }
 
     class ItemViewHolder(val view: View) : RecyclerView.ViewHolder(view),

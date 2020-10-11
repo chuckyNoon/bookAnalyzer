@@ -8,21 +8,16 @@ import kotlinx.coroutines.*
 import moxy.MvpPresenter
 import kotlin.concurrent.thread
 
-class BookInfoPresenter(private val repository: BookInfoRepository) : MvpPresenter<BookInfoView>(){
+class BookInfoPresenter() : MvpPresenter<BookInfoView>(){
+    private lateinit var repository: BookInfoRepository
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Main + job)
-    private val handler = Handler()
+
+    fun setRepository(repository: BookInfoRepository){
+        this.repository = repository
+    }
 
     fun onViewCreated(ind:Int) {
-        /*thread {
-            val model = repository.readInfo(ind)
-            Thread.sleep(10000)
-            handler.post {
-                viewState.setViewsText(model.path, model.uniqueWordCount, model.allWordCount, model.allCharsCount,
-                    model.avgSentenceLenInWrd, model.avgSentenceLenInChr, model.avgWordLen
-                )
-            }
-        }*/
         scope.launch {
             val time1= System.currentTimeMillis()
             val model = withContext(Dispatchers.Default) {
@@ -44,14 +39,6 @@ class BookInfoPresenter(private val repository: BookInfoRepository) : MvpPresent
         }
     }
 
-    /*
-    }*/
-
-
-
-    fun onOptionsItemSelected() {
-        viewState.finishActivity()
-    }
 
     fun onWordListButtonClicked(ind:Int) {
         viewState.startWordListActivity(ind)
