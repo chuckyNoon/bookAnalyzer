@@ -1,16 +1,14 @@
 package com.example.bookanalyzer.mvp.repositories
 
 import android.content.Context
-import com.example.bookanalyzer.data.AnalyzedInfoSaver
-import com.example.bookanalyzer.ui.adapters.WordListElemModel
+import com.example.bookanalyzer.data.filesystem.WordListStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.io.IOException
 
 class WordListRepository(private val ctx: Context) {
-    private val analyzedInfoSaver = AnalyzedInfoSaver(ctx)
+    private val wordListStorage = WordListStorage(ctx)
 
     suspend fun getWordList(ind: Int) = withContext(Dispatchers.Default){
-        (analyzedInfoSaver.getWordList(ind))
+        (wordListStorage.getWordList(ind))
     }
 }

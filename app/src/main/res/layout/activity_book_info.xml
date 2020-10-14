@@ -23,8 +23,8 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_height="0dp"
+            android:layout_weight="2"
             android:background="@android:color/background_light"
             android:orientation="horizontal">
 
@@ -34,7 +34,7 @@
                 android:layout_marginStart="20dp"
                 android:layout_weight="1"
                 android:gravity="start|center_vertical"
-                android:text="File Name"
+                android:text="@string/file_name"
                 android:textColor="#000000"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -43,7 +43,7 @@
                 android:id="@+id/bookNameView"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_marginEnd="30dp"
+                android:layout_marginEnd="15dp"
                 android:layout_weight="1"
                 android:gravity="center_vertical|end"
                 android:textColor="#673AB7"
@@ -64,7 +64,7 @@
                 android:layout_marginStart="20dp"
                 android:layout_weight="1"
                 android:gravity="start|center_vertical"
-                android:text="Unique word count"
+                android:text="@string/unique_word_count"
                 android:textColor="#000000"
                 android:textSize="18sp"
                 android:textStyle="bold" />
@@ -73,7 +73,7 @@
                 android:id="@+id/uniqWordView"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_marginEnd="30dp"
+                android:layout_marginEnd="15dp"
                 android:layout_weight="1"
                 android:gravity="center_vertical|end"
                 android:textColor="#673AB7"
@@ -95,7 +95,7 @@
                 android:layout_weight="1"
                 android:background="#FFFFFF"
                 android:gravity="start|center_vertical"
-                android:text="Word count"
+                android:text="@string/word_count"
                 android:textColor="#000000"
                 android:textSize="18sp" />
 
@@ -103,7 +103,7 @@
                 android:id="@+id/allWordCountView"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_marginEnd="30dp"
+                android:layout_marginEnd="15dp"
                 android:layout_weight="1"
                 android:background="#FFFFFF"
                 android:gravity="center_vertical|end"
@@ -125,7 +125,7 @@
                 android:layout_weight="1"
                 android:background="#FFFFFF"
                 android:gravity="start|center_vertical"
-                android:text="Character count"
+                android:text="@string/character_count"
                 android:textColor="#000000"
                 android:textSize="18sp" />
 
@@ -133,7 +133,7 @@
                 android:id="@+id/allCharsCountView"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_marginEnd="30dp"
+                android:layout_marginEnd="15dp"
                 android:layout_weight="1"
                 android:background="#FFFFFF"
                 android:gravity="center_vertical|end"
@@ -155,7 +155,7 @@
                 android:layout_weight="1"
                 android:background="#FFFFFF"
                 android:gravity="start|center_vertical"
-                android:text="Average Sentence Length(words)"
+                android:text="@string/average_sentence_length_wrd"
                 android:textColor="#000000"
                 android:textSize="18sp" />
 
@@ -163,7 +163,7 @@
                 android:id="@+id/avgSentenceLenView1"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_marginEnd="30dp"
+                android:layout_marginEnd="15dp"
                 android:layout_weight="1"
                 android:background="#FFFFFF"
                 android:gravity="center_vertical|end"
@@ -185,7 +185,7 @@
                 android:layout_weight="1"
                 android:background="#FFFFFF"
                 android:gravity="start|center_vertical"
-                android:text="Average Sentence Length(characters)"
+                android:text="@string/average_sentence_length_chr"
                 android:textColor="#000000"
                 android:textSize="18sp" />
 
@@ -193,7 +193,7 @@
                 android:id="@+id/avgSentenceLenView2"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_marginEnd="30dp"
+                android:layout_marginEnd="15dp"
                 android:layout_weight="1"
                 android:background="#FFFFFF"
                 android:gravity="center_vertical|end"
@@ -215,7 +215,7 @@
                 android:layout_weight="1"
                 android:background="#FFFFFF"
                 android:gravity="start|center_vertical"
-                android:text="Average Word Length"
+                android:text="@string/average_word_length"
                 android:textColor="#000000"
                 android:textSize="18sp" />
 
@@ -223,7 +223,7 @@
                 android:id="@+id/avgWordLenView"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_marginEnd="30dp"
+                android:layout_marginEnd="15dp"
                 android:layout_weight="1"
                 android:background="#FFFFFF"
                 android:gravity="center_vertical|end"
@@ -236,7 +236,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="end"
-            android:text="List of Words" />
+            android:text="@string/list_button_text" />
 
     </LinearLayout>
 

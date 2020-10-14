@@ -9,17 +9,16 @@ import android.widget.Button
 import android.widget.CheckBox
 import android.widget.RadioGroup
 import androidx.fragment.app.DialogFragment
-import com.example.bookanalyzer.ui.activities.ISelectedSearchSettings
 import com.example.bookanalyzer.R
-import java.io.FileInputStream
+import java.io.File
 
 
 class SearchSettingsDialog : DialogFragment(){
-    private var mCallback: ISelectedSearchSettings? = null
+    private var mCallback: IOnSelectedSearchSettings? = null
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         dialog?.setTitle("Title!")
-        val view = layoutInflater.inflate(R.layout.search_settings_dialog, null)
+        val view = layoutInflater.inflate(R.layout.dialog_search_settings, null)
         view.findViewById<Button>(R.id.startSearchButton).setOnClickListener {
             val epubSelected = view.findViewById<CheckBox>(R.id.epubBox).isChecked
             val fb2Selected = view.findViewById<CheckBox>(R.id.fb2Box).isChecked
@@ -50,10 +49,14 @@ class SearchSettingsDialog : DialogFragment(){
     override fun onAttach(context: Context) {
         super.onAttach(context)
         try {
-            mCallback = activity as ISelectedSearchSettings
+            mCallback = activity as IOnSelectedSearchSettings
         } catch (e: ClassCastException) {
             println("doesnt support")
         }
     }
 
+    interface IOnSelectedSearchSettings  {
+        fun onSelectedSearchSettings(formats: ArrayList<String>, dir: File)
+    }
 }
+

@@ -3,19 +3,16 @@ package com.example.bookanalyzer.ui.activities
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
-import android.widget.AdapterView
 import android.widget.SeekBar
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bookanalyzer.R
-import com.example.bookanalyzer.mvp.presenters.BookInfoPresenter
 import com.example.bookanalyzer.mvp.presenters.WordListPresenter
 import com.example.bookanalyzer.mvp.repositories.WordListRepository
 import com.example.bookanalyzer.mvp.views.WordListView
 import com.example.bookanalyzer.ui.adapters.WordListAdapter
-import com.example.bookanalyzer.ui.adapters.WordListElemModel
+import com.example.bookanalyzer.ui.adapters.WordListItem
 import moxy.MvpAppCompatActivity
 import moxy.ktx.moxyPresenter
 
@@ -101,7 +98,7 @@ class WordListActivity : MvpAppCompatActivity(), WordListView {
         seekBar.max = maxVal
     }
 
-    override fun setupWordLines(linesList: ArrayList<WordListElemModel>) {
+    override fun setupWordLines(linesList: ArrayList<WordListItem>) {
         wordListAdapter.setupData(linesList)
     }
 }

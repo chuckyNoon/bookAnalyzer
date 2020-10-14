@@ -3,19 +3,19 @@ package com.example.bookanalyzer.ui.adapters
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bookanalyzer.R
-import kotlinx.android.synthetic.main.word_list_elem.view.*
+import kotlinx.android.synthetic.main.item_word_list_row.view.*
 
-class WordListElemModel(var word:String, var frequency:String, var pos:String){
+class WordListItem(var word:String, var frequency:String, var pos:String){
 }
 
 class WordListAdapter : RecyclerView.Adapter<WordListAdapter.MyViewHolder>() {
-    class MyViewHolder(val view: View) : RecyclerView.ViewHolder(view)
-    private var ar:ArrayList<WordListElemModel> = ArrayList()
+    private var ar:ArrayList<WordListItem> = ArrayList()
     private var onItemClickListener:View.OnClickListener? = null
 
-    fun setupData(rowsList:ArrayList<WordListElemModel>){
+    fun setupData(rowsList:ArrayList<WordListItem>){
         ar = rowsList
     }
 
@@ -24,7 +24,7 @@ class WordListAdapter : RecyclerView.Adapter<WordListAdapter.MyViewHolder>() {
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.word_list_elem, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_word_list_row, parent, false)
 
         return MyViewHolder(view)
     }
@@ -34,13 +34,19 @@ class WordListAdapter : RecyclerView.Adapter<WordListAdapter.MyViewHolder>() {
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-        val view = holder.view
         val data = ar[position]
-        view.wordView.text = data.word
-        view.frequencyView.text = data.frequency
-        view.indView.text = data.pos
+
+        holder.wordView.text = data.word
+        holder.frequencyView.text = data.frequency
+        holder.indView.text = data.pos
         onItemClickListener?.let {
-            view.setOnClickListener(it)
+            holder.view.setOnClickListener(it)
         }
+    }
+
+    class MyViewHolder(val view: View) : RecyclerView.ViewHolder(view){
+        val wordView: TextView = view.wordView
+        val frequencyView:TextView = view.frequencyView
+        val indView:TextView = view.indView
     }
 }

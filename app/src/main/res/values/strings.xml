@@ -1,3 +1,18 @@
 <resources>
     <string name="app_name">BookAnalyzer</string>
+
+    <string name="file_name">File name</string>
+    <string name="unique_word_count">Unique word count</string>
+    <string name="word_count">Word count</string>
+    <string name="character_count">Character count</string>
+    <string name="average_sentence_length_wrd">Average Sentence Length(words)</string>
+    <string name="average_sentence_length_chr">Average Sentence Length(characters)</string>
+    <string name="average_word_length">Average Word Length</string>
+    <string name="list_button_text">List of words</string>
+
+    <string name = "waiting_text">Analysing…</string>
+    <string name = "start_screen_title">Books</string>
+    <string name = "select_new_file">Select new file</string>
+    <string name = "search_books">Search books…</string>
+
 </resources>

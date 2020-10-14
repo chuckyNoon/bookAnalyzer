@@ -1,24 +1,31 @@
-package com.example.bookanalyzer.data
+package com.example.bookanalyzer.data.filesystem
 
 import android.content.Context
-import com.example.bookanalyzer.MenuBookModel
+import android.graphics.Bitmap
 import com.example.bookanalyzer.common.Utils
 import nl.siegmann.epublib.domain.Book
 import nl.siegmann.epublib.epub.EpubReader
 import java.io.FileInputStream
-import kotlin.collections.ArrayList
+import java.io.IOException
 
-class PresentationInfoLoader(private val ctx: Context) : FileDataStorage(){
-    fun getPreviewList(savedPaths:ArrayList<String>) : ArrayList<MenuBookModel>{
-        val bookList = ArrayList<MenuBookModel>()
-        for (path in savedPaths){
-            bookList.add(MenuBookModel(path, null, null, null, 0))
+class ParsedBookData(
+    var path:String,
+    var title:String?,
+    var author:String?,
+    var imgPath: String?)
+{
+}
+
+class PreviewDataParser(private val ctx: Context) {
+    fun getPreviewList(paths: ArrayList<String>) : ArrayList<ParsedBookData>{
+        val bookList = ArrayList<ParsedBookData>()
+        for (path in paths){
+            bookList.add(getPreviewData(path))
         }
-
         return bookList
     }
 
-    fun getDetailedBookInfo(path:String) : MenuBookModel {
+    fun getPreviewData(path: String) : ParsedBookData {
         val book = when(getFormat(path)) {
             "epub" -> parseEpub(path)
             "fb2" -> parseFb2(path)
@@ -27,7 +34,7 @@ class PresentationInfoLoader(private val ctx: Context) : FileDataStorage(){
         return book
     }
 
-    private fun getFormat(path:String) : String{
+    private fun getFormat(path: String) : String{
         return when{
             path.endsWith(".epub") -> "epub"
             path.endsWith(".fb2") -> "fb2"
@@ -35,35 +42,53 @@ class PresentationInfoLoader(private val ctx: Context) : FileDataStorage(){
         }
     }
 
-    private fun parseEpub(path:String) : MenuBookModel {
+    private fun saveImage(bitmap:Bitmap, imgPath:String){
+        try{
+            val out = ctx.openFileOutput(imgPath,0)
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+            out.close()
+        }catch (e:IOException){
+            println(e)
+        }
+    }
+
+    private fun parseEpub(path: String) : ParsedBookData {
         val inStream = FileInputStream(path)
         val ebook: Book = EpubReader().readEpub(inStream)
-
         val author = if (ebook.metadata.authors.size > 0)
             ebook.metadata.authors[0].firstname + " " + ebook.metadata.authors[0].lastname
             else ""
         val bookName = ebook.title
+        val bitmap = Utils.byteArrayToBitmap(ebook.coverImage?.data)
+        val imgPath = if(ebook.coverImage != null) "$bookName.jpg" else null
+        if (imgPath != null && bitmap != null) {
+            saveImage(bitmap, imgPath)
+        }
 
-        return (MenuBookModel(path, bookName, author, Utils.byteArrayToBitmap(ebook.coverImage?.data)))
+        return (ParsedBookData(path, bookName, author,imgPath))
     }
 
-    private fun parseFb2(path:String) : MenuBookModel{
+    private fun parseFb2(path: String) : ParsedBookData{
         val fileInputStream = FileInputStream(path)
         val unhandledStr = fileInputStream.readBytes().toString(Charsets.UTF_8)
         fileInputStream.close()
 
         val bookTitle = getBookTitleFromFb2(unhandledStr)
         val author = getAuthorFromFb2(unhandledStr)
-        val imgByteArray = getImageFromFb2(unhandledStr)
+        val bitmap = Utils.byteArrayToBitmap(getImageFromFb2(unhandledStr))
+        val imgPath = if(bitmap != null) "${bookTitle}.jpg" else null
+        if (imgPath != null && bitmap != null) {
+            saveImage(bitmap, imgPath)
+        }
 
-        return (MenuBookModel(path, bookTitle, author, Utils.byteArrayToBitmap(imgByteArray)))
+        return (ParsedBookData(path, bookTitle, author, imgPath))
     }
 
-    private fun parseTxt(path:String) : MenuBookModel {
-        return MenuBookModel(path, null, null, null)
+    private fun parseTxt(path: String) : ParsedBookData {
+        return ParsedBookData(path, null, null, null)
     }
 
-    private fun getAuthorFromFb2(unhandledStr:String) : String?{
+    private fun getAuthorFromFb2(unhandledStr: String) : String?{
         var fInd1 = unhandledStr.indexOf("<first-name>")
         var fInd2 = unhandledStr.indexOf("</first-name>")
         var mInd1 = unhandledStr.indexOf("<middle-name>")
@@ -85,6 +110,7 @@ class PresentationInfoLoader(private val ctx: Context) : FileDataStorage(){
             if (mInd1 <= mInd2)
                 middleName = unhandledStr.substring(mInd1, mInd2)
         }
+
         if (lInd1 in 0 until lInd2){
             lInd1 += "<last-name>".length
             if (lInd1 <= lInd2)
@@ -93,7 +119,7 @@ class PresentationInfoLoader(private val ctx: Context) : FileDataStorage(){
         return ("$firstName $middleName $lastName")
     }
 
-    private fun getBookTitleFromFb2(unhandledStr:String) : String?{
+    private fun getBookTitleFromFb2(unhandledStr: String) : String?{
         var bookTitle = ""
         var ind1 = unhandledStr.indexOf("<book-title>")
         var ind2 = unhandledStr.indexOf("</book-title>")
@@ -104,17 +130,17 @@ class PresentationInfoLoader(private val ctx: Context) : FileDataStorage(){
         return bookTitle
     }
 
-    private fun getImageFromFb2(unhandledStr:String) : ByteArray?{
-        var imgNameStart = unhandledStr.indexOf( "xlink:href=")
+    private fun getImageFromFb2(unhandledStr: String) : ByteArray?{
+        var imgNameStart = unhandledStr.indexOf("xlink:href=")
         var name = ""
         if (imgNameStart >= 0) {
             imgNameStart += ("xlink:href=").length
             val imgNameEnd = unhandledStr.indexOf("\"", imgNameStart + 1)
             if (imgNameEnd >= 0){
-                name = unhandledStr.substring(imgNameStart, imgNameEnd + 1).replace("#","")
+                name = unhandledStr.substring(imgNameStart, imgNameEnd + 1).replace("#", "")
             }
         }
-        val imgStart = unhandledStr.indexOf(">",unhandledStr.indexOf("<binary id=$name")) + 1
+        val imgStart = unhandledStr.indexOf(">", unhandledStr.indexOf("<binary id=$name")) + 1
         val imgEnd = unhandledStr.indexOf("</binary", imgStart) - 1
         var imgByteArray:ByteArray? = null
         if (imgStart >=0 && imgEnd>= 0) {

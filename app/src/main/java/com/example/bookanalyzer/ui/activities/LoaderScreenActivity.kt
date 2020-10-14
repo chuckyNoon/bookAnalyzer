@@ -3,16 +3,12 @@ package com.example.bookanalyzer.ui.activities
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
-import androidx.appcompat.app.AppCompatActivity
 import com.example.bookanalyzer.R
-import com.example.bookanalyzer.data.AnalyzedInfoSaver
-import com.example.bookanalyzer.mvp.presenters.BookInfoPresenter
 import com.example.bookanalyzer.mvp.presenters.LoaderScreenPresenter
 import com.example.bookanalyzer.mvp.repositories.LoaderScreenRepository
 import com.example.bookanalyzer.mvp.views.LoaderScreenView
 import moxy.MvpAppCompatActivity
 import moxy.ktx.moxyPresenter
-import java.io.*
 
 
 class LoaderScreenActivity : MvpAppCompatActivity(),LoaderScreenView {
@@ -31,12 +27,7 @@ class LoaderScreenActivity : MvpAppCompatActivity(),LoaderScreenView {
             finish()
         }else if(savedInstanceState == null){
             val bookInd = arguments.getInt("ind")
-            try {
-                val inStream = FileInputStream(path)
-                presenter.onViewCreated(bookInd, inStream, path)
-            }catch(e:IOException){
-                println("here")
-            }
+            presenter.onViewCreated(bookInd, path)
         }
     }
 

@@ -34,7 +34,7 @@
             android:layout_weight="1"
             android:autoText="false"
             android:gravity="center"
-            android:text="Analysing..."
+            android:text="@string/waiting_text"
             android:textColor="#0055A5"
             android:textSize="36sp"
             android:textStyle="bold" />
@@ -48,8 +48,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:background="@drawable/g7"
-                android:src="@drawable/g7" />
+                android:background="@drawable/gear"
+                android:src="@drawable/gear" />
         </LinearLayout>
 
     </LinearLayout>
