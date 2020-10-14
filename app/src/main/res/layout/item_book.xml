@@ -15,7 +15,7 @@
         android:id="@+id/view_foreground"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/book_transition">
+        android:background="@drawable/transition_book_to_clicked_state">
 
         <ImageView
             android:id="@+id/bookImage"

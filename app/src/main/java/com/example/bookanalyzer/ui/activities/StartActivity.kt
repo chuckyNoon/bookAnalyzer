@@ -7,6 +7,7 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.MenuItem
@@ -30,6 +31,7 @@ import com.example.bookanalyzer.mvp.presenters.StartScreenPresenter
 import com.example.bookanalyzer.mvp.repositories.StartScreenRepository
 import com.example.bookanalyzer.mvp.views.StartView
 import com.example.bookanalyzer.ui.adapters.BookListAdapter
+import com.example.bookanalyzer.ui.adapters.BookListItem
 import com.example.bookanalyzer.ui.adapters.SideMenuItemModel
 import com.example.bookanalyzer.ui.fragments.FirstLaunchDialog
 import kotlinx.coroutines.*
@@ -38,15 +40,9 @@ import moxy.ktx.moxyPresenter
 
 import java.io.File
 
-interface ISelectedLaunch{
-    fun onSelectedLaunch(ifScan: Boolean)
-}
+class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.IOnSelectedSearchSettings,
+    FirstLaunchDialog.IOnSelectedLaunchType, StartView{
 
-interface ISelectedSearchSettings  {
-    fun onSelectedSearchSettings(formats: ArrayList<String>, dir: File)
-}
-
-class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelectedLaunch, StartView{
     private lateinit var listView: RecyclerView
     private lateinit var drawerLayout:DrawerLayout
     private lateinit var loadingStateTextView:TextView
@@ -55,6 +51,11 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
 
     private var repository = StartScreenRepository(this)
     private val presenter by moxyPresenter { StartScreenPresenter(repository) }
+
+    private val FIRST_LAUNCH_TAG = "firstLaunch"
+    private val REQUEST_PERMISSION_FOR_BOOK_ADD = 1
+    private val REQUEST_PERMISSION_FOR_BOOK_SEARCH = 2
+    private val SELECT_FILE_REQUEST_CODE = 123
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -66,12 +67,11 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
         setRecyclerView()
 
         val prefs = getSharedPreferences("APP_PREFERENCES", Context.MODE_PRIVATE)
-        if (!prefs.contains("firstLaunch")) {
-            prefs.edit().putBoolean("firstLaunch", true).apply()
+        if (!prefs.contains(FIRST_LAUNCH_TAG)) {
+            prefs.edit().putBoolean(FIRST_LAUNCH_TAG, true).apply()
             FirstLaunchDialog().show(supportFragmentManager, "123")
-        }else{
-            if (savedInstanceState == null)
-                presenter.onViewCreated()
+        }else if (savedInstanceState == null) {
+            presenter.onViewCreated()
         }
     }
 
@@ -84,14 +84,14 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
 
     private fun setToolBar(){
         val toolBar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.products_toolbar)
-        toolBar.title = "Files"
+        toolBar.title = resources.getString(R.string.start_screen_title)
         toolBar.setNavigationIcon(R.drawable.baseline_menu_24)
         setSupportActionBar(toolBar)
     }
 
     private fun setRecyclerView() {
         val defaultBookImage = BitmapFactory.decodeResource(this.resources, R.drawable.book)
-        adapter = BookListAdapter(defaultBookImage, presenter)
+        adapter = BookListAdapter(this,defaultBookImage, presenter)
         listView.setHasFixedSize(true)
         val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(presenter)
         val mItemTouchHelper = ItemTouchHelper(callback)
@@ -111,7 +111,6 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
     override fun onRestart() {
         super.onRestart()
         presenter.onRestart()
-
     }
 
     override fun onStop() {
@@ -134,11 +133,11 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 123 && resultCode == Activity.RESULT_OK) {
+        if (requestCode == SELECT_FILE_REQUEST_CODE && resultCode == Activity.RESULT_OK && data?.data != null) {
             val scope = CoroutineScope(Dispatchers.Main)
             scope.launch {
                 val bookPath = withContext(Dispatchers.IO) {
-                    FileUtils().getPath(this@StartActivity, data!!.data!!)
+                    FileUtils().getPathByUri(this@StartActivity, data.data!!)
                 }
                 bookPath?.let{
                     presenter.onActivityResult(bookPath)
@@ -147,12 +146,16 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
         }
     }
 
-    override fun onSelectedLaunch(ifScan: Boolean) {
+    private fun requestReadPermission(requestCode: Int){
+        val requiredPermissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        ActivityCompat.requestPermissions(this, requiredPermissions, requestCode)
+    }
+
+    override fun onSelectedLaunchType(ifScan: Boolean) {
         if (ifScan){
-            val requiredPermissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-            ActivityCompat.requestPermissions(this, requiredPermissions, 0)
+            requestReadPermission(REQUEST_PERMISSION_FOR_BOOK_SEARCH)
         }else{
-            Toast.makeText(this, "Books not searched", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "Books are not searched", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -162,7 +165,19 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        presenter.onRequestPermissionsResult(requestCode,permissions,grantResults)
+        if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+            when (requestCode){
+                REQUEST_PERMISSION_FOR_BOOK_ADD ->{
+                    drawerLayout.close()
+                    val intent = Intent().setAction(Intent.ACTION_GET_CONTENT).setType("*/*")
+                    startActivityForResult(intent, SELECT_FILE_REQUEST_CODE)
+                }
+                REQUEST_PERMISSION_FOR_BOOK_SEARCH->{
+                    drawerLayout.close()
+                    showSearchSettingsDialog()
+                }
+            }
+        }
     }
 
     override fun showSearchSettingsDialog() {
@@ -227,8 +242,8 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
         drawerLayout.open()
     }
 
-    override fun showList(bookList: ArrayList<MenuBookModel>) {
-        adapter.setupBooks(bookList)
+    override fun showList(itemList: ArrayList<BookListItem>) {
+        adapter.setupBooks(itemList)
     }
 
 
@@ -243,24 +258,21 @@ class StartActivity : MvpAppCompatActivity(), ISelectedSearchSettings, ISelected
             }
         ))
         ar.add(SideMenuItemModel(
-            "Select new file...",
+            resources.getString(R.string.select_new_file),
             R.drawable.baseline_folder_24,
             object : OnSideMenuItemTouchListener {
                 override fun doAction() {
-                    drawerLayout.close()
-                    val intent = Intent().setAction(Intent.ACTION_GET_CONTENT).setType("*/*")
-                    startActivityForResult(intent, 123)
+                    requestReadPermission(REQUEST_PERMISSION_FOR_BOOK_ADD)
                 }
             }
         ))
 
         ar.add(SideMenuItemModel(
-            "Search files...",
+            resources.getString(R.string.search_books),
             R.drawable.baseline_search_24,
             object : OnSideMenuItemTouchListener {
                 override fun doAction() {
-                    drawerLayout.close()
-                    SearchSettingsDialog().show(supportFragmentManager, "124")
+                    requestReadPermission(REQUEST_PERMISSION_FOR_BOOK_SEARCH)
                 }
             }
         ))

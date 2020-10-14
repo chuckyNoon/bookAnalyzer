@@ -1,5 +1,6 @@
 package com.example.bookanalyzer.mvp.views
-import com.example.bookanalyzer.MenuBookModel
+import com.example.bookanalyzer.data.database.models.DbBookPreviewData
+import com.example.bookanalyzer.ui.adapters.BookListItem
 import moxy.MvpView
 import moxy.viewstate.strategy.alias.AddToEnd
 import moxy.viewstate.strategy.alias.AddToEndSingle
@@ -20,7 +21,7 @@ interface StartView : MvpView{
     fun showSideMenu()
 
     @AddToEndSingle
-    fun showList(bookList: ArrayList<MenuBookModel>)
+    fun showList(itemList: ArrayList<BookListItem>)
     @Skip
     fun startLoadingActivity(bookPath:String, newBookInd:Int)
     @Skip

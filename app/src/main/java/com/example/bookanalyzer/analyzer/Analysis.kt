@@ -1,28 +1,25 @@
 package com.example.bookanalyzer.analyzer
 
 import android.content.Context
-import com.example.bookanalyzer.AnalyzedBookModel
-import java.io.InputStream
 import kotlin.math.roundToInt
 
 class BookAnalysis(private val ctx:Context)
 {
-    fun startAnalyze(inStream: InputStream, path:String ): AnalyzedBookModel {
+    fun getAnalysis(path:String ): AnalyzedBookModel {
         val parser = BookParser()
         val normalizer = WordNormalizer(ctx)
-        val parserInfo = parser.parseFile(inStream, path)
+        val parserInfo = parser.parseFile(path)
         val sourceWordMap = parser.parseWords(parserInfo.text)
         val normalizedWordMap = normalizeWordMap(normalizer, sourceWordMap)
 
         val charCount = parserInfo.text.length
-        val img = parserInfo.img
         val wordCount = calcWordCount(sourceWordMap)
         val avgWordLen = calcAvgWordLen(wordCount, sourceWordMap)
         val avgSentenceLen:Pair<Double,Double> = calcAvgSentenceLen(wordCount, parserInfo.text)
         val uniqueWordCount = normalizedWordMap.size
 
         return AnalyzedBookModel(path, uniqueWordCount, wordCount, charCount, avgSentenceLen.first,
-                                avgSentenceLen.second, avgWordLen, img, normalizedWordMap)
+                                avgSentenceLen.second, avgWordLen, normalizedWordMap)
     }
 
     private fun calcWordCount(sourceWordMap: MutableMap<String, Int>) : Int{
@@ -64,5 +61,17 @@ class BookAnalysis(private val ctx:Context)
         }
         return (ansMap.toList().sortedBy { it.second }.reversed().toMap())
     }
+
+}
+
+class AnalyzedBookModel(var path:String,
+                        var uniqueWordCount:Int,
+                        var allWordCount:Int,
+                        var allCharCount:Int,
+                        var avgSentenceLenInWrd:Double,
+                        var avgSentenceLenInChr:Double,
+                        var avgWordLen:Double,
+                        var wordMap:Map<String,Int>)
+{
 
 }

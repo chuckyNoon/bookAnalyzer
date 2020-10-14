@@ -4,7 +4,6 @@ import com.example.bookanalyzer.mvp.repositories.LoaderScreenRepository
 import com.example.bookanalyzer.mvp.views.LoaderScreenView
 import kotlinx.coroutines.*
 import moxy.MvpPresenter
-import java.io.FileInputStream
 
 class LoaderScreenPresenter(private val repository: LoaderScreenRepository) :MvpPresenter<LoaderScreenView>(){
     private val job = SupervisorJob()
@@ -14,12 +13,13 @@ class LoaderScreenPresenter(private val repository: LoaderScreenRepository) :Mvp
         viewState.finishActivity()
     }
 
-    fun onViewCreated(bookInd:Int, inStream:FileInputStream, path:String){
+    fun onViewCreated(bookInd:Int, path:String){
+
         scope.launch{
-            val info = repository.analyzeBook(inStream, path)
+            val info = repository.analyzeBook(path)
             yield()
 
-            repository.saveAnalysis(path, bookInd,  info, false)
+            repository.saveAnalysis(path, bookInd,  info)
             viewState.goToInfoActivity(bookInd)
         }
     }

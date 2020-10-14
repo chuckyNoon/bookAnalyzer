@@ -6,11 +6,12 @@ import org.jsoup.Jsoup
 import java.io.*
 
 
-class ParserInfo(var text:String = "", var img:ByteArray? = null){
+class ParserInfo(var text:String = ""){
 }
 
 class BookParser(){
-    fun parseFile(inStream: InputStream, path:String):ParserInfo{
+    fun parseFile( path:String):ParserInfo{
+         val inStream: InputStream = FileInputStream(path)
          return when{
             path.contains(".txt") -> parseTxt(inStream)
             path.contains(".epub") -> parseEpub(inStream)
@@ -51,7 +52,6 @@ class BookParser(){
         val htmlText = java.lang.StringBuilder()
         val parserInfo = ParserInfo()
 
-        parserInfo.img = book.coverImage?.data
         for (elem in book.contents) {
             val text = elem.reader.readText()
             htmlText.append(text)
@@ -76,24 +76,10 @@ class BookParser(){
 
     private fun parseFb2(inStream: InputStream): ParserInfo{
         val parserInfo = parseTxt(inStream)
-        val unhandledStr = parserInfo.text?: return parserInfo
+        val unhandledStr = parserInfo.text
 
-        var imgNameStart = unhandledStr.indexOf( "xlink:href=")
-        var name = ""
-        if (imgNameStart >= 0) {
-            imgNameStart += ("xlink:href=").length
-            val imgNameEnd = unhandledStr.indexOf("\"", imgNameStart + 1)
-            if (imgNameEnd >= 0){
-                name = unhandledStr.substring(imgNameStart, imgNameEnd + 1).replace("#","")
-            }
-        }
         val bodyStart = unhandledStr.indexOf("<body>")
         val bodyEnd = unhandledStr.indexOf("</body>")
-        val imgStart = unhandledStr.indexOf(">",unhandledStr.indexOf("<binary id=$name")) + 1
-        val imgEnd = unhandledStr.indexOf("</binary", imgStart) - 1
-        if (imgStart >=0 && imgEnd>= 0) {
-            parserInfo.img = unhandledStr.substring(imgStart, imgEnd).toByteArray()
-        }
 
         val handledStr = if (bodyStart >= 0 && bodyEnd >= 0){
             val bodyStr = unhandledStr.substring(bodyStart + "<body>".length, bodyEnd - 1)

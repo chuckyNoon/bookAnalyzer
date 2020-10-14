@@ -6,7 +6,7 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bookanalyzer.mvp.presenters.StartScreenPresenter
 import com.example.bookanalyzer.ui.adapters.BookListAdapter
-import kotlinx.android.synthetic.main.book_list_elem.view.*
+import kotlinx.android.synthetic.main.item_book.view.*
 
 class SimpleItemTouchHelperCallback(private val presenter:StartScreenPresenter) :
     ItemTouchHelper.Callback() {

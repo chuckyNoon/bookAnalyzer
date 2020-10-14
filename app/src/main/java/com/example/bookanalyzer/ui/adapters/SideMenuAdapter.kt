@@ -7,14 +7,14 @@ import android.view.ViewGroup
 import android.widget.*
 import com.example.bookanalyzer.R
 
-class SideMenuItemModel(var action:String, var iconRes:Int?, var onTouchListener: View.OnTouchListener){
+class SideMenuItemModel(var text:String, var iconRes:Int?, var onTouchListener: View.OnTouchListener){
 
 }
 
 class SideMenuAdapter(private val ctx:Context,private val ar:ArrayList<SideMenuItemModel>) : BaseAdapter() {
     private val layoutInflater = ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
-        val view = convertView ?: layoutInflater.inflate(R.layout.sidemenu_list_elem, parent, false)
+        val view = convertView ?: layoutInflater.inflate(R.layout.item_side_menu_row, parent, false)
 
         val model = ar[position]
         val imageView = view.findViewById<ImageView>(R.id.iconView)
@@ -24,7 +24,7 @@ class SideMenuAdapter(private val ctx:Context,private val ar:ArrayList<SideMenuI
         }
         else imageView.visibility = ImageView.INVISIBLE
 
-        view.findViewById<TextView>(R.id.actionTextView).text = model.action
+        view.findViewById<TextView>(R.id.actionTextView).text = model.text
         view.setOnTouchListener(model.onTouchListener)
         return (view)
     }

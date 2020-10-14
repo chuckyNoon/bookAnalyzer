@@ -17,7 +17,7 @@ import java.io.InputStream
 class FileUtils() {
     private var contentUri: Uri? = null
 
-    fun getPath(context: Context, uri: Uri): String? {
+    fun getPathByUri(context: Context, uri: Uri): String? {
         // check here to KITKAT or new version
         val isKitKat = Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT
         var selection: String? = null

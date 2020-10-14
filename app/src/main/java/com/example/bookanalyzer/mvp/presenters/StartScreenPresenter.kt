@@ -1,42 +1,40 @@
 package com.example.bookanalyzer.mvp.presenters
 
-import com.example.bookanalyzer.*
 import com.example.bookanalyzer.common.BookSearch
 import com.example.bookanalyzer.mvp.repositories.StartScreenRepository
 import com.example.bookanalyzer.mvp.views.StartView
+import com.example.bookanalyzer.ui.adapters.BookListItem
 import kotlinx.coroutines.*
 import moxy.MvpPresenter
 import java.io.File
+import java.util.*
 import kotlin.collections.ArrayList
 
 class StartScreenPresenter(private val repository: StartScreenRepository) : MvpPresenter<StartView>(){
-    private lateinit var books:ArrayList<MenuBookModel>
+    private var items:ArrayList<BookDisplayData>? = null
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Main + job)
     private var startedActivityInd = -1
 
     fun onViewCreated(){
+        buildList(null)
+    }
+
+    private fun buildList(paths:ArrayList<String>?){
         scope.launch {
             viewState.showLoadingStateView()
-            val preList = repository.getPreviewList()
-            viewState.showList(preList)
             viewState.moveLoadingStateViewUp(300)
             viewState.setLoadingStateViewText("Loading content...")
 
-            var updatedList :ArrayList<MenuBookModel> = copyList(preList)
-            for (i in preList.indices){
-                val detailedBook = withContext(Dispatchers.Default){
-                    repository.getDetailedBookInfo(preList[i].path)
-                }
-                updatedList[i].name = detailedBook.name
-                updatedList[i].bitmap = detailedBook.bitmap
-                updatedList[i].author = detailedBook.author
-                updatedList[i].wordCount = detailedBook.wordCount
-
-                viewState.showList(updatedList)
-                updatedList = copyList(updatedList)
+            if (paths != null){
+                val simpleDataList = repository.getSimplePreviewList(paths)
+                items = simpleDataList
+                viewState.showList(getShowedList(simpleDataList))
             }
-            books = updatedList
+            val completeDataList = (repository.getCompletePreviewList(paths))
+            items = completeDataList
+            viewState.showList(getShowedList(completeDataList))
+
             viewState.updateLoadingStateView("Loading ended", 250, 300)
             delay(3000)
             viewState.moveLoadingStateViewDown(250)
@@ -44,43 +42,37 @@ class StartScreenPresenter(private val repository: StartScreenRepository) : MvpP
         }
     }
 
-    private fun copyItem(model: MenuBookModel):MenuBookModel{
-        return MenuBookModel(model.path,model.name,model.author,model.bitmap,model.wordCount)
-    }
-
-    private fun copyList(ar:ArrayList<MenuBookModel>) : ArrayList<MenuBookModel>{
-        val newList = ArrayList<MenuBookModel>()
+    private fun getShowedList(ar:ArrayList<BookDisplayData>) : ArrayList<BookListItem>{
+        val showedList = ArrayList<BookListItem>()
         for (item in ar){
-            newList.add(copyItem(item))
+            showedList.add(item.toBookListItem())
         }
-        return (newList)
+        return (showedList)
     }
 
+    private fun BookDisplayData.toBookListItem() : BookListItem{
+        val format = path.split(".").last().toUpperCase(Locale.ROOT)
+        val relPath = path.split("/").last()
+        val title = if (title != null) title else relPath
+        val author = if (!author.isNullOrEmpty()) author else "Unknown"
+        val wordCountText = (if (wordCount != 0) wordCount.toString() else "?") + " words"
+        return BookListItem(relPath, title!!, author!!, format, imgPath, wordCountText, wordCount, id)
+    }
 
     private fun addBookToList(bookPath:String) {
         scope.launch {
-            repository.saveBookPath(bookPath)
             val book = repository.getDetailedBookInfo(bookPath)
-            books = copyList(books)
-            books.add(book)
-            viewState.showList(books)
+            items?.let{items->
+                items.add(book)
+                viewState.showList(getShowedList(items))
+            }
         }
     }
 
     fun onSelectedSearchSettings(formats: ArrayList<String>, dir: File) {
         scope.launch {
-            repository.saveAllBookPaths(BookSearch.findAll(dir, formats))
-            onViewCreated()
-        }
-    }
-
-    fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
-        if (requestCode == 0) {
-            viewState.showSearchSettingsDialog()
+            val paths = BookSearch.findAll(dir, formats)
+            buildList(paths)
         }
     }
 
@@ -93,29 +85,33 @@ class StartScreenPresenter(private val repository: StartScreenRepository) : MvpP
     }
 
     fun onBookDismiss(position: Int){
-        books = copyList(books)
-        books.removeAt(position)
-        viewState.showList(books)
+        items?.let {items->
+            items.removeAt(position)
+            viewState.showList(getShowedList(items))
+        }
     }
 
     fun onBookMove(fromPosition: Int, toPosition: Int){
-        val newList = copyList(books)
+       /* val newList = copyList(items)
         val prev = newList.removeAt(fromPosition)
         newList.add(toPosition, prev)
-        books = newList
-        viewState.showList(newList)
+        items = newList
+        viewState.showList(newList)*/
     }
 
     fun onBookClicked(position:Int){
-        if (startedActivityInd == -1){
+        if (startedActivityInd != -1) {
+            return
+        }
+        items?.let{items->
             startedActivityInd = position
             scope.launch {
-                val book = books[position]
+                val book = items[position]
                 val ind = repository.getBookIndByPath(book.path)
                 if (ind != -1){
                     viewState.startInfoActivity(ind)
                 }else{
-                    val newInd = repository.getAnalyzedBookCount()
+                    val newInd = repository.getAnalyzedBookCount() + 1
                     viewState.startLoadingActivity(book.path, newInd)
                 }
             }
@@ -123,28 +119,34 @@ class StartScreenPresenter(private val repository: StartScreenRepository) : MvpP
     }
 
     fun onRestart() {
-        scope.launch {
-            println(startedActivityInd)
-            if (startedActivityInd >= 0){
-                val wordCount = repository.getUniqueWordCount(books[startedActivityInd].path)
-                if (books[startedActivityInd].wordCount != wordCount){
-                    books = copyList(books)
-                    books[startedActivityInd].wordCount = wordCount
-                    viewState.showList(books)
+        items?.let{items->
+            scope.launch {
+                if (startedActivityInd in items.indices){
+                    val wordCount = repository.getUniqueWordCount(items[startedActivityInd].path)
+                    if (items[startedActivityInd].wordCount != wordCount){
+                        items[startedActivityInd].wordCount = wordCount
+                        viewState.showList(getShowedList(items))
+                    }
                 }
+                startedActivityInd = -1
             }
-            startedActivityInd = -1
         }
     }
 
     fun onStop() {
-        scope.launch{
-            val paths = ArrayList<String>()
-            for (book in books){
-                paths.add(book.path)
+        items?.let{items->
+            scope.launch{
+                repository.saveCurrentMenu(items)
             }
-            repository.saveAllBookPaths(paths)
         }
     }
+}
+
+data class BookDisplayData(var path:String,
+                           var title:String?,
+                           var author:String?,
+                           var imgPath: String?,
+                           var wordCount:Int = 0,
+                           var id:Int = 0){
 
 }

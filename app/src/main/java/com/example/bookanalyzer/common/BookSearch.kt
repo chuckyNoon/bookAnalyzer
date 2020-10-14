@@ -4,19 +4,17 @@ import java.io.File
 
 class BookSearch {
     companion object {
-        private lateinit var foundFiles:ArrayList<String>
-        private var patterns: ArrayList<String>?=null
         fun findAll(dir: File, specPatterns:ArrayList<String>? = null): ArrayList<String> {
-            foundFiles = ArrayList()
-            patterns = specPatterns ?: arrayListOf("fb2", "epub", "txt")
-            search(dir)
+            val foundFiles = ArrayList<String>()
+            val patterns = specPatterns ?: arrayListOf("fb2", "epub", "txt")
+            search(dir, foundFiles, patterns)
             return (foundFiles)
         }
 
-        private fun fitsPattern(fileName: String): Boolean {
+        private fun fitsPattern(fileName: String, patterns: ArrayList<String>): Boolean {
             if (patterns.isNullOrEmpty())
                 return false
-            for (pattern in patterns!!) {
+            for (pattern in patterns) {
                 if (fileName.endsWith(pattern)) {
                     return true
                 }
@@ -24,17 +22,13 @@ class BookSearch {
             return false
         }
 
-        private fun search(dir: File) {
+        private fun search(dir: File,foundFiles:ArrayList<String>, patterns: ArrayList<String>) {
             val fileList: Array<File> = dir.listFiles() ?: return
-            println(fileList.isEmpty())
             for (j in fileList.indices) {
-
-                println(fileList[j].path)
-
                 if (fileList[j].isDirectory) {
-                    search(fileList[j])
+                    search(fileList[j], foundFiles, patterns)
                 } else {
-                    if (fitsPattern(fileList[j].name)) {
+                    if (fitsPattern(fileList[j].name, patterns)) {
                         foundFiles.add(fileList[j].path)
                     }
                 }
