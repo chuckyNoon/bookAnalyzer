@@ -4,17 +4,18 @@ import java.io.File
 
 class BookSearch {
     companion object {
-        fun findAll(dir: File, specPatterns:ArrayList<String>? = null): ArrayList<String> {
-            val foundFiles = ArrayList<String>()
-            val patterns = specPatterns ?: arrayListOf("fb2", "epub", "txt")
-            search(dir, foundFiles, patterns)
-            return (foundFiles)
+        fun findBookPaths(dir: File, namePatterns: ArrayList<String>? = null): ArrayList<String> {
+            val foundPaths = ArrayList<String>()
+            val patterns = namePatterns ?: arrayListOf("fb2", "epub", "txt")
+            search(dir, foundPaths, patterns)
+            return (foundPaths)
         }
 
-        private fun fitsPattern(fileName: String, patterns: ArrayList<String>): Boolean {
-            if (patterns.isNullOrEmpty())
+        private fun fitsPattern(fileName: String, namePatterns: ArrayList<String>): Boolean {
+            if (namePatterns.isNullOrEmpty()) {
                 return false
-            for (pattern in patterns) {
+            }
+            for (pattern in namePatterns) {
                 if (fileName.endsWith(pattern)) {
                     return true
                 }
@@ -22,14 +23,18 @@ class BookSearch {
             return false
         }
 
-        private fun search(dir: File,foundFiles:ArrayList<String>, patterns: ArrayList<String>) {
+        private fun search(
+            dir: File,
+            foundPaths: ArrayList<String>,
+            namePatterns: ArrayList<String>
+        ) {
             val fileList: Array<File> = dir.listFiles() ?: return
-            for (j in fileList.indices) {
-                if (fileList[j].isDirectory) {
-                    search(fileList[j], foundFiles, patterns)
+            for (i in fileList.indices) {
+                if (fileList[i].isDirectory) {
+                    search(fileList[i], foundPaths, namePatterns)
                 } else {
-                    if (fitsPattern(fileList[j].name, patterns)) {
-                        foundFiles.add(fileList[j].path)
+                    if (fitsPattern(fileList[i].name, namePatterns)) {
+                        foundPaths.add(fileList[i].path)
                     }
                 }
             }

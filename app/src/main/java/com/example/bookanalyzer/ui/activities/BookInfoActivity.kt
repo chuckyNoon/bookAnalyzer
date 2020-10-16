@@ -14,82 +14,104 @@ import moxy.ktx.moxyPresenter
 
 class BookInfoActivity : MvpAppCompatActivity(),
     BookInfoView {
+    private lateinit var toolBar: androidx.appcompat.widget.Toolbar
     private lateinit var bookNameView: TextView
-    private lateinit var allWordView: TextView
-    private lateinit var textLengthView: TextView
+    private lateinit var wordCountView: TextView
+    private lateinit var charCountView: TextView
     private lateinit var uniqueWordView: TextView
-    private lateinit var avgSentenceViewWrd: TextView
-    private lateinit var avgSentenceViewChr: TextView
-    private lateinit var avgWordView: TextView
+    private lateinit var avgSentenceLenViewWrd: TextView
+    private lateinit var avgSentenceLenViewChr: TextView
+    private lateinit var avgWordLenView: TextView
+    private lateinit var toWordListButton: Button
 
     private var repository = BookInfoRepository(this)
-    private val presenter by moxyPresenter{BookInfoPresenter(repository)}
+    private val presenter by moxyPresenter { BookInfoPresenter(repository) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_book_info)
 
-        bookNameView = findViewById(R.id.bookNameView)
-        allWordView = findViewById(R.id.allWordCountView)
-        uniqueWordView = findViewById(R.id.uniqWordView)
-        textLengthView = findViewById(R.id.allCharsCountView)
-        avgSentenceViewWrd = findViewById(R.id.avgSentenceLenView1)
-        avgSentenceViewChr = findViewById(R.id.avgSentenceLenView2)
-        avgWordView = findViewById(R.id.avgWordLenView)
-
+        initFields()
         setToolBar()
-        val arguments = intent.extras
-        val ind = arguments?.getInt("ind")
+        setToWordListButton()
+        selectLaunchOption(savedInstanceState != null)
+    }
 
-        if (ind == null)
-            finish()
-        findViewById<Button>(R.id.toWordListButton).setOnClickListener {
-            presenter.onWordListButtonClicked(ind!!)
+    private fun selectLaunchOption(isActivityRecreated: Boolean) {
+        val bookInd = getBookInd()
+        bookInd?.let {
+            if (!isActivityRecreated) {
+                presenter.onViewCreated(bookInd)
+            }
         }
-        if (savedInstanceState == null)
-            presenter.onViewCreated(ind!!)
+    }
 
+    private fun getBookInd(): Int? {
+        return intent.extras?.getInt("ind")
+    }
+
+    private fun initFields() {
+        toolBar = findViewById(R.id.toolbar)
+        bookNameView = findViewById(R.id.bookNameView)
+        wordCountView = findViewById(R.id.allWordCountView)
+        uniqueWordView = findViewById(R.id.uniqWordView)
+        charCountView = findViewById(R.id.allCharsCountView)
+        avgSentenceLenViewWrd = findViewById(R.id.avgSentenceLenView1)
+        avgSentenceLenViewChr = findViewById(R.id.avgSentenceLenView2)
+        avgWordLenView = findViewById(R.id.avgWordLenView)
+        toWordListButton = findViewById(R.id.toWordListButton)
     }
 
     private fun setToolBar() {
-        val toolBar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
-        toolBar?.title = "Info"
+        toolBar.title = "Info"
         toolBar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
         setSupportActionBar(toolBar)
     }
 
+    private fun setToWordListButton() {
+        val bookInd = getBookInd()
+        bookInd?.let {
+            toWordListButton.setOnClickListener {
+                presenter.onWordListButtonClicked(bookInd)
+            }
+        }
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if(item.itemId == android.R.id.home ){
-            presenter.onOptionsItemSelected()
+        if (item.itemId == android.R.id.home) {
+            presenter.onOptionsItemBackSelected()
         }
         return super.onOptionsItemSelected(item)
+    }
+
+    override fun setViewsText(bookInfoModel: BookInfoModel) {
+        bookNameView.text = bookInfoModel.path
+        uniqueWordView.text = bookInfoModel.uniqueWordCount
+        wordCountView.text = bookInfoModel.allWordCount
+        charCountView.text = bookInfoModel.allCharsCount
+        avgSentenceLenViewWrd.text = bookInfoModel.avgSentenceLenInWrd
+        avgSentenceLenViewChr.text = bookInfoModel.avgSentenceLenInChr
+        avgWordLenView.text = bookInfoModel.avgWordLen
+    }
+
+    override fun startWordListActivity(ind: Int) {
+        val intent = Intent(this, WordListActivity::class.java).apply {
+            putExtra("ind", ind)
+        }
+        startActivity(intent)
     }
 
     override fun finishActivity() {
         finish()
     }
-
-    override fun setViewsText(
-        path: String,
-        uniqWordCount: String,
-        allWordCount: String,
-        allCharsCount: String,
-        avgSentenceLenInWrd: String,
-        avgSentenceLenInChr: String,
-        avgWordLen: String
-    ) {
-        bookNameView.text = path
-        uniqueWordView.text = uniqWordCount
-        allWordView.text = allWordCount
-        textLengthView.text = allCharsCount
-        avgSentenceViewWrd.text = avgSentenceLenInWrd
-        avgSentenceViewChr.text = avgSentenceLenInChr
-        avgWordView.text = avgWordLen
-    }
-
-    override fun startWordListActivity(ind: Int) {
-        val newIntent = Intent(this, WordListActivity::class.java)
-        newIntent.putExtra("ind", ind)
-        startActivity(newIntent)
-    }
 }
+
+data class BookInfoModel(
+    var path: String,
+    var uniqueWordCount: String,
+    var allWordCount: String,
+    var allCharsCount: String,
+    var avgSentenceLenInWrd: String,
+    var avgSentenceLenInChr: String,
+    var avgWordLen: String
+)

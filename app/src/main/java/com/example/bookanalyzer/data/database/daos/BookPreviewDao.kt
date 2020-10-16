@@ -17,6 +17,9 @@ interface BookPreviewDao {
     @Query("SELECT * FROM menu_table")
     fun getBookPreviews(): List<DbBookPreviewData>
 
+    @Query("SELECT * FROM menu_table WHERE path == :path LIMIT 1")
+    fun getBookPreviewByPath(path:String) : DbBookPreviewData
+
     @Query("DELETE FROM menu_table")
     fun nukeTable()
 }

@@ -8,7 +8,7 @@ import kotlinx.coroutines.withContext
 class WordListRepository(private val ctx: Context) {
     private val wordListStorage = WordListStorage(ctx)
 
-    suspend fun getWordList(ind: Int) = withContext(Dispatchers.Default){
+    suspend fun getWordList(ind: Int) = withContext(Dispatchers.Default) {
         (wordListStorage.getWordList(ind))
     }
 }

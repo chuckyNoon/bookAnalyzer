@@ -10,143 +10,190 @@ import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 
-class StartScreenPresenter(private val repository: StartScreenRepository) : MvpPresenter<StartView>(){
-    private var items:ArrayList<BookDisplayData>? = null
+class StartScreenPresenter(private val repository: StartScreenRepository) :
+    MvpPresenter<StartView>() {
+
+    private var bookDataList: ArrayList<BookData>? = null
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Main + job)
-    private var startedActivityInd = -1
+    private var lastOpenedBookInd = -1
 
-    fun onViewCreated(){
-        buildList(null)
+    fun onViewCreated() {
+        scope.launch {
+            repository.initDataSources()
+            buildListFromSavedData()
+        }
     }
 
-    private fun buildList(paths:ArrayList<String>?){
-        scope.launch {
-            viewState.showLoadingStateView()
-            viewState.moveLoadingStateViewUp(300)
-            viewState.setLoadingStateViewText("Loading content...")
+    private suspend fun buildListFromSavedData() {
+        indicateContentLoadingStart()
+        buildCompleteBookList()
+        indicateContentLoadingEnd()
+    }
 
-            if (paths != null){
-                val simpleDataList = repository.getSimplePreviewList(paths)
-                items = simpleDataList
-                viewState.showList(getShowedList(simpleDataList))
+    private suspend fun buildListFromNewData(bookPaths: ArrayList<String>) {
+        indicateContentLoadingStart()
+        buildInitialBookList(bookPaths)
+        repository.insertDataFromPathsInDb(bookPaths)
+        buildCompleteBookList()
+        indicateContentLoadingEnd()
+    }
+
+    private suspend fun buildInitialBookList(bookPaths: ArrayList<String>) {
+        val initialDataList = repository.getInitialDataList(bookPaths)
+        bookDataList = initialDataList
+        val initialItemList = convertDataListToItemList(initialDataList)
+        viewState.showBookList(initialItemList)
+    }
+
+    private suspend fun buildCompleteBookList() {
+        val completeDataList = (repository.getCompleteDataList())
+        bookDataList = completeDataList
+        val completeItemList = convertDataListToItemList(completeDataList)
+        viewState.showBookList(completeItemList)
+    }
+
+    private fun indicateContentLoadingStart() {
+        viewState.showLoadingStateView()
+        viewState.moveLoadingStateViewUp(300)
+        viewState.setLoadingStateViewText("Loading content...")
+    }
+
+    private suspend fun indicateContentLoadingEnd() {
+        viewState.updateLoadingStateView("Loading ended", 250, 300)
+        delay(3000)
+        viewState.moveLoadingStateViewDown(250)
+        viewState.hideLoadingStateView()
+    }
+
+    private fun convertDataListToItemList(dataList: ArrayList<BookData>): ArrayList<BookListItem> {
+        val itemList = ArrayList<BookListItem>()
+        for (item in dataList) {
+            itemList.add(item.toBookListItem())
+        }
+        return (itemList)
+    }
+
+    private fun BookData.toBookListItem(): BookListItem {
+        val bookFormat = path.split(".").last().toUpperCase(Locale.ROOT)
+        val relativePath = path.split("/").last()
+        val title = title ?: relativePath
+        val author = author ?: "Unknown"
+        val uniqueWordCountText = makeWordCountText(uniqueWordCount)
+
+        return BookListItem(
+            path = relativePath,
+            title = title,
+            author = author,
+            format = bookFormat,
+            imgPath = imgPath,
+            uniqueWordCount = uniqueWordCountText,
+            barProgress = uniqueWordCount,
+            id = id
+        )
+    }
+
+    private fun makeWordCountText(uniqueWordCount: Int): String {
+        val firstPart = if (uniqueWordCount != 0) {
+            uniqueWordCount.toString()
+        } else {
+            "?"
+        }
+        return "$firstPart words"
+    }
+
+    private fun addBookItemToList(bookPath: String) {
+        scope.launch {
+            val book = repository.getCompleteBookData(bookPath)
+            book?.let {
+                bookDataList?.let { items ->
+                    items.add(book)
+                    viewState.showBookList(convertDataListToItemList(items))
+                }
             }
-            val completeDataList = (repository.getCompletePreviewList(paths))
-            items = completeDataList
-            viewState.showList(getShowedList(completeDataList))
-
-            viewState.updateLoadingStateView("Loading ended", 250, 300)
-            delay(3000)
-            viewState.moveLoadingStateViewDown(250)
-            viewState.hideLoadingStateView()
         }
     }
 
-    private fun getShowedList(ar:ArrayList<BookDisplayData>) : ArrayList<BookListItem>{
-        val showedList = ArrayList<BookListItem>()
-        for (item in ar){
-            showedList.add(item.toBookListItem())
-        }
-        return (showedList)
-    }
-
-    private fun BookDisplayData.toBookListItem() : BookListItem{
-        val format = path.split(".").last().toUpperCase(Locale.ROOT)
-        val relPath = path.split("/").last()
-        val title = if (title != null) title else relPath
-        val author = if (!author.isNullOrEmpty()) author else "Unknown"
-        val wordCountText = (if (wordCount != 0) wordCount.toString() else "?") + " words"
-        return BookListItem(relPath, title!!, author!!, format, imgPath, wordCountText, wordCount, id)
-    }
-
-    private fun addBookToList(bookPath:String) {
+    fun onSelectedSearchSettings(bookFormats: ArrayList<String>, rootDir: File) {
         scope.launch {
-            val book = repository.getDetailedBookInfo(bookPath)
-            items?.let{items->
-                items.add(book)
-                viewState.showList(getShowedList(items))
-            }
+            val bookPaths = BookSearch.findBookPaths(rootDir, bookFormats)
+            repository.initDataSources()
+            buildListFromNewData(bookPaths)
         }
     }
 
-    fun onSelectedSearchSettings(formats: ArrayList<String>, dir: File) {
-        scope.launch {
-            val paths = BookSearch.findAll(dir, formats)
-            buildList(paths)
-        }
-    }
-
-    fun onOptionsItemSelected() {
+    fun onOptionsMenuItemSelected() {
         viewState.showSideMenu()
     }
 
-    fun onActivityResult(bookPath:String) {
-        addBookToList(bookPath)
+    fun onActivityResult(bookPath: String) {
+        addBookItemToList(bookPath)
     }
 
-    fun onBookDismiss(position: Int){
-        items?.let {items->
-            items.removeAt(position)
-            viewState.showList(getShowedList(items))
+    fun onBookDismiss(position: Int) {
+        bookDataList?.let { bookDataList ->
+            bookDataList.removeAt(position)
+            viewState.showBookList(convertDataListToItemList(bookDataList))
         }
     }
 
-    fun onBookMove(fromPosition: Int, toPosition: Int){
-       /* val newList = copyList(items)
-        val prev = newList.removeAt(fromPosition)
-        newList.add(toPosition, prev)
-        items = newList
-        viewState.showList(newList)*/
+    fun onBookMove(fromPosition: Int, toPosition: Int) {
+        /* val newList = copyList(items)
+         val prev = newList.removeAt(fromPosition)
+         newList.add(toPosition, prev)
+         items = newList
+         viewState.showList(newList)*/
     }
 
-    fun onBookClicked(position:Int){
-        if (startedActivityInd != -1) {
+    fun onBookClicked(position: Int) {
+        if (lastOpenedBookInd != -1) {
             return
         }
-        items?.let{items->
-            startedActivityInd = position
+        bookDataList?.let { bookDataList ->
+            lastOpenedBookInd = position
             scope.launch {
-                val book = items[position]
+                val book = bookDataList[position]
                 val ind = repository.getBookIndByPath(book.path)
-                if (ind != -1){
-                    viewState.startInfoActivity(ind)
-                }else{
+                if (ind != -1) {
+                    viewState.startBookInfoActivity(ind)
+                } else {
                     val newInd = repository.getAnalyzedBookCount() + 1
-                    viewState.startLoadingActivity(book.path, newInd)
+                    viewState.startLoaderScreenActivity(book.path, newInd)
                 }
             }
         }
     }
 
     fun onRestart() {
-        items?.let{items->
+        bookDataList?.let { bookDataList ->
             scope.launch {
-                if (startedActivityInd in items.indices){
-                    val wordCount = repository.getUniqueWordCount(items[startedActivityInd].path)
-                    if (items[startedActivityInd].wordCount != wordCount){
-                        items[startedActivityInd].wordCount = wordCount
-                        viewState.showList(getShowedList(items))
+                if (lastOpenedBookInd in bookDataList.indices) {
+                    val newUniqueWordCount =
+                        repository.getUniqueWordCountByPath(bookDataList[lastOpenedBookInd].path)
+                    if (bookDataList[lastOpenedBookInd].uniqueWordCount != newUniqueWordCount) {
+                        bookDataList[lastOpenedBookInd].uniqueWordCount = newUniqueWordCount
+                        viewState.showBookList(convertDataListToItemList(bookDataList))
                     }
                 }
-                startedActivityInd = -1
+                lastOpenedBookInd = -1
             }
         }
     }
 
     fun onStop() {
-        items?.let{items->
-            scope.launch{
-                repository.saveCurrentMenu(items)
+        bookDataList?.let { bookDataList ->
+            scope.launch {
+                repository.saveCurrentBookList(bookDataList)
             }
         }
     }
 }
 
-data class BookDisplayData(var path:String,
-                           var title:String?,
-                           var author:String?,
-                           var imgPath: String?,
-                           var wordCount:Int = 0,
-                           var id:Int = 0){
-
-}
+data class BookData(
+    var path: String,
+    var title: String?,
+    var author: String?,
+    var imgPath: String?,
+    var uniqueWordCount: Int = 0,
+    var id: Int = 0
+)

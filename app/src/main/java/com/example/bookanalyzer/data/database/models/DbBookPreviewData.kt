@@ -7,14 +7,17 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "menu_table")
 data class DbBookPreviewData(
     @ColumnInfo(name = "path")
-    var path:String,
+    var path: String,
+
     @ColumnInfo(name = "title")
-    var title:String?,
+    var title: String?,
+
     @ColumnInfo(name = "author")
-    var author:String?,
+    var author: String?,
+
     @ColumnInfo(name = "img_path")
     var imgPath: String?,
+
     @PrimaryKey(autoGenerate = true)
-    var id:Int = 0,
-){
-}
+    var id: Int = 0,
+)

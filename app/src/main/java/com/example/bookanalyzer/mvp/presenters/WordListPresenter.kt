@@ -7,41 +7,42 @@ import com.example.bookanalyzer.ui.adapters.WordListItem
 import kotlinx.coroutines.*
 import moxy.MvpPresenter
 
-class WordListPresenter(private val repository: WordListRepository) : MvpPresenter<WordListView>(){
+class WordListPresenter(private val repository: WordListRepository) : MvpPresenter<WordListView>() {
     private var wordListSize = 0
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Main + job)
 
-    fun onOptionsItemSelected() {
-        viewState.finishActivity()
-    }
-
-    fun onProgressChanged(Progress:Int) {
+    fun onProgressChanged(Progress: Int) {
         var progress = Progress
-        if (progress == 0)
+        if (progress == 0) {
             progress++
-        viewState.setPositionText("$progress from $wordListSize")
+        }
+        viewState.setPositionViewText("$progress from $wordListSize")
         viewState.scrollToPosition(progress)
     }
 
-    fun onViewCreated(bookInd:Int) {
+    fun onViewCreated(bookInd: Int) {
         scope.launch {
             val rowList = repository.getWordList(bookInd)
-            if (rowList != null){
+            rowList?.let {
                 wordListSize = rowList.size
-                val wordListItemArray  = ArrayList<WordListItem>().apply{
+                val wordListItemArray = ArrayList<WordListItem>().apply {
                     rowList.forEach {
                         add(it.toWordListItem())
                     }
                 }
-                viewState.setupWordLines(wordListItemArray)
+                viewState.setupWordListItems(wordListItemArray)
                 viewState.setSeekBarMaxValue(wordListSize)
-                viewState.setPositionText("1 from $wordListSize")
+                viewState.setPositionViewText("1 from $wordListSize")
             }
         }
     }
 
-    private fun WordListRowData.toWordListItem() : WordListItem{
+    private fun WordListRowData.toWordListItem(): WordListItem {
         return WordListItem(word, frequency.toString(), pos.toString())
+    }
+
+    fun onOptionsItemBackSelected() {
+        viewState.finishActivity()
     }
 }

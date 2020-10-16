@@ -5,7 +5,7 @@ import moxy.viewstate.strategy.alias.AddToEnd
 import moxy.viewstate.strategy.alias.Skip
 
 @AddToEnd
-interface LoaderScreenView : MvpView{
+interface LoaderScreenView : MvpView {
     fun finishActivity()
-    fun goToInfoActivity(bookInd:Int)
+    fun goToInfoActivity(bookInd: Int)
 }

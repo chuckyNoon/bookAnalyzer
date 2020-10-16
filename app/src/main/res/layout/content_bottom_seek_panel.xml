@@ -7,7 +7,7 @@
     android:background="#222222">
 
     <SeekBar
-        android:id="@+id/seekBar"
+        android:id="@+id/seek_bar"
         android:layout_width="0dp"
         android:layout_height="29dp"
         android:layout_marginStart="32dp"
@@ -17,10 +17,10 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/seekTextView" />
+        app:layout_constraintTop_toBottomOf="@+id/text_view_position" />
 
     <TextView
-        android:id="@+id/seekTextView"
+        android:id="@+id/text_view_position"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="5dp"

@@ -8,7 +8,7 @@ import com.example.bookanalyzer.mvp.presenters.StartScreenPresenter
 import com.example.bookanalyzer.ui.adapters.BookListAdapter
 import kotlinx.android.synthetic.main.item_book.view.*
 
-class SimpleItemTouchHelperCallback(private val presenter:StartScreenPresenter) :
+class SimpleItemTouchHelperCallback(private val presenter: StartScreenPresenter) :
     ItemTouchHelper.Callback() {
     private var lastDraggedViewHolder: ItemTouchHelperViewHolder? = null
     override fun isLongPressDragEnabled(): Boolean {
@@ -42,7 +42,7 @@ class SimpleItemTouchHelperCallback(private val presenter:StartScreenPresenter) 
     }
 
     override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
-        if (lastDraggedViewHolder != null  && actionState == ItemTouchHelper.ACTION_STATE_IDLE){
+        if (lastDraggedViewHolder != null && actionState == ItemTouchHelper.ACTION_STATE_IDLE) {
             lastDraggedViewHolder?.onItemClear()
         }
         if (actionState != ItemTouchHelper.ACTION_STATE_IDLE) {
@@ -54,7 +54,6 @@ class SimpleItemTouchHelperCallback(private val presenter:StartScreenPresenter) 
     }
 
     override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
-        val backgroundView: View = viewHolder.itemView.view_background
         val foregroundView: View = viewHolder.itemView.view_foreground
 
         getDefaultUIUtil().clearView(foregroundView)
@@ -65,17 +64,17 @@ class SimpleItemTouchHelperCallback(private val presenter:StartScreenPresenter) 
         viewHolder: RecyclerView.ViewHolder, dX: Float, dY: Float,
         actionState: Int, isCurrentlyActive: Boolean
     ) {
-       if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-           val foregroundView: View =
-               (viewHolder as BookListAdapter.ItemViewHolder).view.view_foreground
-           drawBackground(viewHolder, dX, actionState)
-           getDefaultUIUtil().onDraw(
-               c, recyclerView, foregroundView, dX, dY,
-               actionState, isCurrentlyActive
-           )
-       }else{
-           super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
-       }
+        if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
+            val foregroundView: View =
+                (viewHolder as BookListAdapter.ItemViewHolder).view.view_foreground
+            drawBackground(viewHolder, dX, actionState)
+            getDefaultUIUtil().onDraw(
+                c, recyclerView, foregroundView, dX, dY,
+                actionState, isCurrentlyActive
+            )
+        } else {
+            super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive)
+        }
     }
 
     override fun onChildDrawOver(
@@ -83,7 +82,8 @@ class SimpleItemTouchHelperCallback(private val presenter:StartScreenPresenter) 
         viewHolder: RecyclerView.ViewHolder, dX: Float, dY: Float,
         actionState: Int, isCurrentlyActive: Boolean
     ) {
-        val foregroundView: View = (viewHolder as BookListAdapter.ItemViewHolder).view.view_foreground
+        val foregroundView: View =
+            (viewHolder as BookListAdapter.ItemViewHolder).view.view_foreground
         drawBackground(viewHolder, dX, actionState)
         getDefaultUIUtil().onDrawOver(
             c, recyclerView, foregroundView, dX, dY,
@@ -92,7 +92,8 @@ class SimpleItemTouchHelperCallback(private val presenter:StartScreenPresenter) 
     }
 
     private fun drawBackground(viewHolder: RecyclerView.ViewHolder, dX: Float, actionState: Int) {
-        val backgroundView: View = (viewHolder as BookListAdapter.ItemViewHolder).view.view_background
+        val backgroundView: View =
+            (viewHolder as BookListAdapter.ItemViewHolder).view.view_background
         if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
             backgroundView.left = Math.max(dX, 0f).toInt()
         }

@@ -8,33 +8,33 @@ import androidx.recyclerview.widget.RecyclerView
 import com.example.bookanalyzer.R
 import kotlinx.android.synthetic.main.item_word_list_row.view.*
 
-class WordListItem(var word:String, var frequency:String, var pos:String){
-}
+class WordListItem(var word: String, var frequency: String, var pos: String)
 
 class WordListAdapter : RecyclerView.Adapter<WordListAdapter.MyViewHolder>() {
-    private var ar:ArrayList<WordListItem> = ArrayList()
-    private var onItemClickListener:View.OnClickListener? = null
+    private var wordList: ArrayList<WordListItem> = ArrayList()
+    private var onItemClickListener: View.OnClickListener? = null
 
-    fun setupData(rowsList:ArrayList<WordListItem>){
-        ar = rowsList
+    fun setupData(wordList: ArrayList<WordListItem>) {
+        this.wordList = wordList
     }
 
-    fun setOnItemClickListener(listener:View.OnClickListener){
+    fun setOnItemClickListener(listener: View.OnClickListener) {
         onItemClickListener = listener
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): MyViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_word_list_row, parent, false)
+        val view =
+            LayoutInflater.from(parent.context).inflate(R.layout.item_word_list_row, parent, false)
 
         return MyViewHolder(view)
     }
 
     override fun getItemCount(): Int {
-        return (ar.size)
+        return wordList.size
     }
 
     override fun onBindViewHolder(holder: MyViewHolder, position: Int) {
-        val data = ar[position]
+        val data = wordList[position]
 
         holder.wordView.text = data.word
         holder.frequencyView.text = data.frequency
@@ -44,9 +44,9 @@ class WordListAdapter : RecyclerView.Adapter<WordListAdapter.MyViewHolder>() {
         }
     }
 
-    class MyViewHolder(val view: View) : RecyclerView.ViewHolder(view){
+    class MyViewHolder(val view: View) : RecyclerView.ViewHolder(view) {
         val wordView: TextView = view.wordView
-        val frequencyView:TextView = view.frequencyView
-        val indView:TextView = view.indView
+        val frequencyView: TextView = view.frequencyView
+        val indView: TextView = view.indView
     }
 }

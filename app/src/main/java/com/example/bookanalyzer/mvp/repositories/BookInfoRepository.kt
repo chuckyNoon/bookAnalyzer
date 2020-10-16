@@ -8,23 +8,14 @@ import com.example.bookanalyzer.mvp.presenters.BookAnalysisData
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class BookInfoRepository(val ctx: Context)  {
-    private var analysisDao: BookAnalysisDao?=null
-    private fun DbBookAnalysisData.toBookAnalysisData() : BookAnalysisData{
-        return BookAnalysisData(
-            path,
-            uniqueWordCount,
-            allWordCount, allCharsCount,
-            avgSentenceLenInWrd,
-            avgSentenceLenInChr,
-            avgWordLen,
-            wordListPath)
+class BookInfoRepository(val ctx: Context) {
+    private var analysisDao: BookAnalysisDao? = null
+
+    fun initDataSources() {
+        analysisDao = AppDataBase.getDataBase(ctx)?.bookAnalysisDao()
     }
 
-    suspend fun readInfo(ind:Int) = withContext(Dispatchers.Default){
-        if (analysisDao == null){
-            analysisDao = AppDataBase.getDataBase(ctx)?.bookAnalysisDao()
-        }
+    suspend fun readInfo(ind: Int) = withContext(Dispatchers.Default) {
         var data = analysisDao?.getBookAnalysisById(ind)?.toBookAnalysisData()
         if (data == null) {
             data = BookAnalysisData(
@@ -39,5 +30,17 @@ class BookInfoRepository(val ctx: Context)  {
             )
         }
         (data)
+    }
+
+    private fun DbBookAnalysisData.toBookAnalysisData(): BookAnalysisData {
+        return BookAnalysisData(
+            path,
+            uniqueWordCount,
+            allWordCount, allCharCount,
+            avgSentenceLenInWrd,
+            avgSentenceLenInChr,
+            avgWordLen,
+            wordListPath
+        )
     }
 }

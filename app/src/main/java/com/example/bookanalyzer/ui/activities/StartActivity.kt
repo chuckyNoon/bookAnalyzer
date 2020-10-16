@@ -32,22 +32,22 @@ import com.example.bookanalyzer.mvp.repositories.StartScreenRepository
 import com.example.bookanalyzer.mvp.views.StartView
 import com.example.bookanalyzer.ui.adapters.BookListAdapter
 import com.example.bookanalyzer.ui.adapters.BookListItem
-import com.example.bookanalyzer.ui.adapters.SideMenuItemModel
+import com.example.bookanalyzer.ui.adapters.SideMenuItem
 import com.example.bookanalyzer.ui.fragments.FirstLaunchDialog
-import kotlinx.coroutines.*
 import moxy.MvpAppCompatActivity
 import moxy.ktx.moxyPresenter
 
 import java.io.File
 
-class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.IOnSelectedSearchSettings,
-    FirstLaunchDialog.IOnSelectedLaunchType, StartView{
+class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSearchSettings,
+    FirstLaunchDialog.OnSelectedLaunchOption, StartView {
 
-    private lateinit var listView: RecyclerView
-    private lateinit var drawerLayout:DrawerLayout
-    private lateinit var loadingStateTextView:TextView
+    private lateinit var bookListView: RecyclerView
+    private lateinit var drawerLayout: DrawerLayout
+    private lateinit var loadingStateTextView: TextView
     private lateinit var adapter: BookListAdapter
-    private lateinit var sideMenuListView:ListView
+    private lateinit var sideMenuListView: ListView
+    private lateinit var toolBar: androidx.appcompat.widget.Toolbar
 
     private var repository = StartScreenRepository(this)
     private val presenter by moxyPresenter { StartScreenPresenter(repository) }
@@ -65,25 +65,36 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.IOnSelectedSe
         setToolBar()
         setSideMenu()
         setRecyclerView()
+        selectLaunchOption(savedInstanceState != null)
+    }
 
+    private fun isFirstApplicationLaunch(): Boolean {
         val prefs = getSharedPreferences("APP_PREFERENCES", Context.MODE_PRIVATE)
         if (!prefs.contains(FIRST_LAUNCH_TAG)) {
             prefs.edit().putBoolean(FIRST_LAUNCH_TAG, true).apply()
+            return true
+        } else {
+            return false
+        }
+    }
+
+    private fun selectLaunchOption(isActivityRecreated: Boolean) {
+        if (isFirstApplicationLaunch()) {
             FirstLaunchDialog().show(supportFragmentManager, "123")
-        }else if (savedInstanceState == null) {
+        } else if (!isActivityRecreated) {
             presenter.onViewCreated()
         }
     }
 
-    private fun initFields(){
-        listView = findViewById(R.id.list_view)
+    private fun initFields() {
+        bookListView = findViewById(R.id.recycler_view_books)
         drawerLayout = findViewById(R.id.drawerLayout)
-        loadingStateTextView = findViewById(R.id.textview_loading_state)
+        loadingStateTextView = findViewById(R.id.text_view_loading_state)
         sideMenuListView = findViewById(R.id.sideMenuListView)
+        toolBar = findViewById(R.id.toolbar)
     }
 
-    private fun setToolBar(){
-        val toolBar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.products_toolbar)
+    private fun setToolBar() {
         toolBar.title = resources.getString(R.string.start_screen_title)
         toolBar.setNavigationIcon(R.drawable.baseline_menu_24)
         setSupportActionBar(toolBar)
@@ -91,70 +102,59 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.IOnSelectedSe
 
     private fun setRecyclerView() {
         val defaultBookImage = BitmapFactory.decodeResource(this.resources, R.drawable.book)
-        adapter = BookListAdapter(this,defaultBookImage, presenter)
-        listView.setHasFixedSize(true)
+        adapter = BookListAdapter(this, defaultBookImage, presenter)
+        bookListView.setHasFixedSize(true)
         val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(presenter)
-        val mItemTouchHelper = ItemTouchHelper(callback)
-        mItemTouchHelper.attachToRecyclerView(listView)
+        val itemTouchHelper = ItemTouchHelper(callback)
+        itemTouchHelper.attachToRecyclerView(bookListView)
 
-        listView.adapter = adapter
-        listView.layoutManager = LinearLayoutManager(this)
+        bookListView.adapter = adapter
+        bookListView.layoutManager = LinearLayoutManager(this)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if(item.itemId == android.R.id.home ){
-            presenter.onOptionsItemSelected()
+        if (item.itemId == android.R.id.home) {
+            presenter.onOptionsMenuItemSelected()
         }
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onRestart() {
-        super.onRestart()
-        presenter.onRestart()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        presenter.onStop()
-    }
-
-    override fun startLoadingActivity(bookPath:String, newBookInd:Int) {
-        val intent = Intent(this, LoaderScreenActivity::class.java)
-        intent.putExtra("path", bookPath)
-        intent.putExtra("ind", newBookInd)
+    override fun startLoaderScreenActivity(bookPath: String, newBookInd: Int) {
+        val intent = Intent(this, LoaderScreenActivity::class.java).apply {
+            putExtra("path", bookPath)
+            putExtra("ind", newBookInd)
+        }
         startActivity(intent)
     }
 
-    override fun startInfoActivity(bookInd:Int) {
-        val intentToBook = Intent(this, BookInfoActivity::class.java)
-        intentToBook.putExtra("ind", bookInd)
-        startActivity(intentToBook)
+    override fun startBookInfoActivity(bookInd: Int) {
+        val intent = Intent(this, BookInfoActivity::class.java).apply {
+            putExtra("ind", bookInd)
+        }
+        startActivity(intent)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == SELECT_FILE_REQUEST_CODE && resultCode == Activity.RESULT_OK && data?.data != null) {
-            val scope = CoroutineScope(Dispatchers.Main)
-            scope.launch {
-                val bookPath = withContext(Dispatchers.IO) {
-                    FileUtils().getPathByUri(this@StartActivity, data.data!!)
-                }
-                bookPath?.let{
+        if (requestCode == SELECT_FILE_REQUEST_CODE && resultCode == Activity.RESULT_OK) {
+            data?.data?.let { uri ->
+                val bookPath = FileUtils().getPathByUri(this@StartActivity, uri)
+                bookPath?.let {
                     presenter.onActivityResult(bookPath)
                 }
             }
         }
     }
 
-    private fun requestReadPermission(requestCode: Int){
+    private fun requestReadPermission(requestCode: Int) {
         val requiredPermissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
         ActivityCompat.requestPermissions(this, requiredPermissions, requestCode)
     }
 
-    override fun onSelectedLaunchType(ifScan: Boolean) {
-        if (ifScan){
+    override fun onSelectedLaunchOption(isScanSelected: Boolean) {
+        if (isScanSelected) {
             requestReadPermission(REQUEST_PERMISSION_FOR_BOOK_SEARCH)
-        }else{
+        } else {
             Toast.makeText(this, "Books are not searched", Toast.LENGTH_SHORT).show()
         }
     }
@@ -165,15 +165,14 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.IOnSelectedSe
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-            when (requestCode){
-                REQUEST_PERMISSION_FOR_BOOK_ADD ->{
-                    drawerLayout.close()
+        if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            drawerLayout.close()
+            when (requestCode) {
+                REQUEST_PERMISSION_FOR_BOOK_ADD -> {
                     val intent = Intent().setAction(Intent.ACTION_GET_CONTENT).setType("*/*")
                     startActivityForResult(intent, SELECT_FILE_REQUEST_CODE)
                 }
-                REQUEST_PERMISSION_FOR_BOOK_SEARCH->{
-                    drawerLayout.close()
+                REQUEST_PERMISSION_FOR_BOOK_SEARCH -> {
                     showSearchSettingsDialog()
                 }
             }
@@ -184,30 +183,30 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.IOnSelectedSe
         SearchSettingsDialog().show(supportFragmentManager, "124")
     }
 
-    override fun onSelectedSearchSettings(formats: ArrayList<String>, dir: File) {
-        presenter.onSelectedSearchSettings(formats, dir)
+    override fun onSelectedSearchSettings(bookFormats: ArrayList<String>, searchRootDir: File) {
+        presenter.onSelectedSearchSettings(bookFormats, searchRootDir)
     }
 
-    override fun hideLoadingStateView(){
+    override fun hideLoadingStateView() {
         loadingStateTextView.visibility = View.INVISIBLE
     }
 
-    override fun moveLoadingStateViewUp(dur:Int){
-        ObjectAnimator.ofFloat(loadingStateTextView, "translationY", 0f).apply{
-            duration = dur.toLong()
+    override fun moveLoadingStateViewUp(duration: Int) {
+        ObjectAnimator.ofFloat(loadingStateTextView, "translationY", 0f).apply {
+            this.duration = duration.toLong()
             start()
         }
     }
 
-    override fun moveLoadingStateViewDown(dur:Int){
+    override fun moveLoadingStateViewDown(duration: Int) {
         val height = loadingStateTextView.height.toFloat()
-        ObjectAnimator.ofFloat(loadingStateTextView, "translationY", height).apply{
-            duration = dur.toLong()
+        ObjectAnimator.ofFloat(loadingStateTextView, "translationY", height).apply {
+            this.duration = duration.toLong()
             start()
         }
     }
 
-    override fun showLoadingStateView(){
+    override fun showLoadingStateView() {
         loadingStateTextView.visibility = View.VISIBLE
     }
 
@@ -215,22 +214,23 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.IOnSelectedSe
         loadingStateTextView.text = text
     }
 
-    override fun updateLoadingStateView(str: String, downDuration: Long, upDuration: Long){
+    override fun updateLoadingStateView(text: String, downDuration: Long, upDuration: Long) {
         val height = loadingStateTextView.height.toFloat()
+
         ObjectAnimator.ofFloat(loadingStateTextView, "translationY", height).apply {
             duration = downDuration
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationStart(animation: Animator?) {
                 }
+
                 override fun onAnimationEnd(animation: Animator?) {
-                    loadingStateTextView.text = str
-                    ObjectAnimator.ofFloat(loadingStateTextView, "translationY", 0f).apply {
-                        duration = upDuration
-                        start()
-                    }
+                    setLoadingStateViewText(text)
+                    moveLoadingStateViewUp(upDuration.toInt())
                 }
+
                 override fun onAnimationCancel(animation: Animator?) {
                 }
+
                 override fun onAnimationRepeat(animation: Animator?) {
                 }
             })
@@ -242,22 +242,21 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.IOnSelectedSe
         drawerLayout.open()
     }
 
-    override fun showList(itemList: ArrayList<BookListItem>) {
+    override fun showBookList(itemList: ArrayList<BookListItem>) {
         adapter.setupBooks(itemList)
     }
 
-
     @SuppressLint("ClickableViewAccessibility")
-    private fun setSideMenu(){
-        val ar = ArrayList<SideMenuItemModel>()
-        ar.add(SideMenuItemModel(
+    private fun setSideMenu() {
+        val sideMenuItemList = ArrayList<SideMenuItem>()
+        sideMenuItemList.add(SideMenuItem(
             "",
             null,
             View.OnTouchListener { view: View, motionEvent: MotionEvent ->
                 false
             }
         ))
-        ar.add(SideMenuItemModel(
+        sideMenuItemList.add(SideMenuItem(
             resources.getString(R.string.select_new_file),
             R.drawable.baseline_folder_24,
             object : OnSideMenuItemTouchListener {
@@ -266,8 +265,7 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.IOnSelectedSe
                 }
             }
         ))
-
-        ar.add(SideMenuItemModel(
+        sideMenuItemList.add(SideMenuItem(
             resources.getString(R.string.search_books),
             R.drawable.baseline_search_24,
             object : OnSideMenuItemTouchListener {
@@ -276,8 +274,18 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.IOnSelectedSe
                 }
             }
         ))
-        val sideMenuAdapter = SideMenuAdapter(this, ar)
+        val sideMenuAdapter = SideMenuAdapter(this, sideMenuItemList)
         sideMenuListView.adapter = sideMenuAdapter
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        presenter.onRestart()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        presenter.onStop()
     }
 }
 

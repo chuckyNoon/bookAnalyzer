@@ -21,41 +21,45 @@ import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.item_book.view.*
 import java.io.File
 
-data class BookListItem(var path:String,
-                        var title:String,
-                        var author:String,
-                        var format:String,
-                        var imgPath: String?,
-                        var wordCount:String,
-                        var barProgress:Int,
-                        var id:Int)
-{
-}
+data class BookListItem(
+    var path: String,
+    var title: String,
+    var author: String,
+    var format: String,
+    var imgPath: String?,
+    var uniqueWordCount: String,
+    var barProgress: Int,
+    var id: Int
+)
 
-class BookListAdapter(private val ctx:Context, private val defBitmap:Bitmap,private val presenter:StartScreenPresenter) :
-    RecyclerView.Adapter<BookListAdapter.ItemViewHolder>(){
+class BookListAdapter(
+    private val ctx: Context,
+    private val defaultBookBitmap: Bitmap,
+    private val presenter: StartScreenPresenter
+) :
+    RecyclerView.Adapter<BookListAdapter.ItemViewHolder>() {
 
-    private val diffUtilCallback = object : DiffUtil.ItemCallback<BookListItem>(){
+    private val diffUtilCallback = object : DiffUtil.ItemCallback<BookListItem>() {
         override fun areItemsTheSame(oldItem: BookListItem, newItem: BookListItem): Boolean {
             return oldItem.path == newItem.path
         }
 
         override fun areContentsTheSame(oldItem: BookListItem, newItem: BookListItem): Boolean {
-           return when{
+            return when {
                 oldItem.path != newItem.path -> false
-                oldItem.author != newItem.author ->false
-                oldItem.title != newItem.title->false
-                oldItem.imgPath != newItem.imgPath->false
-                oldItem.wordCount != newItem.wordCount->false
-                oldItem.format != newItem.format->false
+                oldItem.author != newItem.author -> false
+                oldItem.title != newItem.title -> false
+                oldItem.imgPath != newItem.imgPath -> false
+                oldItem.uniqueWordCount != newItem.uniqueWordCount -> false
+                oldItem.format != newItem.format -> false
                 else -> true
-           }
+            }
         }
     }
 
     private val differ = AsyncListDiffer(this, diffUtilCallback)
 
-    fun setupBooks(arrayList: ArrayList<BookListItem>){
+    fun setupBooks(arrayList: ArrayList<BookListItem>) {
         differ.submitList(arrayList)
     }
 
@@ -69,35 +73,35 @@ class BookListAdapter(private val ctx:Context, private val defBitmap:Bitmap,priv
     override fun onBindViewHolder(holder: ItemViewHolder, position: Int) {
         val book = differ.currentList[position]
 
-        holder.foregroundView.setOnTouchListener { v, event ->
-            val tr = v?.background as TransitionDrawable
+        holder.foregroundView.setOnTouchListener { view, event ->
+            val itemBackgroundTransition = view?.background as TransitionDrawable
             when (event?.action) {
                 MotionEvent.ACTION_DOWN -> {
-                    true
+                    (true)
                 }
                 MotionEvent.ACTION_CANCEL -> {
-                    true
+                    (true)
                 }
                 MotionEvent.ACTION_UP -> {
-                    tr.startTransition(200)
+                    itemBackgroundTransition.startTransition(200)
                     presenter.onBookClicked(holder.adapterPosition)
-                    tr.reverseTransition(200)
-                    true
+                    itemBackgroundTransition.reverseTransition(200)
+                    (true)
                 }
-                else ->{
-                    false
+                else -> {
+                    (false)
                 }
             }
         }
 
         holder.bookTitleView.text = book.title
         holder.bookAuthorView.text = book.author
-        holder.wordCountView.text = book.wordCount
+        holder.wordCountView.text = book.uniqueWordCount
         holder.bookFormatView.text = book.format
         if (book.imgPath != null) {
             Picasso.get().load(File(ctx.filesDir, book.imgPath)).into(holder.bookImage)
-        }else{
-            holder.bookImage.setImageBitmap(defBitmap)
+        } else {
+            holder.bookImage.setImageBitmap(defaultBookBitmap)
         }
 
         holder.progressBar.apply {
@@ -112,23 +116,22 @@ class BookListAdapter(private val ctx:Context, private val defBitmap:Bitmap,priv
 
     class ItemViewHolder(val view: View) : RecyclerView.ViewHolder(view),
         ItemTouchHelperViewHolder {
-        val foregroundView:View = view.view_foreground
-        val bookTitleView:TextView = view.bookNameView
-        val bookAuthorView:TextView = view.bookAuthorView
-        val wordCountView:TextView = view.wordCountView
-        val bookFormatView:TextView = view.bookFormatView
-        val progressBar:ProgressBar = view.progressBar2
-        val bookImage:ImageView = view.bookImage
+        val foregroundView: View = view.view_foreground
+        val bookTitleView: TextView = view.bookNameView
+        val bookAuthorView: TextView = view.bookAuthorView
+        val wordCountView: TextView = view.wordCountView
+        val bookFormatView: TextView = view.bookFormatView
+        val progressBar: ProgressBar = view.progressBar2
+        val bookImage: ImageView = view.bookImage
 
         override fun onItemSelected() {
-            val tr = foregroundView.background as TransitionDrawable
-            tr.startTransition(200)
+            val backgroundTransition = foregroundView.background as TransitionDrawable
+            backgroundTransition.startTransition(200)
         }
 
         override fun onItemClear() {
-            val tr = foregroundView.background as TransitionDrawable
-            tr.reverseTransition(100)
+            val backgroundTransition = foregroundView.background as TransitionDrawable
+            backgroundTransition.reverseTransition(100)
         }
     }
 }
-

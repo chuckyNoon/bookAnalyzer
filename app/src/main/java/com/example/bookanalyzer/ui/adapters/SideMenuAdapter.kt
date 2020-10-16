@@ -6,31 +6,40 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import com.example.bookanalyzer.R
+import kotlinx.android.synthetic.main.item_side_menu_row.view.*
 
-class SideMenuItemModel(var text:String, var iconRes:Int?, var onTouchListener: View.OnTouchListener){
+class SideMenuItem(
+    var text: String,
+    var iconRes: Int?,
+    var onTouchListener: View.OnTouchListener
+)
 
-}
+//to remake
+class SideMenuAdapter(
+    private val ctx: Context,
+    private val sideMenuItemList: ArrayList<SideMenuItem>
+) :
+    BaseAdapter() {
+    private val layoutInflater =
+        ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
-class SideMenuAdapter(private val ctx:Context,private val ar:ArrayList<SideMenuItemModel>) : BaseAdapter() {
-    private val layoutInflater = ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         val view = convertView ?: layoutInflater.inflate(R.layout.item_side_menu_row, parent, false)
+        val sideMenuItem = sideMenuItemList[position]
+        val iconView = view.findViewById<ImageView>(R.id.iconView)
 
-        val model = ar[position]
-        val imageView = view.findViewById<ImageView>(R.id.iconView)
-        if (model.iconRes != null) {
-            imageView.visibility = ImageView.VISIBLE
-            imageView.setImageResource(model.iconRes!!)
+        iconView.visibility = ImageView.INVISIBLE
+        sideMenuItem.iconRes?.let {
+            iconView.visibility = ImageView.VISIBLE
+            iconView.setImageResource(it)
         }
-        else imageView.visibility = ImageView.INVISIBLE
-
-        view.findViewById<TextView>(R.id.actionTextView).text = model.text
-        view.setOnTouchListener(model.onTouchListener)
+        view.actionTextView.text = sideMenuItem.text
+        view.setOnTouchListener(sideMenuItem.onTouchListener)
         return (view)
     }
 
     override fun getItem(position: Int): Any {
-        return ar[position]
+        return sideMenuItemList[position]
     }
 
     override fun getItemId(position: Int): Long {
@@ -38,6 +47,6 @@ class SideMenuAdapter(private val ctx:Context,private val ar:ArrayList<SideMenuI
     }
 
     override fun getCount(): Int {
-        return (ar.size)
+        return sideMenuItemList.size
     }
 }

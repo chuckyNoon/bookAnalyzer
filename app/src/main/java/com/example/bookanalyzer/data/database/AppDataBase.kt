@@ -11,21 +11,17 @@ import com.example.bookanalyzer.data.database.models.DbBookPreviewData
 
 @Database(entities = [DbBookPreviewData::class, DbBookAnalysisData::class], version = 1)
 abstract class AppDataBase : RoomDatabase() {
-    abstract fun bookPreviewDao() : BookPreviewDao
-    abstract fun bookAnalysisDao() : BookAnalysisDao
+    abstract fun bookPreviewDao(): BookPreviewDao
+    abstract fun bookAnalysisDao(): BookAnalysisDao
 
-    companion object{
-        private var instance:AppDataBase?=null
+    companion object {
+        private var instance: AppDataBase? = null
 
-        fun getDataBase(ctx:Context) : AppDataBase?{
+        fun getDataBase(ctx: Context): AppDataBase? {
             if (instance == null) {
-                instance = Room.databaseBuilder(ctx,AppDataBase::class.java,"myDb").build()
+                instance = Room.databaseBuilder(ctx, AppDataBase::class.java, "myDb").build()
             }
             return instance
-        }
-
-        fun destroyDataBase(){
-            instance = null
         }
     }
 }

@@ -15,8 +15,8 @@ interface BookAnalysisDao {
     @Delete
     fun deleteBookAnalysis(dbBookAnalysisData: DbBookAnalysisData)
 
-    @Query("SELECT * FROM info_table WHERE path == :name LIMIT 1")
-    fun getBookAnalysisByPath(name: String): DbBookAnalysisData?
+    @Query("SELECT * FROM info_table WHERE path == :path LIMIT 1")
+    fun getBookAnalysisByPath(path: String): DbBookAnalysisData?
 
     @Query("SELECT * FROM info_table WHERE id == :id LIMIT 1")
     fun getBookAnalysisById(id:Int): DbBookAnalysisData?

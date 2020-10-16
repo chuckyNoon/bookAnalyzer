@@ -1,29 +1,24 @@
 package com.example.bookanalyzer.mvp.views
-import com.example.bookanalyzer.data.database.models.DbBookPreviewData
+
 import com.example.bookanalyzer.ui.adapters.BookListItem
 import moxy.MvpView
 import moxy.viewstate.strategy.alias.AddToEnd
 import moxy.viewstate.strategy.alias.AddToEndSingle
 import moxy.viewstate.strategy.alias.Skip
 
-@AddToEnd
-interface StartView : MvpView{
-    fun setLoadingStateViewText(text:String)
-    fun hideLoadingStateView()
+@Skip
+interface StartView : MvpView {
     fun showLoadingStateView()
-    fun moveLoadingStateViewUp(dur:Int)
-    fun moveLoadingStateViewDown(dur:Int)
-    fun updateLoadingStateView(str: String, downDuration: Long, upDuration: Long)
-    @Skip
+    fun hideLoadingStateView()
+    fun moveLoadingStateViewUp(duration: Int)
+    fun moveLoadingStateViewDown(duration: Int)
+    fun setLoadingStateViewText(text: String)
+    fun updateLoadingStateView(text: String, downDuration: Long, upDuration: Long)
     fun showSearchSettingsDialog()
-
-    @Skip
     fun showSideMenu()
 
     @AddToEndSingle
-    fun showList(itemList: ArrayList<BookListItem>)
-    @Skip
-    fun startLoadingActivity(bookPath:String, newBookInd:Int)
-    @Skip
-    fun startInfoActivity(bookInd:Int)
+    fun showBookList(itemList: ArrayList<BookListItem>)
+    fun startLoaderScreenActivity(bookPath: String, newBookInd: Int)
+    fun startBookInfoActivity(bookInd: Int)
 }

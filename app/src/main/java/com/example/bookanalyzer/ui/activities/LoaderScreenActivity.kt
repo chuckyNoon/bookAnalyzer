@@ -11,53 +11,67 @@ import moxy.MvpAppCompatActivity
 import moxy.ktx.moxyPresenter
 
 
-class LoaderScreenActivity : MvpAppCompatActivity(),LoaderScreenView {
+class LoaderScreenActivity : MvpAppCompatActivity(), LoaderScreenView {
+    private lateinit var toolBar: androidx.appcompat.widget.Toolbar
+
     private val repository = LoaderScreenRepository(this)
-    private val presenter by moxyPresenter{ LoaderScreenPresenter(repository) }
+    private val presenter by moxyPresenter { LoaderScreenPresenter(repository) }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_loader_screen)
+
+        initFields()
         setToolBar()
+        selectLaunchOption(savedInstanceState != null)
+    }
 
-        val arguments = intent.extras
-        val path = arguments?.getString("path")
+    private fun getPathFromIntent(): String? {
+        return intent.extras?.getString("path")
+    }
 
-        if (path == null){
-            finish()
-        }else if(savedInstanceState == null){
-            val bookInd = arguments.getInt("ind")
+    private fun getBookIndFromIntent(): Int? {
+        return intent.extras?.getInt("ind")
+    }
+
+    private fun selectLaunchOption(isActivityRecreated: Boolean) {
+        val path = getPathFromIntent()
+        val bookInd = getBookIndFromIntent()
+        if (path != null && bookInd != null && !isActivityRecreated) {
             presenter.onViewCreated(bookInd, path)
         }
     }
 
-    private fun setToolBar(){
-        val toolBar = findViewById<androidx.appcompat.widget.Toolbar>(R.id.toolbar)
-        toolBar?.title = ""
+    private fun initFields() {
+        toolBar = findViewById(R.id.toolbar)
+    }
+
+    private fun setToolBar() {
+        toolBar.title = ""
         toolBar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
         setSupportActionBar(toolBar)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if(item.itemId == android.R.id.home ){
-            presenter.onOptionsItemSelected()
+        if (item.itemId == android.R.id.home) {
+            presenter.onOptionsItemBackSelected()
         }
         return super.onOptionsItemSelected(item)
     }
 
-    override fun finishActivity(){
-        finish()
-    }
-
-    override fun goToInfoActivity(bookInd:Int) {
-        val intent = Intent(this@LoaderScreenActivity, BookInfoActivity::class.java)
-        intent.putExtra("ind", bookInd)
-
+    override fun goToInfoActivity(bookInd: Int) {
+        val intent = Intent(this@LoaderScreenActivity, BookInfoActivity::class.java).apply {
+            putExtra("ind", bookInd)
+        }
         startActivity(intent)
     }
 
     override fun onStop() {
         super.onStop()
         presenter.onStop()
+    }
+
+    override fun finishActivity() {
+        finish()
     }
 }
