@@ -40,18 +40,18 @@ class WordListActivity : MvpAppCompatActivity(), WordListView {
         selectLaunchOption(savedInstanceState != null)
     }
 
-    private fun selectLaunchOption(isActivityRecreated:Boolean){
+    private fun selectLaunchOption(isActivityRecreated: Boolean) {
         val bookInd = getBookIndFromIntent()
-        if (bookInd != null && !isActivityRecreated){
+        if (bookInd != null && !isActivityRecreated) {
             presenter.onViewCreated(bookInd)
         }
     }
 
-    private fun getBookIndFromIntent() : Int?{
+    private fun getBookIndFromIntent(): Int? {
         return intent.extras?.getInt("ind")
     }
 
-    private fun initFields(){
+    private fun initFields() {
         toolBar = findViewById(R.id.toolbar)
         wordList = findViewById(R.id.word_list)
         bottomPanel = findViewById(R.id.bottomPanel)
@@ -61,7 +61,7 @@ class WordListActivity : MvpAppCompatActivity(), WordListView {
 
     private fun setRecyclerView() {
         wordListAdapter = WordListAdapter()
-        wordListAdapter.setOnItemClickListener{
+        wordListAdapter.setOnItemClickListener {
             bottomPanel.visibility = if (bottomPanel.visibility == View.VISIBLE) {
                 View.INVISIBLE
             } else {
@@ -78,7 +78,7 @@ class WordListActivity : MvpAppCompatActivity(), WordListView {
         setSupportActionBar(toolBar)
     }
 
-    private fun setSeekBar(){
+    private fun setSeekBar() {
         seekBar.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 presenter.onProgressChanged(seekBar?.progress ?: 0)

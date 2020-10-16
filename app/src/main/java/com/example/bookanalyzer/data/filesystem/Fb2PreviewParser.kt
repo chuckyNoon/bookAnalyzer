@@ -93,7 +93,7 @@ class Fb2PreviewParser(ctx: Context) : BookPreviewParser(ctx) {
         return (imgByteArray)
     }
 
-    private fun getImageName(unhandledStr: String) : String?{
+    private fun getImageName(unhandledStr: String): String? {
         var imgName = ""
         var imgNameStart = unhandledStr.indexOf("xlink:href=")
 

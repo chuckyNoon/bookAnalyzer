@@ -21,12 +21,12 @@ class EpubPreviewParser(ctx: Context) : BookPreviewParser(ctx) {
         return (ParsedBookData(path, bookName, author, saveImgPath))
     }
 
-    private fun getAuthor(book:Book) : String?{
-        return if (book.metadata.authors.size > 0){
+    private fun getAuthor(book: Book): String? {
+        return if (book.metadata.authors.size > 0) {
             val firstName = book.metadata.authors[0].firstname
             val lastName = book.metadata.authors[0].lastname
             ("$firstName $lastName")
-        }else{
+        } else {
             (null)
         }
     }

@@ -11,7 +11,7 @@ class ParsedBookData(
     var imgPath: String?
 )
 
-abstract class BookPreviewParser(val ctx:Context) {
+abstract class BookPreviewParser(val ctx: Context) {
     abstract fun getParsedData(path: String): ParsedBookData
 
     protected fun saveImage(bitmap: Bitmap, imgPath: String) {
