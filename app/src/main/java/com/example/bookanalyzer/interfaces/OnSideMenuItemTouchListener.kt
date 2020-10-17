@@ -15,21 +15,33 @@ interface OnSideMenuItemTouchListener : View.OnTouchListener {
 
         when (event?.action) {
             MotionEvent.ACTION_DOWN -> {
-                createValueAnimator(v, startColor, pressedColor).start()
-                return true
+                onActionDown(v, startColor, pressedColor)
+                return (true)
             }
             MotionEvent.ACTION_CANCEL -> {
-                createValueAnimator(v, pressedColor, startColor).start()
-                return true
+                onActionCancel(v, startColor, pressedColor)
+                return (true)
             }
             MotionEvent.ACTION_UP -> {
-                createValueAnimator(v, startColor, pressedColor).start()
-                doAction()
-                createValueAnimator(v, pressedColor, startColor).start()
-                return true
+                onActionUp(v, startColor, pressedColor)
+                return (true)
             }
         }
-        return false
+        return (false)
+    }
+
+    private fun onActionDown(view:View?, startColor:Int, pressedColor:Int){
+        createValueAnimator(view, startColor, pressedColor).start()
+    }
+
+    private fun onActionCancel(view:View?, startColor:Int, pressedColor:Int){
+        createValueAnimator(view, pressedColor, startColor).start()
+    }
+
+    private fun onActionUp(view:View?, startColor:Int, pressedColor:Int){
+        createValueAnimator(view, startColor, pressedColor).start()
+        doAction()
+        createValueAnimator(view, pressedColor, startColor).start()
     }
 
     private fun createValueAnimator(view: View?, colorFrom: Int, colorTo: Int): ValueAnimator {

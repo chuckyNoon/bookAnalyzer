@@ -21,17 +21,17 @@ class WordListPresenter(private val repository: WordListRepository) : MvpPresent
         viewState.scrollToPosition(progress)
     }
 
-    fun onViewCreated(bookInd: Int) {
+    fun onViewCreated(bookId: Int) {
         scope.launch {
-            val rowList = repository.getWordList(bookInd)
+            val rowList = repository.getWordList(bookId)
             rowList?.let {
                 wordListSize = rowList.size
                 val wordListItemArray = ArrayList<WordListItem>().apply {
-                    rowList.forEach {
-                        add(it.toWordListItem())
+                    rowList.forEach { row ->
+                        add(row.toWordListItem())
                     }
                 }
-                viewState.setupWordListItems(wordListItemArray)
+                viewState.setupWordItems(wordListItemArray)
                 viewState.setSeekBarMaxValue(wordListSize)
                 viewState.setPositionViewText("1 from $wordListSize")
             }

@@ -30,8 +30,8 @@ import com.example.bookanalyzer.interfaces.SimpleItemTouchHelperCallback
 import com.example.bookanalyzer.mvp.presenters.StartScreenPresenter
 import com.example.bookanalyzer.mvp.repositories.StartScreenRepository
 import com.example.bookanalyzer.mvp.views.StartView
-import com.example.bookanalyzer.ui.adapters.BookListAdapter
-import com.example.bookanalyzer.ui.adapters.BookListItem
+import com.example.bookanalyzer.ui.adapters.BookItemsAdapter
+import com.example.bookanalyzer.ui.adapters.BookItem
 import com.example.bookanalyzer.ui.adapters.SideMenuItem
 import com.example.bookanalyzer.ui.fragments.FirstLaunchDialog
 import moxy.MvpAppCompatActivity
@@ -39,23 +39,29 @@ import moxy.ktx.moxyPresenter
 
 import java.io.File
 
+const val EXTRA_BOOK_PATH = "BookPath"
+const val EXTRA_ANALYSIS_ID = "AnalysisId"
+
 class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSearchSettings,
     FirstLaunchDialog.OnSelectedLaunchOption, StartView {
 
-    private lateinit var bookListView: RecyclerView
+    companion object {
+        private const val FIRST_LAUNCH_TAG = "firstLaunch"
+        private const val SEARCH_SETTINGS_DIALOG_TAG = "124"
+        private const val REQUEST_PERMISSION_FOR_BOOK_ADD_CODE = 1
+        private const val REQUEST_PERMISSION_FOR_BOOK_SEARCH_CODE = 2
+        private const val SELECT_FILE_REQUEST_CODE = 123
+    }
+
+    private lateinit var recyclerView: RecyclerView
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var loadingStateTextView: TextView
-    private lateinit var adapter: BookListAdapter
+    private lateinit var adapter: BookItemsAdapter
     private lateinit var sideMenuListView: ListView
     private lateinit var toolBar: androidx.appcompat.widget.Toolbar
 
     private var repository = StartScreenRepository(this)
     private val presenter by moxyPresenter { StartScreenPresenter(repository) }
-
-    private val FIRST_LAUNCH_TAG = "firstLaunch"
-    private val REQUEST_PERMISSION_FOR_BOOK_ADD = 1
-    private val REQUEST_PERMISSION_FOR_BOOK_SEARCH = 2
-    private val SELECT_FILE_REQUEST_CODE = 123
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,11 +76,11 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSea
 
     private fun isFirstApplicationLaunch(): Boolean {
         val prefs = getSharedPreferences("APP_PREFERENCES", Context.MODE_PRIVATE)
-        if (!prefs.contains(FIRST_LAUNCH_TAG)) {
+        return if (!prefs.contains(FIRST_LAUNCH_TAG)) {
             prefs.edit().putBoolean(FIRST_LAUNCH_TAG, true).apply()
-            return true
+            (true)
         } else {
-            return false
+            (false)
         }
     }
 
@@ -87,7 +93,7 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSea
     }
 
     private fun initFields() {
-        bookListView = findViewById(R.id.recycler_view_books)
+        recyclerView = findViewById(R.id.recycler_view_books)
         drawerLayout = findViewById(R.id.drawerLayout)
         loadingStateTextView = findViewById(R.id.text_view_loading_state)
         sideMenuListView = findViewById(R.id.sideMenuListView)
@@ -102,14 +108,14 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSea
 
     private fun setRecyclerView() {
         val defaultBookImage = BitmapFactory.decodeResource(this.resources, R.drawable.book)
-        adapter = BookListAdapter(this, defaultBookImage, presenter)
-        bookListView.setHasFixedSize(true)
+        adapter = BookItemsAdapter(this, defaultBookImage, presenter)
+        recyclerView.setHasFixedSize(true)
         val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(presenter)
         val itemTouchHelper = ItemTouchHelper(callback)
-        itemTouchHelper.attachToRecyclerView(bookListView)
+        itemTouchHelper.attachToRecyclerView(recyclerView)
 
-        bookListView.adapter = adapter
-        bookListView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = adapter
+        recyclerView.layoutManager = LinearLayoutManager(this)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -119,17 +125,16 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSea
         return super.onOptionsItemSelected(item)
     }
 
-    override fun startLoaderScreenActivity(bookPath: String, newBookInd: Int) {
+    override fun startLoaderScreenActivity(bookPath: String) {
         val intent = Intent(this, LoaderScreenActivity::class.java).apply {
-            putExtra("path", bookPath)
-            putExtra("ind", newBookInd)
+            putExtra(EXTRA_BOOK_PATH, bookPath)
         }
         startActivity(intent)
     }
 
-    override fun startBookInfoActivity(bookInd: Int) {
+    override fun startBookInfoActivity(analysisId: Int) {
         val intent = Intent(this, BookInfoActivity::class.java).apply {
-            putExtra("ind", bookInd)
+            putExtra(EXTRA_ANALYSIS_ID, analysisId)
         }
         startActivity(intent)
     }
@@ -153,9 +158,13 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSea
 
     override fun onSelectedLaunchOption(isScanSelected: Boolean) {
         if (isScanSelected) {
-            requestReadPermission(REQUEST_PERMISSION_FOR_BOOK_SEARCH)
+            requestReadPermission(REQUEST_PERMISSION_FOR_BOOK_SEARCH_CODE)
         } else {
-            Toast.makeText(this, "Books are not searched", Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this,
+                resources.getString(R.string.search_declined_message),
+                Toast.LENGTH_SHORT
+            ).show()
         }
     }
 
@@ -168,11 +177,11 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSea
         if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             drawerLayout.close()
             when (requestCode) {
-                REQUEST_PERMISSION_FOR_BOOK_ADD -> {
+                REQUEST_PERMISSION_FOR_BOOK_ADD_CODE -> {
                     val intent = Intent().setAction(Intent.ACTION_GET_CONTENT).setType("*/*")
                     startActivityForResult(intent, SELECT_FILE_REQUEST_CODE)
                 }
-                REQUEST_PERMISSION_FOR_BOOK_SEARCH -> {
+                REQUEST_PERMISSION_FOR_BOOK_SEARCH_CODE -> {
                     showSearchSettingsDialog()
                 }
             }
@@ -180,52 +189,56 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSea
     }
 
     override fun showSearchSettingsDialog() {
-        SearchSettingsDialog().show(supportFragmentManager, "124")
+        SearchSettingsDialog().show(supportFragmentManager, SEARCH_SETTINGS_DIALOG_TAG)
     }
 
     override fun onSelectedSearchSettings(bookFormats: ArrayList<String>, searchRootDir: File) {
         presenter.onSelectedSearchSettings(bookFormats, searchRootDir)
     }
 
+    override fun showLoadingStateView() {
+        loadingStateTextView.visibility = View.VISIBLE
+    }
+
     override fun hideLoadingStateView() {
         loadingStateTextView.visibility = View.INVISIBLE
     }
 
-    override fun moveLoadingStateViewUp(duration: Int) {
+    override fun moveLoadingStateViewUp(animDuration: Int) {
         ObjectAnimator.ofFloat(loadingStateTextView, "translationY", 0f).apply {
-            this.duration = duration.toLong()
+            this.duration = animDuration.toLong()
             start()
         }
     }
 
-    override fun moveLoadingStateViewDown(duration: Int) {
+    override fun moveLoadingStateViewDown(animDuration: Int) {
         val height = loadingStateTextView.height.toFloat()
         ObjectAnimator.ofFloat(loadingStateTextView, "translationY", height).apply {
-            this.duration = duration.toLong()
+            this.duration = animDuration.toLong()
             start()
         }
-    }
-
-    override fun showLoadingStateView() {
-        loadingStateTextView.visibility = View.VISIBLE
     }
 
     override fun setLoadingStateViewText(text: String) {
         loadingStateTextView.text = text
     }
 
-    override fun updateLoadingStateView(text: String, downDuration: Long, upDuration: Long) {
+    override fun updateLoadingStateView(
+        text: String,
+        animDownDuration: Long,
+        animUpDuration: Long
+    ) {
         val height = loadingStateTextView.height.toFloat()
 
         ObjectAnimator.ofFloat(loadingStateTextView, "translationY", height).apply {
-            duration = downDuration
+            duration = animDownDuration
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationStart(animation: Animator?) {
                 }
 
                 override fun onAnimationEnd(animation: Animator?) {
                     setLoadingStateViewText(text)
-                    moveLoadingStateViewUp(upDuration.toInt())
+                    moveLoadingStateViewUp(animUpDuration.toInt())
                 }
 
                 override fun onAnimationCancel(animation: Animator?) {
@@ -242,8 +255,8 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSea
         drawerLayout.open()
     }
 
-    override fun showBookList(itemList: ArrayList<BookListItem>) {
-        adapter.setupBooks(itemList)
+    override fun showBookList(bookItems: ArrayList<BookItem>) {
+        adapter.setupBooks(bookItems)
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -261,7 +274,7 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSea
             R.drawable.baseline_folder_24,
             object : OnSideMenuItemTouchListener {
                 override fun doAction() {
-                    requestReadPermission(REQUEST_PERMISSION_FOR_BOOK_ADD)
+                    requestReadPermission(REQUEST_PERMISSION_FOR_BOOK_ADD_CODE)
                 }
             }
         ))
@@ -270,7 +283,7 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSea
             R.drawable.baseline_search_24,
             object : OnSideMenuItemTouchListener {
                 override fun doAction() {
-                    requestReadPermission(REQUEST_PERMISSION_FOR_BOOK_SEARCH)
+                    requestReadPermission(REQUEST_PERMISSION_FOR_BOOK_SEARCH_CODE)
                 }
             }
         ))

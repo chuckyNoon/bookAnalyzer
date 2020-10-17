@@ -25,11 +25,22 @@ class LoaderScreenRepository(private val ctx: Context) {
         (analyzer?.getAnalysis(path))
     }
 
-    suspend fun saveAnalysis(bookPath: String, ind: Int, analyzedBookModel: AnalyzedBookModel) =
+    suspend fun getAnalysisIdByPath(path: String) = withContext(Dispatchers.Default){
+        (analysisDao?.getBookAnalysisByPath(path)?.id)
+    }
+
+    private suspend fun getNewListInd() = withContext(Dispatchers.Default){
+        val analysisCount = analysisDao?.getBookAnalyses()?.size
+        val listInd = 1 + (analysisCount?:0)
+        (listInd)
+    }
+
+    suspend fun saveAnalysis(analyzedBookModel: AnalyzedBookModel) =
         withContext(Dispatchers.Default) {
-            val wordListPath = wordListStorage?.savedWordListPathByInd(ind)
+            val listInd = getNewListInd()
+            val wordListPath = wordListStorage?.savedWordListPathByInd(listInd)
             val dbBookAnalysisData = DbBookAnalysisData(
-                path = bookPath,
+                path = analyzedBookModel.path,
                 uniqueWordCount = analyzedBookModel.uniqueWordCount,
                 allWordCount = analyzedBookModel.allWordCount,
                 allCharCount = analyzedBookModel.allCharCount,
@@ -39,6 +50,6 @@ class LoaderScreenRepository(private val ctx: Context) {
                 wordListPath = wordListPath ?: ""
             )
             analysisDao?.insertBookAnalysis(dbBookAnalysisData)
-            wordListStorage?.saveWordList(analyzedBookModel.wordMap, ind)
+            wordListStorage?.saveWordList(analyzedBookModel.wordMap, listInd)
         }
 }

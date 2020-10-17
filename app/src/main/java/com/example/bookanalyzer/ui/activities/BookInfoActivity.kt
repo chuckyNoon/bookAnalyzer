@@ -38,16 +38,16 @@ class BookInfoActivity : MvpAppCompatActivity(),
     }
 
     private fun selectLaunchOption(isActivityRecreated: Boolean) {
-        val bookInd = getBookInd()
-        bookInd?.let {
+        val analysisId = getAnalysisIdFromIntent()
+        analysisId?.let {
             if (!isActivityRecreated) {
-                presenter.onViewCreated(bookInd)
+                presenter.onViewCreated(analysisId)
             }
         }
     }
 
-    private fun getBookInd(): Int? {
-        return intent.extras?.getInt("ind")
+    private fun getAnalysisIdFromIntent(): Int? {
+        return intent.extras?.getInt(EXTRA_ANALYSIS_ID)
     }
 
     private fun initFields() {
@@ -63,16 +63,16 @@ class BookInfoActivity : MvpAppCompatActivity(),
     }
 
     private fun setToolBar() {
-        toolBar.title = "Info"
+        toolBar.title = resources.getString(R.string.info_activity_title)
         toolBar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
         setSupportActionBar(toolBar)
     }
 
     private fun setToWordListButton() {
-        val bookInd = getBookInd()
-        bookInd?.let {
+        val analysisId = getAnalysisIdFromIntent()
+        analysisId?.let {
             toWordListButton.setOnClickListener {
-                presenter.onWordListButtonClicked(bookInd)
+                presenter.onWordListButtonClicked(analysisId)
             }
         }
     }
@@ -94,9 +94,9 @@ class BookInfoActivity : MvpAppCompatActivity(),
         avgWordLenView.text = bookInfoModel.avgWordLen
     }
 
-    override fun startWordListActivity(ind: Int) {
+    override fun startWordListActivity(analysisId: Int) {
         val intent = Intent(this, WordListActivity::class.java).apply {
-            putExtra("ind", ind)
+            putExtra(EXTRA_ANALYSIS_ID, analysisId)
         }
         startActivity(intent)
     }

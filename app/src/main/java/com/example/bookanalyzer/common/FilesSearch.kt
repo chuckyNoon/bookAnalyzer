@@ -2,13 +2,13 @@ package com.example.bookanalyzer.common
 
 import java.io.File
 
-class BookSearch {
+class FilesSearch {
     companion object {
-        fun findBookPaths(dir: File, namePatterns: ArrayList<String>? = null): ArrayList<String> {
+        fun findFiles(rootDir: File, namePatterns: ArrayList<String>?): ArrayList<String> {
             val foundPaths = ArrayList<String>()
-            val patterns = namePatterns ?: arrayListOf("fb2", "epub", "txt")
-            search(dir, foundPaths, patterns)
-            return (foundPaths)
+            val patterns = namePatterns ?: arrayListOf()
+            search(rootDir, foundPaths, patterns)
+            return foundPaths
         }
 
         private fun fitsPattern(fileName: String, namePatterns: ArrayList<String>): Boolean {
@@ -28,13 +28,13 @@ class BookSearch {
             foundPaths: ArrayList<String>,
             namePatterns: ArrayList<String>
         ) {
-            val fileList: Array<File> = dir.listFiles() ?: return
-            for (i in fileList.indices) {
-                if (fileList[i].isDirectory) {
-                    search(fileList[i], foundPaths, namePatterns)
+            val fileList = dir.listFiles() ?: return
+            for (file in fileList) {
+                if (file.isDirectory) {
+                    search(file, foundPaths, namePatterns)
                 } else {
-                    if (fitsPattern(fileList[i].name, namePatterns)) {
-                        foundPaths.add(fileList[i].path)
+                    if (fitsPattern(file.name, namePatterns)) {
+                        foundPaths.add(file.path)
                     }
                 }
             }

@@ -1,4 +1,4 @@
-package com.example.bookanalyzer.data.filesystem
+package com.example.bookanalyzer.data.filesystem.preview_parser
 
 import android.content.Context
 

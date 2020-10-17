@@ -21,7 +21,7 @@ import com.squareup.picasso.Picasso
 import kotlinx.android.synthetic.main.item_book.view.*
 import java.io.File
 
-data class BookListItem(
+data class BookItem(
     var path: String,
     var title: String,
     var author: String,
@@ -29,22 +29,22 @@ data class BookListItem(
     var imgPath: String?,
     var uniqueWordCount: String,
     var barProgress: Int,
-    var id: Int
+    var analysisId: Int,
 )
 
-class BookListAdapter(
+class BookItemsAdapter(
     private val ctx: Context,
     private val defaultBookBitmap: Bitmap,
     private val presenter: StartScreenPresenter
 ) :
-    RecyclerView.Adapter<BookListAdapter.ItemViewHolder>() {
+    RecyclerView.Adapter<BookItemsAdapter.ItemViewHolder>() {
 
-    private val diffUtilCallback = object : DiffUtil.ItemCallback<BookListItem>() {
-        override fun areItemsTheSame(oldItem: BookListItem, newItem: BookListItem): Boolean {
+    private val diffUtilCallback = object : DiffUtil.ItemCallback<BookItem>() {
+        override fun areItemsTheSame(oldItem: BookItem, newItem: BookItem): Boolean {
             return oldItem.path == newItem.path
         }
 
-        override fun areContentsTheSame(oldItem: BookListItem, newItem: BookListItem): Boolean {
+        override fun areContentsTheSame(oldItem: BookItem, newItem: BookItem): Boolean {
             return when {
                 oldItem.path != newItem.path -> false
                 oldItem.author != newItem.author -> false
@@ -59,8 +59,8 @@ class BookListAdapter(
 
     private val differ = AsyncListDiffer(this, diffUtilCallback)
 
-    fun setupBooks(arrayList: ArrayList<BookListItem>) {
-        differ.submitList(arrayList)
+    fun setupBooks(bookItems: ArrayList<BookItem>) {
+        differ.submitList(bookItems)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
@@ -93,7 +93,6 @@ class BookListAdapter(
                 }
             }
         }
-
         holder.bookTitleView.text = book.title
         holder.bookAuthorView.text = book.author
         holder.wordCountView.text = book.uniqueWordCount
@@ -103,7 +102,6 @@ class BookListAdapter(
         } else {
             holder.bookImage.setImageBitmap(defaultBookBitmap)
         }
-
         holder.progressBar.apply {
             max = 20000
             progress = book.barProgress

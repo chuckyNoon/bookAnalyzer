@@ -15,9 +15,12 @@ data class DbBookPreviewData(
     @ColumnInfo(name = "author")
     var author: String?,
 
-    @ColumnInfo(name = "img_path")
+    @ColumnInfo(name = "imgPath")
     var imgPath: String?,
 
+    @ColumnInfo(name = "analysisId")
+    var analysisId: Int,
+
     @PrimaryKey(autoGenerate = true)
-    var id: Int = 0,
+    var id: Int = 0
 )

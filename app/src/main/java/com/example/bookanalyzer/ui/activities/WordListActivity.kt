@@ -41,14 +41,14 @@ class WordListActivity : MvpAppCompatActivity(), WordListView {
     }
 
     private fun selectLaunchOption(isActivityRecreated: Boolean) {
-        val bookInd = getBookIndFromIntent()
-        if (bookInd != null && !isActivityRecreated) {
-            presenter.onViewCreated(bookInd)
+        val analysisId = getAnalysisIdFromIntent()
+        if (analysisId != null && !isActivityRecreated) {
+            presenter.onViewCreated(analysisId)
         }
     }
 
-    private fun getBookIndFromIntent(): Int? {
-        return intent.extras?.getInt("ind")
+    private fun getAnalysisIdFromIntent(): Int? {
+        return intent.extras?.getInt(EXTRA_ANALYSIS_ID)
     }
 
     private fun initFields() {
@@ -73,7 +73,7 @@ class WordListActivity : MvpAppCompatActivity(), WordListView {
     }
 
     private fun setToolBar() {
-        toolBar.title = "Word list"
+        toolBar.title = resources.getString(R.string.word_list_activity_title)
         toolBar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
         setSupportActionBar(toolBar)
     }
@@ -111,8 +111,8 @@ class WordListActivity : MvpAppCompatActivity(), WordListView {
         seekBar.max = maxValue
     }
 
-    override fun setupWordListItems(linesList: ArrayList<WordListItem>) {
-        wordListAdapter.setupData(linesList)
+    override fun setupWordItems(wordItems: ArrayList<WordListItem>) {
+        wordListAdapter.setupData(wordItems)
     }
 
     override fun finishActivity() {

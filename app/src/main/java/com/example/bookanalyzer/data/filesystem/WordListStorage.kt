@@ -20,22 +20,46 @@ class WordListStorage(val ctx: Context) {
     }
 
     fun getWordList(ind: Int): ArrayList<WordListRowData>? {
+        val listFileContent = readWordListFile(ind)
+        listFileContent?.let {
+            val lines = (listFileContent.substring(1, listFileContent.length - 1).split(','))
+            val rowDataList = convertFileLinesToRowDataList(ArrayList(lines))
+            return (rowDataList)
+        }
+        return (null)
+    }
+
+    private fun readWordListFile(ind: Int): String? {
         return try {
-            val list = ArrayList<WordListRowData>()
             val listFileInput = ctx.openFileInput(savedWordListPathByInd(ind))
             val listFileContent = listFileInput.readBytes().toString(Charsets.UTF_8)
-            val lines = (listFileContent.substring(1, listFileContent.length - 1).split(','))
-            for (i in lines.indices) {
-                val line = lines[i]
-                val parts = line.split("=")
-                if (parts.size == 2) {
-                    list.add(WordListRowData(parts[0], parts[1].toInt(), (i + 1)))
-                }
-            }
             listFileInput.close()
-            return (list)
+            (listFileContent)
         } catch (e: IOException) {
             println(e)
+            (null)
+        }
+    }
+
+    private fun convertFileLinesToRowDataList(lines: ArrayList<String>): ArrayList<WordListRowData> {
+        val rowDataList = ArrayList<WordListRowData>()
+        for (i in lines.indices) {
+            val rowData = convertFileLineToRowData(lines[i], i)
+            rowData?.let {
+                rowDataList.add(it)
+            }
+        }
+        return (rowDataList)
+    }
+
+    private fun convertFileLineToRowData(line: String, ind: Int): WordListRowData? {
+        val parts = line.split("=")
+        return if (parts.size == 2) {
+            val word = parts[0]
+            val count = parts[1].toInt()
+            val pos = ind + 1
+            (WordListRowData(word, count, pos))
+        } else {
             (null)
         }
     }

@@ -11,5 +11,5 @@ interface BookInfoView : MvpView {
     fun setViewsText(bookInfoModel: BookInfoModel)
 
     @Skip
-    fun startWordListActivity(ind: Int)
+    fun startWordListActivity(analysisId: Int)
 }

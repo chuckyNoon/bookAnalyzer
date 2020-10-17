@@ -19,11 +19,11 @@ interface BookAnalysisDao {
     fun getBookAnalysisByPath(path: String): DbBookAnalysisData?
 
     @Query("SELECT * FROM info_table WHERE id == :id LIMIT 1")
-    fun getBookAnalysisById(id:Int): DbBookAnalysisData?
+    fun getBookAnalysisById(id: Int): DbBookAnalysisData?
 
     @Query("DELETE FROM info_table")
     fun nukeTable()
 
     @Query("SELECT * FROM info_table")
-    fun getBookAnalyses(): List<DbBookPreviewData>
+    fun getBookAnalyses(): List<DbBookAnalysisData>
 }

@@ -23,7 +23,6 @@ class SearchSettingsDialog : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val view = layoutInflater.inflate(R.layout.dialog_search_settings, null)
-        dialog?.setTitle("Title!")
         initFields(view)
         setStartSearchButton()
 
@@ -49,13 +48,13 @@ class SearchSettingsDialog : DialogFragment() {
 
         val selectedFormats = ArrayList<String>()
         if (isEpubFormatSelected) {
-            selectedFormats.add("epub")
+            selectedFormats.add(resources.getString(R.string.epubFormat))
         }
         if (isFb2FormatSelected) {
-            selectedFormats.add("fb2")
+            selectedFormats.add(resources.getString(R.string.fb2Format))
         }
         if (isTxtFormatSelected) {
-            selectedFormats.add("txt")
+            selectedFormats.add(resources.getString(R.string.txtFormat))
         }
         return (selectedFormats)
     }
@@ -63,9 +62,9 @@ class SearchSettingsDialog : DialogFragment() {
     private fun getSelectedSearchRootDir(): File {
         val checkedRadioButtonId = radioGroup.checkedRadioButtonId
         return if (checkedRadioButtonId == R.id.allDirsRadioButton) {
-            Environment.getExternalStorageDirectory()
+            (Environment.getExternalStorageDirectory())
         } else {
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            (Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
         }
     }
 

@@ -14,13 +14,16 @@ class LoaderScreenPresenter(private val repository: LoaderScreenRepository) :
         viewState.finishActivity()
     }
 
-    fun onViewCreated(bookInd: Int, path: String) {
+    fun onViewCreated(bookPath: String) {
         scope.launch {
             repository.initDataSources()
-            val analyzedBookModel = repository.analyzeBook(path)
+            val analyzedBookModel = repository.analyzeBook(bookPath)
             analyzedBookModel?.let {
-                repository.saveAnalysis(path, bookInd, analyzedBookModel)
-                viewState.goToInfoActivity(bookInd)
+                repository.saveAnalysis(analyzedBookModel)
+                val analysisId = repository.getAnalysisIdByPath(bookPath)
+                analysisId?.let{
+                    viewState.goToInfoActivity(analysisId)
+                }
             }
         }
     }

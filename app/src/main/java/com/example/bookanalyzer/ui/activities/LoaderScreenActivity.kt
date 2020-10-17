@@ -26,19 +26,14 @@ class LoaderScreenActivity : MvpAppCompatActivity(), LoaderScreenView {
         selectLaunchOption(savedInstanceState != null)
     }
 
-    private fun getPathFromIntent(): String? {
-        return intent.extras?.getString("path")
-    }
-
-    private fun getBookIndFromIntent(): Int? {
-        return intent.extras?.getInt("ind")
+    private fun getBookPathFromIntent(): String? {
+        return intent.extras?.getString(EXTRA_BOOK_PATH)
     }
 
     private fun selectLaunchOption(isActivityRecreated: Boolean) {
-        val path = getPathFromIntent()
-        val bookInd = getBookIndFromIntent()
-        if (path != null && bookInd != null && !isActivityRecreated) {
-            presenter.onViewCreated(bookInd, path)
+        val path = getBookPathFromIntent()
+        if (path != null && !isActivityRecreated) {
+            presenter.onViewCreated(path)
         }
     }
 
@@ -47,7 +42,7 @@ class LoaderScreenActivity : MvpAppCompatActivity(), LoaderScreenView {
     }
 
     private fun setToolBar() {
-        toolBar.title = ""
+        toolBar.title = resources.getString(R.string.loader_activity_title)
         toolBar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
         setSupportActionBar(toolBar)
     }
@@ -59,9 +54,9 @@ class LoaderScreenActivity : MvpAppCompatActivity(), LoaderScreenView {
         return super.onOptionsItemSelected(item)
     }
 
-    override fun goToInfoActivity(bookInd: Int) {
+    override fun goToInfoActivity(analysisId: Int) {
         val intent = Intent(this@LoaderScreenActivity, BookInfoActivity::class.java).apply {
-            putExtra("ind", bookInd)
+            putExtra(EXTRA_ANALYSIS_ID, analysisId)
         }
         startActivity(intent)
     }

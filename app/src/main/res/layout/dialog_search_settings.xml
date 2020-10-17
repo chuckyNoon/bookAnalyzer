@@ -12,7 +12,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="32dp"
-        android:text="Formats:"
+        android:text="@string/formats"
         android:textAlignment="viewStart"
         android:textSize="18sp"
         android:textStyle="bold"
@@ -40,7 +40,7 @@
             android:layout_marginStart="30dp"
             android:layout_weight="1"
             android:checked="true"
-            android:text="EPUB"
+            android:text="@string/epubFormat"
             android:textAlignment="viewStart" />
 
         <CheckBox
@@ -49,7 +49,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:checked="true"
-            android:text="FB2"
+            android:text="@string/fb2Format"
             android:textAlignment="viewStart" />
 
         <CheckBox
@@ -59,7 +59,7 @@
             android:layout_marginEnd="30dp"
             android:layout_weight="1"
             android:checked="true"
-            android:text="TXT"
+            android:text="@string/txtFormat"
             android:textAlignment="viewStart" />
     </LinearLayout>
 
@@ -71,7 +71,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginTop="4dp"
         android:layout_marginEnd="2dp"
-        android:text="Ok"
+        android:text="@string/ok"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="1.0"
@@ -85,7 +85,7 @@
         android:layout_marginStart="32dp"
         android:layout_marginTop="16dp"
         android:layout_marginEnd="10dp"
-        android:text="Search in"
+        android:text="@string/search_in"
         android:textSize="18sp"
         android:textStyle="bold"
         app:layout_constraintEnd_toStartOf="@+id/radioGroup"
@@ -106,13 +106,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:checked="true"
-            android:text="Downloads" />
+            android:text="@string/downloads_dir" />
 
         <RadioButton
             android:id="@+id/allDirsRadioButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="All directories" />
+            android:text="All directories"
+            tools:text="@string/all_dirs" />
 
     </RadioGroup>
 

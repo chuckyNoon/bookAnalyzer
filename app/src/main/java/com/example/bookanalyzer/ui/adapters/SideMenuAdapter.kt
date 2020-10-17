@@ -16,10 +16,10 @@ class SideMenuItem(
 
 //to remake
 class SideMenuAdapter(
-    private val ctx: Context,
+    ctx: Context,
     private val sideMenuItemList: ArrayList<SideMenuItem>
-) :
-    BaseAdapter() {
+) : BaseAdapter() {
+
     private val layoutInflater =
         ctx.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
@@ -35,7 +35,7 @@ class SideMenuAdapter(
         }
         view.actionTextView.text = sideMenuItem.text
         view.setOnTouchListener(sideMenuItem.onTouchListener)
-        return (view)
+        return view
     }
 
     override fun getItem(position: Int): Any {

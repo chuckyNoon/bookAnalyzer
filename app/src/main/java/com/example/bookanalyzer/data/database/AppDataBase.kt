@@ -9,6 +9,8 @@ import com.example.bookanalyzer.data.database.daos.BookPreviewDao
 import com.example.bookanalyzer.data.database.models.DbBookAnalysisData
 import com.example.bookanalyzer.data.database.models.DbBookPreviewData
 
+const val DB_NAME = "myDb"
+
 @Database(entities = [DbBookPreviewData::class, DbBookAnalysisData::class], version = 1)
 abstract class AppDataBase : RoomDatabase() {
     abstract fun bookPreviewDao(): BookPreviewDao
@@ -19,7 +21,7 @@ abstract class AppDataBase : RoomDatabase() {
 
         fun getDataBase(ctx: Context): AppDataBase? {
             if (instance == null) {
-                instance = Room.databaseBuilder(ctx, AppDataBase::class.java, "myDb").build()
+                instance = Room.databaseBuilder(ctx, AppDataBase::class.java, DB_NAME).build()
             }
             return instance
         }

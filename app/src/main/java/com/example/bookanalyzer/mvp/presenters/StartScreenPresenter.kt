@@ -1,22 +1,32 @@
 package com.example.bookanalyzer.mvp.presenters
 
-import com.example.bookanalyzer.common.BookSearch
+import com.example.bookanalyzer.common.FilesSearch
 import com.example.bookanalyzer.mvp.repositories.StartScreenRepository
 import com.example.bookanalyzer.mvp.views.StartView
-import com.example.bookanalyzer.ui.adapters.BookListItem
+import com.example.bookanalyzer.ui.adapters.BookItem
 import kotlinx.coroutines.*
 import moxy.MvpPresenter
 import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
 
+const val ANALYSIS_NOT_EXIST = -1
+
 class StartScreenPresenter(private val repository: StartScreenRepository) :
     MvpPresenter<StartView>() {
+
+    companion object {
+        private const val LOADING_CONTENT_TEXT = "Loading content..."
+        private const val LOADING_ENDED_TEXT = "Loading ended"
+        private const val UNKNOWN_AUTHOR_TEXT = "Unknown"
+        private const val TIME_BEFORE_HIDING_LOADING_STATE_VIEW: Long = 3000
+        private const val NO_BOOK_OPENED = -1
+    }
 
     private var bookDataList: ArrayList<BookData>? = null
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Main + job)
-    private var lastOpenedBookInd = -1
+    private var lastOpenedBookInd = NO_BOOK_OPENED
 
     fun onViewCreated() {
         scope.launch {
@@ -56,32 +66,32 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
     private fun indicateContentLoadingStart() {
         viewState.showLoadingStateView()
         viewState.moveLoadingStateViewUp(300)
-        viewState.setLoadingStateViewText("Loading content...")
+        viewState.setLoadingStateViewText(LOADING_CONTENT_TEXT)
     }
 
     private suspend fun indicateContentLoadingEnd() {
-        viewState.updateLoadingStateView("Loading ended", 250, 300)
-        delay(3000)
+        viewState.updateLoadingStateView(LOADING_ENDED_TEXT, 250, 300)
+        delay(TIME_BEFORE_HIDING_LOADING_STATE_VIEW)
         viewState.moveLoadingStateViewDown(250)
         viewState.hideLoadingStateView()
     }
 
-    private fun convertDataListToItemList(dataList: ArrayList<BookData>): ArrayList<BookListItem> {
-        val itemList = ArrayList<BookListItem>()
-        for (item in dataList) {
-            itemList.add(item.toBookListItem())
+    private fun convertDataListToItemList(dataList: ArrayList<BookData>): ArrayList<BookItem> {
+        val itemList = ArrayList<BookItem>().apply {
+            for (data in dataList) {
+                add(data.toBookListItem())
+            }
         }
         return (itemList)
     }
 
-    private fun BookData.toBookListItem(): BookListItem {
+    private fun BookData.toBookListItem(): BookItem {
         val bookFormat = path.split(".").last().toUpperCase(Locale.ROOT)
         val relativePath = path.split("/").last()
         val title = title ?: relativePath
-        val author = author ?: "Unknown"
+        val author = author ?: UNKNOWN_AUTHOR_TEXT
         val uniqueWordCountText = makeWordCountText(uniqueWordCount)
-
-        return BookListItem(
+        return BookItem(
             path = relativePath,
             title = title,
             author = author,
@@ -89,7 +99,7 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
             imgPath = imgPath,
             uniqueWordCount = uniqueWordCountText,
             barProgress = uniqueWordCount,
-            id = id
+            analysisId = analysisId
         )
     }
 
@@ -99,7 +109,7 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
         } else {
             "?"
         }
-        return "$firstPart words"
+        return ("$firstPart words")
     }
 
     private fun addBookItemToList(bookPath: String) {
@@ -116,7 +126,7 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
 
     fun onSelectedSearchSettings(bookFormats: ArrayList<String>, rootDir: File) {
         scope.launch {
-            val bookPaths = BookSearch.findBookPaths(rootDir, bookFormats)
+            val bookPaths = FilesSearch.findFiles(rootDir, bookFormats)
             repository.initDataSources()
             buildListFromNewData(bookPaths)
         }
@@ -146,36 +156,36 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
     }
 
     fun onBookClicked(position: Int) {
-        if (lastOpenedBookInd != -1) {
+        if (lastOpenedBookInd != NO_BOOK_OPENED) {
             return
         }
         bookDataList?.let { bookDataList ->
             lastOpenedBookInd = position
-            scope.launch {
-                val book = bookDataList[position]
-                val ind = repository.getBookIndByPath(book.path)
-                if (ind != -1) {
-                    viewState.startBookInfoActivity(ind)
-                } else {
-                    val newInd = repository.getAnalyzedBookCount() + 1
-                    viewState.startLoaderScreenActivity(book.path, newInd)
-                }
+            val book = bookDataList[position]
+            val analysisId = book.analysisId
+            if (analysisId == ANALYSIS_NOT_EXIST) {
+                viewState.startLoaderScreenActivity(book.path)
+            } else {
+                viewState.startBookInfoActivity(analysisId)
             }
         }
     }
 
     fun onRestart() {
         bookDataList?.let { bookDataList ->
-            scope.launch {
-                if (lastOpenedBookInd in bookDataList.indices) {
+            if (lastOpenedBookInd in bookDataList.indices) {
+                scope.launch {
                     val newUniqueWordCount =
                         repository.getUniqueWordCountByPath(bookDataList[lastOpenedBookInd].path)
-                    if (bookDataList[lastOpenedBookInd].uniqueWordCount != newUniqueWordCount) {
+                    val newId =
+                        repository.getAnalysisIdByPath(bookDataList[lastOpenedBookInd].path)
+                    if (bookDataList[lastOpenedBookInd].analysisId != newId) {
                         bookDataList[lastOpenedBookInd].uniqueWordCount = newUniqueWordCount
+                        bookDataList[lastOpenedBookInd].analysisId = newId
                         viewState.showBookList(convertDataListToItemList(bookDataList))
                     }
+                    lastOpenedBookInd = NO_BOOK_OPENED
                 }
-                lastOpenedBookInd = -1
             }
         }
     }
@@ -194,6 +204,7 @@ data class BookData(
     var title: String?,
     var author: String?,
     var imgPath: String?,
-    var uniqueWordCount: Int = 0,
-    var id: Int = 0
+    var uniqueWordCount: Int,
+    var analysisId: Int,
 )
+

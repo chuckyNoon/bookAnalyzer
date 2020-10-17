@@ -1,6 +1,7 @@
-package com.example.bookanalyzer.data.filesystem
+package com.example.bookanalyzer.data.filesystem.preview_parser
 
 import android.content.Context
+import android.graphics.Bitmap
 import com.example.bookanalyzer.common.Utils
 import nl.siegmann.epublib.domain.Book
 import nl.siegmann.epublib.epub.EpubReader
@@ -12,13 +13,26 @@ class EpubPreviewParser(ctx: Context) : BookPreviewParser(ctx) {
         val book: Book = EpubReader().readEpub(inStream)
 
         val author = getAuthor(book)
-        val bookName = book.title
+        val bookTitle = book.title
         val bitmap = Utils.byteArrayToBitmap(book.coverImage?.data)
-        val saveImgPath = if (book.coverImage != null) "$bookName.jpg" else null
+        val saveImgPath = getSaveImgPath(bitmap, bookTitle)
         if (saveImgPath != null && bitmap != null) {
             saveImage(bitmap, saveImgPath)
         }
-        return (ParsedBookData(path, bookName, author, saveImgPath))
+        return ParsedBookData(
+            path,
+            bookTitle,
+            author,
+            saveImgPath
+        )
+    }
+
+    private fun getSaveImgPath(bitmap: Bitmap?, bookTitle: String?): String? {
+        return if (bitmap != null) {
+            ("${bookTitle}.jpg")
+        } else {
+            (null)
+        }
     }
 
     private fun getAuthor(book: Book): String? {

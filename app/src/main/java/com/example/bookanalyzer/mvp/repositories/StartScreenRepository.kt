@@ -5,8 +5,10 @@ import com.example.bookanalyzer.data.database.AppDataBase
 import com.example.bookanalyzer.data.database.daos.BookAnalysisDao
 import com.example.bookanalyzer.data.database.daos.BookPreviewDao
 import com.example.bookanalyzer.data.database.models.DbBookPreviewData
-import com.example.bookanalyzer.data.filesystem.*
+import com.example.bookanalyzer.data.filesystem.preview_parser.BookPreviewListParser
+import com.example.bookanalyzer.data.filesystem.preview_parser.ParsedBookData
 import com.example.bookanalyzer.mvp.presenters.BookData
+import com.example.bookanalyzer.mvp.presenters.ANALYSIS_NOT_EXIST
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.collections.ArrayList
@@ -25,7 +27,15 @@ class StartScreenRepository(private val ctx: Context) {
         withContext(Dispatchers.Default) {
             val bookDataList = ArrayList<BookData>().apply {
                 paths.forEach { path ->
-                    add(BookData(path, null, null, null))
+                    val data = BookData(
+                        path,
+                        null,
+                        null,
+                        null,
+                        0,
+                        ANALYSIS_NOT_EXIST
+                    )
+                    add(data)
                 }
             }
             (bookDataList)
@@ -47,7 +57,8 @@ class StartScreenRepository(private val ctx: Context) {
         val bookDataList = ArrayList<BookData>().apply {
             for (dbItem in dbItems) {
                 val bookData = dbItem.toBookData().apply {
-                    uniqueWordCount = getUniqueWordCountByPath(dbItem.path)
+                    uniqueWordCount = getUniqueWordCountByPath(path)
+                    analysisId = getAnalysisIdByPath(path)
                 }
                 add(bookData)
             }
@@ -55,6 +66,10 @@ class StartScreenRepository(private val ctx: Context) {
         (bookDataList)
     }
 
+    suspend fun getAnalysisIdByPath(bookPath: String) =
+        withContext(Dispatchers.Default) {
+            (analysisDao?.getBookAnalysisByPath(bookPath)?.id ?: ANALYSIS_NOT_EXIST)
+        }
 
     suspend fun getCompleteBookData(bookPath: String) = withContext(Dispatchers.Default) {
         val bookData = previewDao?.getBookPreviewByPath(bookPath)?.toBookData()?.apply {
@@ -68,37 +83,24 @@ class StartScreenRepository(private val ctx: Context) {
         (analysis?.uniqueWordCount ?: 0)
     }
 
-    suspend fun saveCurrentBookList(dataListItems: ArrayList<BookData>) =
+    suspend fun saveCurrentBookList(dataList: ArrayList<BookData>) =
         withContext(Dispatchers.Default) {
             previewDao?.nukeTable()
-            for (item in dataListItems) {
+            for (item in dataList) {
                 previewDao?.insertBookPreview(item.toDbBookPreviewData())
             }
         }
 
-    suspend fun getAnalyzedBookCount() = withContext(Dispatchers.Default) {
-        val analyses = analysisDao?.getBookAnalyses()
-        (analyses?.size ?: 0)
-    }
-
-    suspend fun getBookIndByPath(path: String) = withContext(Dispatchers.Default) {
-        val analysis = analysisDao?.getBookAnalysisByPath(path)
-        (analysis?.id ?: -1)
-    }
-
     private fun DbBookPreviewData.toBookData(): BookData {
-        return BookData(path, title, author, imgPath, 0, id)
+        return BookData(path, title, author, imgPath, 0, analysisId)
     }
 
     private fun BookData.toDbBookPreviewData(): DbBookPreviewData {
-        return (DbBookPreviewData(path, title, author, imgPath, id))
+        return (DbBookPreviewData(path, title, author, imgPath, analysisId))
     }
 
     private fun ParsedBookData.toDbBookPreviewData(): DbBookPreviewData {
-        return (DbBookPreviewData(path, title, author, imgPath))
+        return (DbBookPreviewData(path, title, author, imgPath, ANALYSIS_NOT_EXIST))
     }
 
-    private fun ParsedBookData.toBookData(): BookData {
-        return (BookData(path, title, author, imgPath))
-    }
 }

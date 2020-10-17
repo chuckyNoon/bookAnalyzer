@@ -21,10 +21,10 @@ class BookInfoPresenter(private val repository: BookInfoRepository) : MvpPresent
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Main + job)
 
-    fun onViewCreated(ind: Int) {
+    fun onViewCreated(analysisId: Int) {
         scope.launch {
             repository.initDataSources()
-            val bookData = repository.readInfo(ind)
+            val bookData = repository.readInfo(analysisId)
             val bookInfoModel = BookInfoModel(
                 bookData.path.split("/").last(),
                 bookData.uniqueWordCount.toString(),
@@ -42,7 +42,7 @@ class BookInfoPresenter(private val repository: BookInfoRepository) : MvpPresent
         viewState.finishActivity()
     }
 
-    fun onWordListButtonClicked(ind: Int) {
-        viewState.startWordListActivity(ind)
+    fun onWordListButtonClicked(analysisId: Int) {
+        viewState.startWordListActivity(analysisId)
     }
 }

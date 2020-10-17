@@ -15,8 +15,8 @@ class BookInfoRepository(val ctx: Context) {
         analysisDao = AppDataBase.getDataBase(ctx)?.bookAnalysisDao()
     }
 
-    suspend fun readInfo(ind: Int) = withContext(Dispatchers.Default) {
-        var data = analysisDao?.getBookAnalysisById(ind)?.toBookAnalysisData()
+    suspend fun readInfo(analysisId: Int) = withContext(Dispatchers.Default) {
+        var data = analysisDao?.getBookAnalysisById(analysisId)?.toBookAnalysisData()
         if (data == null) {
             data = BookAnalysisData(
                 "",
@@ -36,7 +36,8 @@ class BookInfoRepository(val ctx: Context) {
         return BookAnalysisData(
             path,
             uniqueWordCount,
-            allWordCount, allCharCount,
+            allWordCount,
+            allCharCount,
             avgSentenceLenInWrd,
             avgSentenceLenInChr,
             avgWordLen,

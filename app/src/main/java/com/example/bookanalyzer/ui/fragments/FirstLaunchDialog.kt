@@ -5,17 +5,19 @@ import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
 import androidx.fragment.app.DialogFragment
+import com.example.bookanalyzer.R
 
 class FirstLaunchDialog : DialogFragment() {
     private var callback: OnSelectedLaunchOption? = null
+
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val builder: AlertDialog.Builder = AlertDialog.Builder(activity)
 
-        builder.setMessage("Scan all books on device?")
-            .setPositiveButton("Yes") { dialog, id ->
+        builder.setMessage(resources.getString(R.string.if_scan_message))
+            .setPositiveButton(resources.getString(R.string.positive_response)) { dialog, id ->
                 callback?.onSelectedLaunchOption(true)
             }
-            .setNegativeButton("No") { dialog, id ->
+            .setNegativeButton(resources.getString(R.string.negative_response)) { dialog, id ->
                 callback?.onSelectedLaunchOption(false)
             }
         return builder.create()

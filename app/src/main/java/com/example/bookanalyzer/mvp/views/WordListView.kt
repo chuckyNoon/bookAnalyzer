@@ -15,5 +15,5 @@ interface WordListView : MvpView {
     @AddToEndSingle
     fun setPositionViewText(text: String)
     fun setSeekBarMaxValue(maxValue: Int)
-    fun setupWordListItems(linesList: ArrayList<WordListItem>)
+    fun setupWordItems(wordItems: ArrayList<WordListItem>)
 }
