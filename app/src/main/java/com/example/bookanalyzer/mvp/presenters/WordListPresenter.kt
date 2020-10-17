@@ -21,17 +21,18 @@ class WordListPresenter(private val repository: WordListRepository) : MvpPresent
         viewState.scrollToPosition(progress)
     }
 
-    fun onViewCreated(bookId: Int) {
+    fun onViewCreated(analysisId: Int) {
         scope.launch {
-            val rowList = repository.getWordList(bookId)
-            rowList?.let {
-                wordListSize = rowList.size
-                val wordListItemArray = ArrayList<WordListItem>().apply {
-                    rowList.forEach { row ->
+            repository.initSources()
+            val listRows = repository.getWordList(analysisId)
+            listRows?.let {
+                wordListSize = listRows.size
+                val wordListItems = ArrayList<WordListItem>().apply {
+                    listRows.forEach { row ->
                         add(row.toWordListItem())
                     }
                 }
-                viewState.setupWordItems(wordListItemArray)
+                viewState.setupWordItems(wordListItems)
                 viewState.setSeekBarMaxValue(wordListSize)
                 viewState.setPositionViewText("1 from $wordListSize")
             }
@@ -39,7 +40,11 @@ class WordListPresenter(private val repository: WordListRepository) : MvpPresent
     }
 
     private fun WordListRowData.toWordListItem(): WordListItem {
-        return WordListItem(word, frequency.toString(), pos.toString())
+        return WordListItem(
+            word,
+            frequency.toString(),
+            pos.toString()
+        )
     }
 
     fun onOptionsItemBackSelected() {

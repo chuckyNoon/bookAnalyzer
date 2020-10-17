@@ -1,11 +1,10 @@
-package com.example.bookanalyzer.interfaces
+package com.example.bookanalyzer.ui.adapters
 
 import android.graphics.Canvas
 import android.view.View
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bookanalyzer.mvp.presenters.StartScreenPresenter
-import com.example.bookanalyzer.ui.adapters.BookItemsAdapter
 import kotlinx.android.synthetic.main.item_book.view.*
 
 class SimpleItemTouchHelperCallback(private val presenter: StartScreenPresenter) :

@@ -8,31 +8,19 @@ import nl.siegmann.epublib.epub.EpubReader
 import java.io.FileInputStream
 
 class EpubPreviewParser(ctx: Context) : BookPreviewParser(ctx) {
-    override fun getParsedData(path: String): ParsedBookData {
+    override fun getParsedData(path: String): ParsedPreviewData {
         val inStream = FileInputStream(path)
         val book: Book = EpubReader().readEpub(inStream)
 
         val author = getAuthor(book)
         val bookTitle = book.title
-        val bitmap = Utils.byteArrayToBitmap(book.coverImage?.data)
-        val saveImgPath = getSaveImgPath(bitmap, bookTitle)
-        if (saveImgPath != null && bitmap != null) {
-            saveImage(bitmap, saveImgPath)
-        }
-        return ParsedBookData(
+        val imgByteArray = book.coverImage?.data
+        return ParsedPreviewData(
             path,
             bookTitle,
             author,
-            saveImgPath
+            imgByteArray
         )
-    }
-
-    private fun getSaveImgPath(bitmap: Bitmap?, bookTitle: String?): String? {
-        return if (bitmap != null) {
-            ("${bookTitle}.jpg")
-        } else {
-            (null)
-        }
     }
 
     private fun getAuthor(book: Book): String? {

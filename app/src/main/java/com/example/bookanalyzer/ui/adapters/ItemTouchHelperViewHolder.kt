@@ -1,4 +1,4 @@
-package com.example.bookanalyzer.interfaces
+package com.example.bookanalyzer.ui.adapters
 
 interface ItemTouchHelperViewHolder {
     fun onItemSelected()

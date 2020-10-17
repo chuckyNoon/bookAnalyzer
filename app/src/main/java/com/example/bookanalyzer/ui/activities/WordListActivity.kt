@@ -18,6 +18,7 @@ import moxy.ktx.moxyPresenter
 
 
 class WordListActivity : MvpAppCompatActivity(), WordListView {
+
     private lateinit var toolBar: androidx.appcompat.widget.Toolbar
     private lateinit var wordList: RecyclerView
     private lateinit var seekBar: SeekBar
@@ -118,5 +119,4 @@ class WordListActivity : MvpAppCompatActivity(), WordListView {
     override fun finishActivity() {
         finish()
     }
-
 }

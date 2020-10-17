@@ -6,12 +6,12 @@ class Fb2TextParser() : BookTextParser() {
         private const val BODY_CLOSE_TAG = "</body>"
     }
 
-    override fun parseFile(path: String): ParsedData {
+    override fun parseFile(path: String): ParsedTextData {
         val sourceText = readAsPlainText(path)
         val bodyText = getBodyText(sourceText)
         val finalText = deleteAllTags(bodyText)
 
-        return ParsedData().apply {
+        return ParsedTextData().apply {
             text = finalText
         }
     }

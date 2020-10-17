@@ -12,7 +12,6 @@ class FirstLaunchDialog : DialogFragment() {
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         val builder: AlertDialog.Builder = AlertDialog.Builder(activity)
-
         builder.setMessage(resources.getString(R.string.if_scan_message))
             .setPositiveButton(resources.getString(R.string.positive_response)) { dialog, id ->
                 callback?.onSelectedLaunchOption(true)

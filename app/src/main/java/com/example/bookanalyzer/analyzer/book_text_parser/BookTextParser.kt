@@ -2,10 +2,10 @@ package com.example.bookanalyzer.analyzer.book_text_parser
 
 import java.io.*
 
-class ParsedData(var text: String = "")
+class ParsedTextData(var text: String = "")
 
 abstract class BookTextParser() {
-    abstract fun parseFile(path: String): ParsedData
+    abstract fun parseFile(path: String): ParsedTextData
 
     protected fun readAsPlainText(path: String): String {
         var plainText = ""

@@ -1,9 +1,9 @@
 package com.example.bookanalyzer.analyzer.book_text_parser
 
 class TxtTextParser : BookTextParser() {
-    override fun parseFile(path: String): ParsedData {
+    override fun parseFile(path: String): ParsedTextData {
         val sourceText = readAsPlainText(path)
-        return ParsedData().apply {
+        return ParsedTextData().apply {
             text = sourceText
         }
     }

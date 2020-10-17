@@ -25,13 +25,13 @@ class LoaderScreenRepository(private val ctx: Context) {
         (analyzer?.getAnalysis(path))
     }
 
-    suspend fun getAnalysisIdByPath(path: String) = withContext(Dispatchers.Default){
+    suspend fun getAnalysisIdByPath(path: String) = withContext(Dispatchers.Default) {
         (analysisDao?.getBookAnalysisByPath(path)?.id)
     }
 
-    private suspend fun getNewListInd() = withContext(Dispatchers.Default){
+    private suspend fun getNewListInd() = withContext(Dispatchers.Default) {
         val analysisCount = analysisDao?.getBookAnalyses()?.size
-        val listInd = 1 + (analysisCount?:0)
+        val listInd = 1 + (analysisCount ?: 0)
         (listInd)
     }
 

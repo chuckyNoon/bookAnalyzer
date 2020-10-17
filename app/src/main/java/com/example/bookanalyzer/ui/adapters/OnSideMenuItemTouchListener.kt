@@ -1,44 +1,47 @@
-package com.example.bookanalyzer.interfaces
+package com.example.bookanalyzer.ui.adapters
 
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
 import android.graphics.Color
 import android.view.MotionEvent
 import android.view.View
+import com.example.bookanalyzer.R
 
 interface OnSideMenuItemTouchListener : View.OnTouchListener {
     fun doAction()
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-        val startColor = Color.parseColor("#303030")
-        val pressedColor = Color.parseColor("#AB84F2")
+        if (v == null)
+            return false
+        val startColor = v.resources.getColor(R.color.colorMenuItemDefault)
+        val pressedColor = v.resources.getColor(R.color.colorMenuItemPressed)
 
         when (event?.action) {
             MotionEvent.ACTION_DOWN -> {
                 onActionDown(v, startColor, pressedColor)
-                return (true)
+                return true
             }
             MotionEvent.ACTION_CANCEL -> {
                 onActionCancel(v, startColor, pressedColor)
-                return (true)
+                return true
             }
             MotionEvent.ACTION_UP -> {
                 onActionUp(v, startColor, pressedColor)
-                return (true)
+                return true
             }
         }
-        return (false)
+        return false
     }
 
-    private fun onActionDown(view:View?, startColor:Int, pressedColor:Int){
+    private fun onActionDown(view: View?, startColor: Int, pressedColor: Int) {
         createValueAnimator(view, startColor, pressedColor).start()
     }
 
-    private fun onActionCancel(view:View?, startColor:Int, pressedColor:Int){
+    private fun onActionCancel(view: View?, startColor: Int, pressedColor: Int) {
         createValueAnimator(view, pressedColor, startColor).start()
     }
 
-    private fun onActionUp(view:View?, startColor:Int, pressedColor:Int){
+    private fun onActionUp(view: View?, startColor: Int, pressedColor: Int) {
         createValueAnimator(view, startColor, pressedColor).start()
         doAction()
         createValueAnimator(view, pressedColor, startColor).start()

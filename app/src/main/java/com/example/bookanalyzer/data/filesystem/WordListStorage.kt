@@ -7,7 +7,7 @@ import kotlin.collections.ArrayList
 class WordListRowData(var word: String, var frequency: Int, var pos: Int)
 
 class WordListStorage(val ctx: Context) {
-    fun savedWordListPathByInd(bookInd: Int) = "list$bookInd"
+    fun savedWordListPathByInd(ind: Int) = "list$ind"
 
     fun saveWordList(wordMap: Map<String, Int>, ind: Int) {
         try {
@@ -19,19 +19,18 @@ class WordListStorage(val ctx: Context) {
         }
     }
 
-    fun getWordList(ind: Int): ArrayList<WordListRowData>? {
-        val listFileContent = readWordListFile(ind)
+    fun getWordList(listPath:String): ArrayList<WordListRowData>? {
+        val listFileContent = readWordListFile(listPath)
         listFileContent?.let {
             val lines = (listFileContent.substring(1, listFileContent.length - 1).split(','))
-            val rowDataList = convertFileLinesToRowDataList(ArrayList(lines))
-            return (rowDataList)
+            return convertFileLinesToRowDataList(ArrayList(lines))
         }
-        return (null)
+        return null
     }
 
-    private fun readWordListFile(ind: Int): String? {
+    private fun readWordListFile(listPath: String): String? {
         return try {
-            val listFileInput = ctx.openFileInput(savedWordListPathByInd(ind))
+            val listFileInput = ctx.openFileInput(listPath)
             val listFileContent = listFileInput.readBytes().toString(Charsets.UTF_8)
             listFileInput.close()
             (listFileContent)
@@ -49,7 +48,7 @@ class WordListStorage(val ctx: Context) {
                 rowDataList.add(it)
             }
         }
-        return (rowDataList)
+        return rowDataList
     }
 
     private fun convertFileLineToRowData(line: String, ind: Int): WordListRowData? {

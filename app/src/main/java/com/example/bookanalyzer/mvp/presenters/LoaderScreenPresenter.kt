@@ -21,7 +21,7 @@ class LoaderScreenPresenter(private val repository: LoaderScreenRepository) :
             analyzedBookModel?.let {
                 repository.saveAnalysis(analyzedBookModel)
                 val analysisId = repository.getAnalysisIdByPath(bookPath)
-                analysisId?.let{
+                analysisId?.let {
                     viewState.goToInfoActivity(analysisId)
                 }
             }

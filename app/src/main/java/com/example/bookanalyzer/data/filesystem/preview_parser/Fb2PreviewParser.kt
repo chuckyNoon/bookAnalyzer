@@ -1,41 +1,35 @@
 package com.example.bookanalyzer.data.filesystem.preview_parser
 
 import android.content.Context
-import android.graphics.Bitmap
-import com.example.bookanalyzer.common.Utils
 import java.io.FileInputStream
 import java.io.IOException
 
 class Fb2PreviewParser(ctx: Context) : BookPreviewParser(ctx) {
 
     companion object {
-        private const val FIRST_NAME_OPEN_TAG = "<first-name>"
-        private const val FIRST_NAME_CLOSE_TAG = "</first-name>"
-        private const val MIDDLE_NAME_OPEN_TAG = "<middle-name>"
-        private const val MIDDLE_NAME_CLOSE_TAG = "</middle-name>"
-        private const val LAST_NAME_OPEN_TAG = "<last-name>"
-        private const val LAST_NAME_CLOSE_TAG = "</last-name>"
-        private const val BOOK_TITLE_OPEN_TAG = "<book-title>"
-        private const val BOOK_TITLE_CLOSE_TAG = "</book-title>"
+        private const val FIRST_NAME_OPENING_TAG = "<first-name>"
+        private const val FIRST_NAME_CLOSING_TAG = "</first-name>"
+        private const val MIDDLE_NAME_OPENING_TAG = "<middle-name>"
+        private const val MIDDLE_NAME_CLOSING_TAG = "</middle-name>"
+        private const val LAST_NAME_OPENING_TAG = "<last-name>"
+        private const val LAST_NAME_CLOSING_TAG = "</last-name>"
+        private const val BOOK_TITLE_OPENING_TAG = "<book-title>"
+        private const val BOOK_TITLE_CLOSING_TAG = "</book-title>"
+        private const val CLOSING_TAG_CHAR = ">"
+        private const val BINARY_CLOSING_TAG = "</binary>"
+        private const val LINK = "image l:href="
+        private const val IMAGE_NAME_BORDER_CHAR = "\""
+        private const val UNNECESSARY_CHAR_IN_IMAGE_NAME = "#"
+        private const val BINARY_PART_TAG = "<binary"
     }
 
-    override fun getParsedData(path: String): ParsedBookData {
+    override fun getParsedData(path: String): ParsedPreviewData {
         val sourceText = readSourceText(path) ?: ""
         val bookTitle = getBookTitle(sourceText)
         val author = getAuthor(sourceText)
-        val bitmap = Utils.byteArrayToBitmap(getImage(sourceText))
-        val saveImgPath = getSaveImgPath(bitmap, bookTitle)
+        val imgByteArray = getImageByteArray(sourceText)
 
-        saveImage(bitmap, saveImgPath)
-        return ParsedBookData(path, bookTitle, author, saveImgPath)
-    }
-
-    private fun getSaveImgPath(bitmap: Bitmap?, bookTitle: String?): String? {
-        return if (bitmap != null) {
-            ("${bookTitle}.jpg")
-        } else {
-            (null)
-        }
+        return ParsedPreviewData(path, bookTitle, author, imgByteArray)
     }
 
     private fun readSourceText(path: String): String? {
@@ -52,63 +46,90 @@ class Fb2PreviewParser(ctx: Context) : BookPreviewParser(ctx) {
 
     private fun getAuthor(sourceText: String): String? {
         val firstName =
-            getAuthorNamePartByTag(sourceText, FIRST_NAME_OPEN_TAG, FIRST_NAME_CLOSE_TAG)
+            getTagContent(sourceText, FIRST_NAME_OPENING_TAG, FIRST_NAME_CLOSING_TAG)
         val middleName =
-            getAuthorNamePartByTag(sourceText, MIDDLE_NAME_OPEN_TAG, MIDDLE_NAME_CLOSE_TAG)
-        val lastName = getAuthorNamePartByTag(sourceText, LAST_NAME_OPEN_TAG, LAST_NAME_CLOSE_TAG)
+            getTagContent(sourceText, MIDDLE_NAME_OPENING_TAG, MIDDLE_NAME_CLOSING_TAG)
+        val lastName = getTagContent(sourceText, LAST_NAME_OPENING_TAG, LAST_NAME_CLOSING_TAG)
         return "$firstName $middleName $lastName"
     }
 
-    private fun getAuthorNamePartByTag(
+    private fun getBookTitle(sourceText: String): String? {
+        return getTagContent(sourceText, BOOK_TITLE_OPENING_TAG, BOOK_TITLE_CLOSING_TAG)
+    }
+
+    private fun getTagContent(
         sourceText: String,
         openTag: String,
         closeTag: String
     ): String {
-        var namePart = ""
-        val partStart = sourceText.indexOf(openTag) + openTag.length
-        val partEnd = sourceText.indexOf(closeTag)
-
-        if (partEnd >= 0 && partStart in 0 until partEnd) {
-            namePart = sourceText.substring(partStart, partEnd)
-        }
-        return namePart
+        val contentStart = getTagContentStart(sourceText, openTag)
+        val contentEnd = getTagContentEnd(sourceText, closeTag)
+        return getContentFromBorders(sourceText, contentStart, contentEnd)
     }
 
-    private fun getBookTitle(sourceText: String): String? {
-        var bookTitle = ""
-        var titleStart = sourceText.indexOf(BOOK_TITLE_OPEN_TAG)
-        val titleEnd = sourceText.indexOf(BOOK_TITLE_CLOSE_TAG)
-
-        if (titleStart >= 0 && titleEnd >= 0) {
-            titleStart += BOOK_TITLE_OPEN_TAG.length
-            bookTitle = sourceText.substring(titleStart, titleEnd)
+    private fun getTagContentStart(sourceText: String, openingTag: String): Int {
+        val openingTagStart = sourceText.indexOf(openingTag)
+        return if (isTextIndexValid(openingTagStart)) {
+            (openingTagStart + openingTag.length)
+        } else {
+            (-1)
         }
-        return bookTitle
     }
 
-    private fun getImage(sourceText: String): ByteArray? {
-        val imgName = getImageName(sourceText)
+    private fun getTagContentEnd(sourceText: String, closingTag: String): Int {
+        val closingTagStart = sourceText.indexOf(closingTag)
+        return if (isTextIndexValid(closingTagStart)) {
+            (closingTagStart)
+        } else {
+            (-1)
+        }
+    }
 
-        val imgStart = sourceText.indexOf(">", sourceText.indexOf("<binary id=$imgName")) + 1
-        val imgEnd = sourceText.indexOf("</binary", imgStart) - 1
+    private fun getContentFromBorders(
+        sourceText: String,
+        contentStart: Int,
+        contentEnd: Int
+    ): String {
+        var content = ""
+        if (isContentBordersValid(contentStart, contentEnd)) {
+            content = sourceText.substring(contentStart, contentEnd)
+        }
+        return content
+    }
+
+
+    private fun getImageByteArray(sourceText: String): ByteArray? {
         var imgByteArray: ByteArray? = null
-        if (imgStart >= 0 && imgEnd >= 0) {
-            imgByteArray = sourceText.substring(imgStart, imgEnd).toByteArray()
+        val imgName = getImageName(sourceText) ?: ""
+
+        val leftBorder = sourceText.indexOf(imgName, sourceText.indexOf(BINARY_PART_TAG))
+        if (isTextIndexValid(leftBorder)) {
+            val imgStart = sourceText.indexOf(CLOSING_TAG_CHAR, leftBorder) + 1
+            if (isTextIndexValid((imgStart))) {
+                val imgEnd = sourceText.indexOf(BINARY_CLOSING_TAG, imgStart)
+                imgByteArray = getContentFromBorders(sourceText, imgStart, imgEnd).toByteArray()
+            }
         }
         return imgByteArray
     }
 
     private fun getImageName(sourceText: String): String? {
         var imgName = ""
-        var imgNameStart = sourceText.indexOf("xlink:href=")
 
-        if (imgNameStart >= 0) {
-            imgNameStart += ("xlink:href=").length
-            val imgNameEnd = sourceText.indexOf("\"", imgNameStart + 1)
-            if (imgNameEnd >= 0) {
-                imgName = sourceText.substring(imgNameStart, imgNameEnd + 1).replace("#", "")
-            }
+        val openingTagStart = sourceText.indexOf(LINK)
+        if (isTextIndexValid(openingTagStart)) {
+            val imgNameStart = openingTagStart + (LINK).length + 1
+            val imgNameEnd = sourceText.indexOf(IMAGE_NAME_BORDER_CHAR, imgNameStart)
+            imgName = getContentFromBorders(sourceText, imgNameStart, imgNameEnd).replace(
+                UNNECESSARY_CHAR_IN_IMAGE_NAME, ""
+            )
         }
         return imgName
     }
+
+    private fun isTextIndexValid(textInd: Int) = (textInd > 0)
+
+    private fun isContentBordersValid(textStart: Int, textEnd: Int) =
+        (textEnd >= 0 && textStart in 0..textEnd)
+
 }

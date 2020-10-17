@@ -9,8 +9,8 @@ class BookPreviewListParser(private val ctx: Context) {
         private const val FB2_ENDING = ".fb2"
     }
 
-    fun getParsedDataList(paths: ArrayList<String>): ArrayList<ParsedBookData> {
-        val parsedDataList = ArrayList<ParsedBookData>()
+    fun getParsedDataList(paths: ArrayList<String>): ArrayList<ParsedPreviewData> {
+        val parsedDataList = ArrayList<ParsedPreviewData>()
         for (path in paths) {
             val bookPreviewParser = getBookPreviewParser(path)
             parsedDataList.add(bookPreviewParser.getParsedData(path))

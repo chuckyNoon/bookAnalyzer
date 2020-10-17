@@ -8,7 +8,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.view.MenuItem
 import android.view.MotionEvent
@@ -23,10 +22,10 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bookanalyzer.*
 import com.example.bookanalyzer.common.FileUtils
-import com.example.bookanalyzer.interfaces.OnSideMenuItemTouchListener
+import com.example.bookanalyzer.ui.adapters.OnSideMenuItemTouchListener
 import com.example.bookanalyzer.ui.adapters.SideMenuAdapter
 import com.example.bookanalyzer.ui.fragments.SearchSettingsDialog
-import com.example.bookanalyzer.interfaces.SimpleItemTouchHelperCallback
+import com.example.bookanalyzer.ui.adapters.SimpleItemTouchHelperCallback
 import com.example.bookanalyzer.mvp.presenters.StartScreenPresenter
 import com.example.bookanalyzer.mvp.repositories.StartScreenRepository
 import com.example.bookanalyzer.mvp.views.StartView
@@ -107,8 +106,7 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSea
     }
 
     private fun setRecyclerView() {
-        val defaultBookImage = BitmapFactory.decodeResource(this.resources, R.drawable.book)
-        adapter = BookItemsAdapter(this, defaultBookImage, presenter)
+        adapter = BookItemsAdapter(this, presenter)
         recyclerView.setHasFixedSize(true)
         val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(presenter)
         val itemTouchHelper = ItemTouchHelper(callback)

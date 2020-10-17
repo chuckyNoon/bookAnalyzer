@@ -41,7 +41,8 @@
             android:layout_weight="1"
             android:checked="true"
             android:text="@string/epubFormat"
-            android:textAlignment="viewStart" />
+            android:textAlignment="viewStart"
+            android:textAllCaps="true" />
 
         <CheckBox
             android:id="@+id/fb2Box"
@@ -50,7 +51,8 @@
             android:layout_weight="1"
             android:checked="true"
             android:text="@string/fb2Format"
-            android:textAlignment="viewStart" />
+            android:textAlignment="viewStart"
+            android:textAllCaps="true" />
 
         <CheckBox
             android:id="@+id/txtBox"
@@ -60,7 +62,8 @@
             android:layout_weight="1"
             android:checked="true"
             android:text="@string/txtFormat"
-            android:textAlignment="viewStart" />
+            android:textAlignment="viewStart"
+            android:textAllCaps="true" />
     </LinearLayout>
 
     <Button

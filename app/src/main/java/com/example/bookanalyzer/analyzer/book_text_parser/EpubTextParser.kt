@@ -14,10 +14,10 @@ class EpubTextParser() : BookTextParser() {
         private const val P_TAG = "p"
     }
 
-    override fun parseFile(path: String): ParsedData {
+    override fun parseFile(path: String): ParsedTextData {
         val htmlText = readHtmlFromEpub(path)
         val finalText = parseHtml(htmlText)
-        return ParsedData().apply {
+        return ParsedTextData().apply {
             text = finalText
         }
     }

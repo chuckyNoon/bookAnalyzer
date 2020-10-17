@@ -77,12 +77,11 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
     }
 
     private fun convertDataListToItemList(dataList: ArrayList<BookData>): ArrayList<BookItem> {
-        val itemList = ArrayList<BookItem>().apply {
+        return ArrayList<BookItem>().apply {
             for (data in dataList) {
                 add(data.toBookListItem())
             }
         }
-        return (itemList)
     }
 
     private fun BookData.toBookListItem(): BookItem {
@@ -105,23 +104,15 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
 
     private fun makeWordCountText(uniqueWordCount: Int): String {
         val firstPart = if (uniqueWordCount != 0) {
-            uniqueWordCount.toString()
+            (uniqueWordCount.toString())
         } else {
-            "?"
+            ("?")
         }
-        return ("$firstPart words")
+        return "$firstPart words"
     }
 
     private fun addBookItemToList(bookPath: String) {
-        scope.launch {
-            val book = repository.getCompleteBookData(bookPath)
-            book?.let {
-                bookDataList?.let { items ->
-                    items.add(book)
-                    viewState.showBookList(convertDataListToItemList(items))
-                }
-            }
-        }
+        //to fix
     }
 
     fun onSelectedSearchSettings(bookFormats: ArrayList<String>, rootDir: File) {
@@ -163,13 +154,15 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
             lastOpenedBookInd = position
             val book = bookDataList[position]
             val analysisId = book.analysisId
-            if (analysisId == ANALYSIS_NOT_EXIST) {
-                viewState.startLoaderScreenActivity(book.path)
-            } else {
+            if (isBookAnalyzed(analysisId)) {
                 viewState.startBookInfoActivity(analysisId)
+            } else {
+                viewState.startLoaderScreenActivity(book.path)
             }
         }
     }
+
+    private fun isBookAnalyzed(analysisId: Int) = (analysisId != ANALYSIS_NOT_EXIST)
 
     fun onRestart() {
         bookDataList?.let { bookDataList ->

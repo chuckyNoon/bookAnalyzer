@@ -5,8 +5,9 @@ import com.example.bookanalyzer.data.database.AppDataBase
 import com.example.bookanalyzer.data.database.daos.BookAnalysisDao
 import com.example.bookanalyzer.data.database.daos.BookPreviewDao
 import com.example.bookanalyzer.data.database.models.DbBookPreviewData
+import com.example.bookanalyzer.data.filesystem.ImageStorage
 import com.example.bookanalyzer.data.filesystem.preview_parser.BookPreviewListParser
-import com.example.bookanalyzer.data.filesystem.preview_parser.ParsedBookData
+import com.example.bookanalyzer.data.filesystem.preview_parser.ParsedPreviewData
 import com.example.bookanalyzer.mvp.presenters.BookData
 import com.example.bookanalyzer.mvp.presenters.ANALYSIS_NOT_EXIST
 import kotlinx.coroutines.Dispatchers
@@ -14,6 +15,7 @@ import kotlinx.coroutines.withContext
 import kotlin.collections.ArrayList
 
 class StartScreenRepository(private val ctx: Context) {
+
     private var bookPreviewListParser = BookPreviewListParser(ctx)
     private var analysisDao: BookAnalysisDao? = null
     private var previewDao: BookPreviewDao? = null
@@ -47,10 +49,29 @@ class StartScreenRepository(private val ctx: Context) {
                 previewDao.nukeTable()
                 val parsedDataList = bookPreviewListParser.getParsedDataList(bookPaths)
                 for (parsedData in parsedDataList) {
-                    previewDao.insertBookPreview(parsedData.toDbBookPreviewData())
+                    val dbPreviewData = parsedData.toDbBookPreviewData().apply {
+                        this.imgPath = saveImageFromBookInLocalStorage(parsedData)
+                    }
+                    previewDao.insertBookPreview(dbPreviewData)
                 }
             }
         }
+
+    private fun saveImageFromBookInLocalStorage(parsedData: ParsedPreviewData): String? {
+        parsedData.imgByteArray?.let { imgByteArray ->
+            val forSavingImgPath = ImageStorage.getSaveImgPathByTitle(parsedData.title)
+            if (forSavingImgPath != null) {
+                val isSuccessfullySaved =
+                    ImageStorage.saveImage(ctx, imgByteArray, forSavingImgPath)
+                return if (isSuccessfullySaved) {
+                    (forSavingImgPath)
+                } else {
+                    (null)
+                }
+            }
+        }
+        return null
+    }
 
     suspend fun getCompleteDataList() = withContext(Dispatchers.Default) {
         val dbItems = previewDao?.getBookPreviews() ?: ArrayList()
@@ -71,13 +92,6 @@ class StartScreenRepository(private val ctx: Context) {
             (analysisDao?.getBookAnalysisByPath(bookPath)?.id ?: ANALYSIS_NOT_EXIST)
         }
 
-    suspend fun getCompleteBookData(bookPath: String) = withContext(Dispatchers.Default) {
-        val bookData = previewDao?.getBookPreviewByPath(bookPath)?.toBookData()?.apply {
-            uniqueWordCount = getUniqueWordCountByPath(bookPath)
-        }
-        (bookData)
-    }
-
     suspend fun getUniqueWordCountByPath(bookPath: String) = withContext(Dispatchers.Default) {
         val analysis = analysisDao?.getBookAnalysisByPath(bookPath)
         (analysis?.uniqueWordCount ?: 0)
@@ -96,11 +110,10 @@ class StartScreenRepository(private val ctx: Context) {
     }
 
     private fun BookData.toDbBookPreviewData(): DbBookPreviewData {
-        return (DbBookPreviewData(path, title, author, imgPath, analysisId))
+        return DbBookPreviewData(path, title, author, imgPath, analysisId)
     }
 
-    private fun ParsedBookData.toDbBookPreviewData(): DbBookPreviewData {
-        return (DbBookPreviewData(path, title, author, imgPath, ANALYSIS_NOT_EXIST))
+    private fun ParsedPreviewData.toDbBookPreviewData(): DbBookPreviewData {
+        return DbBookPreviewData(path, title, author, null, ANALYSIS_NOT_EXIST)
     }
-
 }
