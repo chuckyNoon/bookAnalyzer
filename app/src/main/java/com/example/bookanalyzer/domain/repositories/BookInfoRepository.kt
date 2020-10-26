@@ -1,24 +1,17 @@
-package com.example.bookanalyzer.mvp.repositories
+package com.example.bookanalyzer.domain.repositories
 
-import android.content.Context
-import com.example.bookanalyzer.data.database.AppDataBase
 import com.example.bookanalyzer.data.database.daos.BookAnalysisDao
 import com.example.bookanalyzer.data.database.models.DbBookAnalysisData
-import com.example.bookanalyzer.mvp.presenters.BookAnalysisData
+import com.example.bookanalyzer.domain.models.BookInfoEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class BookInfoRepository(val ctx: Context) {
-    private var analysisDao: BookAnalysisDao? = null
-
-    fun initDataSources() {
-        analysisDao = AppDataBase.getDataBase(ctx)?.bookAnalysisDao()
-    }
+class BookInfoRepository(private val analysisDao: BookAnalysisDao?) {
 
     suspend fun readInfo(analysisId: Int) = withContext(Dispatchers.Default) {
         var data = analysisDao?.getBookAnalysisById(analysisId)?.toBookAnalysisData()
         if (data == null) {
-            data = BookAnalysisData(
+            data = BookInfoEntity(
                 "",
                 0,
                 0,
@@ -32,8 +25,8 @@ class BookInfoRepository(val ctx: Context) {
         (data)
     }
 
-    private fun DbBookAnalysisData.toBookAnalysisData(): BookAnalysisData {
-        return BookAnalysisData(
+    private fun DbBookAnalysisData.toBookAnalysisData(): BookInfoEntity {
+        return BookInfoEntity(
             path,
             uniqueWordCount,
             allWordCount,

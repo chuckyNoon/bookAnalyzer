@@ -1,6 +1,6 @@
 package com.example.bookanalyzer.mvp.presenters
 
-import com.example.bookanalyzer.mvp.repositories.LoaderScreenRepository
+import com.example.bookanalyzer.domain.repositories.LoaderScreenRepository
 import com.example.bookanalyzer.mvp.views.LoaderScreenView
 import kotlinx.coroutines.*
 import moxy.MvpPresenter
@@ -16,10 +16,9 @@ class LoaderScreenPresenter(private val repository: LoaderScreenRepository) :
 
     fun onViewCreated(bookPath: String) {
         scope.launch {
-            repository.initDataSources()
-            val analyzedBookModel = repository.analyzeBook(bookPath)
-            analyzedBookModel?.let {
-                repository.saveAnalysis(analyzedBookModel)
+            val bookAnalysisEntity = repository.analyzeBook(bookPath)
+            bookAnalysisEntity.let {
+                repository.saveAnalysis(bookAnalysisEntity)
                 val analysisId = repository.getAnalysisIdByPath(bookPath)
                 analysisId?.let {
                     viewState.goToInfoActivity(analysisId)

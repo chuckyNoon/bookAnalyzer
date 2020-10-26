@@ -1,8 +1,6 @@
-package com.example.bookanalyzer.data.filesystem.preview_parser
+package com.example.bookanalyzer.data.filesystem.data_extractors.preview_parser
 
 import android.content.Context
-import android.graphics.Bitmap
-import com.example.bookanalyzer.common.Utils
 import nl.siegmann.epublib.domain.Book
 import nl.siegmann.epublib.epub.EpubReader
 import java.io.FileInputStream

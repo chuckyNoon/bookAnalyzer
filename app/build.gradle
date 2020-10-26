@@ -8,6 +8,9 @@ android {
     compileSdkVersion 29
     buildToolsVersion "29.0.3"
 
+    kapt {
+        generateStubs = true
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -92,6 +95,16 @@ dependencies {
     //Kotlin
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
 
+    //dagger
+    implementation "com.google.dagger:dagger:2.15"
+    implementation "com.google.dagger:dagger-android:2.15"
+    kapt "com.google.dagger:dagger-compiler:2.13"
+    kapt "com.google.dagger:dagger-android-processor:2.14"
+    //mockito
+    implementation 'org.greenrobot:eventbus:3.0.0'
+    testImplementation 'org.mockito:mockito-core:2.8.47'
+    testImplementation "com.nhaarman:mockito-kotlin-kt1.1:1.5.0"
+    
     //androidx
     implementation "androidx.navigation:navigation-fragment-ktx:$navigation_version"
     implementation "androidx.navigation:navigation-ui-ktx:$navigation_version"

@@ -5,12 +5,16 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Button
 import android.widget.TextView
+import com.example.bookanalyzer.MyApp
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.mvp.presenters.BookInfoPresenter
-import com.example.bookanalyzer.mvp.repositories.BookInfoRepository
+import com.example.bookanalyzer.domain.repositories.BookInfoRepository
 import com.example.bookanalyzer.mvp.views.BookInfoView
 import moxy.MvpAppCompatActivity
 import moxy.ktx.moxyPresenter
+import moxy.presenter.InjectPresenter
+import moxy.presenter.ProvidePresenter
+import javax.inject.Inject
 
 class BookInfoActivity : MvpAppCompatActivity(),
     BookInfoView {
@@ -24,8 +28,17 @@ class BookInfoActivity : MvpAppCompatActivity(),
     private lateinit var avgWordLenView: TextView
     private lateinit var toWordListButton: Button
 
-    private var repository = BookInfoRepository(this)
-    private val presenter by moxyPresenter { BookInfoPresenter(repository) }
+    @Inject
+    lateinit var repository: BookInfoRepository
+
+    @InjectPresenter
+    lateinit var presenter: BookInfoPresenter
+
+    @ProvidePresenter
+    fun provideStartScreenPresenter(): BookInfoPresenter {
+        MyApp.appComponent.inject(this)
+        return BookInfoPresenter(repository)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

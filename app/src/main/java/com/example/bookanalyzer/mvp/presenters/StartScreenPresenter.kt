@@ -1,7 +1,8 @@
 package com.example.bookanalyzer.mvp.presenters
 
 import com.example.bookanalyzer.common.FilesSearch
-import com.example.bookanalyzer.mvp.repositories.StartScreenRepository
+import com.example.bookanalyzer.domain.repositories.StartScreenRepository
+import com.example.bookanalyzer.domain.models.BookPreviewEntity
 import com.example.bookanalyzer.mvp.views.StartView
 import com.example.bookanalyzer.ui.adapters.BookItem
 import kotlinx.coroutines.*
@@ -23,14 +24,13 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
         private const val NO_BOOK_OPENED = -1
     }
 
-    private var bookDataList: ArrayList<BookData>? = null
+    private var bookPreviewEntityList: ArrayList<BookPreviewEntity>? = null
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Main + job)
     private var lastOpenedBookInd = NO_BOOK_OPENED
 
     fun onViewCreated() {
         scope.launch {
-            repository.initDataSources()
             buildListFromSavedData()
         }
     }
@@ -51,14 +51,14 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
 
     private suspend fun buildInitialBookList(bookPaths: ArrayList<String>) {
         val initialDataList = repository.getInitialDataList(bookPaths)
-        bookDataList = initialDataList
+        bookPreviewEntityList = initialDataList
         val initialItemList = convertDataListToItemList(initialDataList)
         viewState.showBookList(initialItemList)
     }
 
     private suspend fun buildCompleteBookList() {
         val completeDataList = (repository.getCompleteDataList())
-        bookDataList = completeDataList
+        bookPreviewEntityList = completeDataList
         val completeItemList = convertDataListToItemList(completeDataList)
         viewState.showBookList(completeItemList)
     }
@@ -76,15 +76,15 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
         viewState.hideLoadingStateView()
     }
 
-    private fun convertDataListToItemList(dataList: ArrayList<BookData>): ArrayList<BookItem> {
+    private fun convertDataListToItemList(previewEntityList: ArrayList<BookPreviewEntity>): ArrayList<BookItem> {
         return ArrayList<BookItem>().apply {
-            for (data in dataList) {
+            for (data in previewEntityList) {
                 add(data.toBookListItem())
             }
         }
     }
 
-    private fun BookData.toBookListItem(): BookItem {
+    private fun BookPreviewEntity.toBookListItem(): BookItem {
         val bookFormat = path.split(".").last().toUpperCase(Locale.ROOT)
         val relativePath = path.split("/").last()
         val title = title ?: relativePath
@@ -118,7 +118,6 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
     fun onSelectedSearchSettings(bookFormats: ArrayList<String>, rootDir: File) {
         scope.launch {
             val bookPaths = FilesSearch.findFiles(rootDir, bookFormats)
-            repository.initDataSources()
             buildListFromNewData(bookPaths)
         }
     }
@@ -132,7 +131,7 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
     }
 
     fun onBookDismiss(position: Int) {
-        bookDataList?.let { bookDataList ->
+        bookPreviewEntityList?.let { bookDataList ->
             bookDataList.removeAt(position)
             viewState.showBookList(convertDataListToItemList(bookDataList))
         }
@@ -150,7 +149,7 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
         if (lastOpenedBookInd != NO_BOOK_OPENED) {
             return
         }
-        bookDataList?.let { bookDataList ->
+        bookPreviewEntityList?.let { bookDataList ->
             lastOpenedBookInd = position
             val book = bookDataList[position]
             val analysisId = book.analysisId
@@ -165,7 +164,7 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
     private fun isBookAnalyzed(analysisId: Int) = (analysisId != ANALYSIS_NOT_EXIST)
 
     fun onRestart() {
-        bookDataList?.let { bookDataList ->
+        bookPreviewEntityList?.let { bookDataList ->
             if (lastOpenedBookInd in bookDataList.indices) {
                 scope.launch {
                     val newUniqueWordCount =
@@ -184,20 +183,11 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
     }
 
     fun onStop() {
-        bookDataList?.let { bookDataList ->
+        bookPreviewEntityList?.let { bookDataList ->
             scope.launch {
                 repository.saveCurrentBookList(bookDataList)
             }
         }
     }
 }
-
-data class BookData(
-    var path: String,
-    var title: String?,
-    var author: String?,
-    var imgPath: String?,
-    var uniqueWordCount: Int,
-    var analysisId: Int,
-)
 

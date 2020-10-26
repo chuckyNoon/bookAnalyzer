@@ -1,4 +1,4 @@
-package com.example.bookanalyzer.analyzer
+package com.example.bookanalyzer.data.filesystem.data_extractors.analyzer
 
 import android.content.Context
 import com.example.bookanalyzer.R

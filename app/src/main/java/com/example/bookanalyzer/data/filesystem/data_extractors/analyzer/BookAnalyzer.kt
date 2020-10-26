@@ -1,7 +1,7 @@
-package com.example.bookanalyzer.analyzer
+package com.example.bookanalyzer.data.filesystem.data_extractors.analyzer
 
 import android.content.Context
-import com.example.bookanalyzer.analyzer.book_text_parser.*
+import com.example.bookanalyzer.data.filesystem.data_extractors.analyzer.book_text_parser.*
 import kotlin.math.roundToInt
 
 class BookAnalyzer(private val ctx: Context) {
@@ -10,7 +10,7 @@ class BookAnalyzer(private val ctx: Context) {
         private const val FB2_ENDING = ".fb2"
     }
 
-    fun getAnalysis(path: String): AnalyzedBookModel {
+    fun getAnalysis(path: String): BookAnalysisData {
         val textParser = getBookTextParser(path)
         val wordsParser = WordsParser()
         val normalizer = WordNormalizer(ctx)
@@ -26,7 +26,7 @@ class BookAnalyzer(private val ctx: Context) {
             calculateAvgSentenceLenPair(wordCount, parsedFileData.text)
         val uniqueWordCount = normalizedWordMap.size
 
-        return AnalyzedBookModel(
+        return BookAnalysisData(
             path = path,
             uniqueWordCount = uniqueWordCount,
             allWordCount = wordCount,
@@ -108,7 +108,7 @@ class BookAnalyzer(private val ctx: Context) {
     }
 }
 
-class AnalyzedBookModel(
+class BookAnalysisData(
     var path: String,
     var uniqueWordCount: Int,
     var allWordCount: Int,

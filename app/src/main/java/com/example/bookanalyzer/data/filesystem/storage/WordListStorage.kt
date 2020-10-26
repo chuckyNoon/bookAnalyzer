@@ -1,4 +1,4 @@
-package com.example.bookanalyzer.data.filesystem
+package com.example.bookanalyzer.data.filesystem.storage
 
 import android.content.Context
 import java.io.IOException

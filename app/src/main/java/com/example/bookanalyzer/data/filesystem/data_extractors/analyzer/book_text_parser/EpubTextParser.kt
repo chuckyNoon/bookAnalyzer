@@ -1,4 +1,4 @@
-package com.example.bookanalyzer.analyzer.book_text_parser
+package com.example.bookanalyzer.data.filesystem.data_extractors.analyzer.book_text_parser
 
 import nl.siegmann.epublib.domain.Book
 import nl.siegmann.epublib.epub.EpubReader

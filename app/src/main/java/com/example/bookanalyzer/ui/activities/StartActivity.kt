@@ -27,16 +27,18 @@ import com.example.bookanalyzer.ui.adapters.SideMenuAdapter
 import com.example.bookanalyzer.ui.fragments.SearchSettingsDialog
 import com.example.bookanalyzer.ui.adapters.SimpleItemTouchHelperCallback
 import com.example.bookanalyzer.mvp.presenters.StartScreenPresenter
-import com.example.bookanalyzer.mvp.repositories.StartScreenRepository
+import com.example.bookanalyzer.domain.repositories.StartScreenRepository
 import com.example.bookanalyzer.mvp.views.StartView
 import com.example.bookanalyzer.ui.adapters.BookItemsAdapter
 import com.example.bookanalyzer.ui.adapters.BookItem
 import com.example.bookanalyzer.ui.adapters.SideMenuItem
 import com.example.bookanalyzer.ui.fragments.FirstLaunchDialog
 import moxy.MvpAppCompatActivity
-import moxy.ktx.moxyPresenter
+import moxy.presenter.InjectPresenter
+import moxy.presenter.ProvidePresenter
 
 import java.io.File
+import javax.inject.Inject
 
 const val EXTRA_BOOK_PATH = "BookPath"
 const val EXTRA_ANALYSIS_ID = "AnalysisId"
@@ -45,6 +47,7 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSea
     FirstLaunchDialog.OnSelectedLaunchOption, StartView {
 
     companion object {
+        private const val PREFERENCES_TAG = "APP_PREFERENCES"
         private const val FIRST_LAUNCH_TAG = "firstLaunch"
         private const val SEARCH_SETTINGS_DIALOG_TAG = "124"
         private const val REQUEST_PERMISSION_FOR_BOOK_ADD_CODE = 1
@@ -59,22 +62,31 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSea
     private lateinit var sideMenuListView: ListView
     private lateinit var toolBar: androidx.appcompat.widget.Toolbar
 
-    private var repository = StartScreenRepository(this)
-    private val presenter by moxyPresenter { StartScreenPresenter(repository) }
+    @Inject
+    lateinit var repository: StartScreenRepository
+
+    @InjectPresenter
+    lateinit var presenter: StartScreenPresenter
+
+    @ProvidePresenter
+    fun provideStartScreenPresenter(): StartScreenPresenter {
+        MyApp.appComponent.inject(this)
+        return StartScreenPresenter(repository)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_start)
 
         initFields()
-        setToolBar()
-        setSideMenu()
-        setRecyclerView()
+        initToolBar()
+        initSideMenu()
+        initRecyclerView()
         selectLaunchOption(savedInstanceState != null)
     }
 
     private fun isFirstApplicationLaunch(): Boolean {
-        val prefs = getSharedPreferences("APP_PREFERENCES", Context.MODE_PRIVATE)
+        val prefs = getSharedPreferences(PREFERENCES_TAG, Context.MODE_PRIVATE)
         return if (!prefs.contains(FIRST_LAUNCH_TAG)) {
             prefs.edit().putBoolean(FIRST_LAUNCH_TAG, true).apply()
             (true)
@@ -99,13 +111,13 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSea
         toolBar = findViewById(R.id.toolbar)
     }
 
-    private fun setToolBar() {
+    private fun initToolBar() {
         toolBar.title = resources.getString(R.string.start_screen_title)
         toolBar.setNavigationIcon(R.drawable.baseline_menu_24)
         setSupportActionBar(toolBar)
     }
 
-    private fun setRecyclerView() {
+    private fun initRecyclerView() {
         adapter = BookItemsAdapter(this, presenter)
         recyclerView.setHasFixedSize(true)
         val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(presenter)
@@ -258,7 +270,7 @@ class StartActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelectedSea
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun setSideMenu() {
+    private fun initSideMenu() {
         val sideMenuItemList = ArrayList<SideMenuItem>()
         sideMenuItemList.add(SideMenuItem(
             "",

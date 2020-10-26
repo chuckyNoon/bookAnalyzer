@@ -4,7 +4,7 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import java.nio.charset.StandardCharsets
 
-class Utils {
+class BitmapUtils {
     companion object {
         fun byteArrayToBitmap(byteArray: ByteArray?): Bitmap? {
             if (byteArray == null) {

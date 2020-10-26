@@ -7,14 +7,17 @@ import android.widget.SeekBar
 import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.bookanalyzer.MyApp
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.mvp.presenters.WordListPresenter
-import com.example.bookanalyzer.mvp.repositories.WordListRepository
+import com.example.bookanalyzer.domain.repositories.WordListRepository
 import com.example.bookanalyzer.mvp.views.WordListView
 import com.example.bookanalyzer.ui.adapters.WordListAdapter
 import com.example.bookanalyzer.ui.adapters.WordListItem
 import moxy.MvpAppCompatActivity
-import moxy.ktx.moxyPresenter
+import moxy.presenter.InjectPresenter
+import moxy.presenter.ProvidePresenter
+import javax.inject.Inject
 
 
 class WordListActivity : MvpAppCompatActivity(), WordListView {
@@ -26,8 +29,17 @@ class WordListActivity : MvpAppCompatActivity(), WordListView {
     private lateinit var bottomPanel: View
     private lateinit var wordListAdapter: WordListAdapter
 
-    private var repository = WordListRepository(this)
-    private val presenter by moxyPresenter { WordListPresenter(repository) }
+    @Inject
+    lateinit var repository: WordListRepository
+
+    @InjectPresenter
+    lateinit var presenter: WordListPresenter
+
+    @ProvidePresenter
+    fun provideStartScreenPresenter(): WordListPresenter {
+        MyApp.appComponent.inject(this)
+        return WordListPresenter(repository)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +49,6 @@ class WordListActivity : MvpAppCompatActivity(), WordListView {
         setToolBar()
         setRecyclerView()
         setSeekBar()
-
         selectLaunchOption(savedInstanceState != null)
     }
 

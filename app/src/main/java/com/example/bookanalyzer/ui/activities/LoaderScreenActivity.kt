@@ -3,19 +3,32 @@ package com.example.bookanalyzer.ui.activities
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
+import com.example.bookanalyzer.MyApp
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.mvp.presenters.LoaderScreenPresenter
-import com.example.bookanalyzer.mvp.repositories.LoaderScreenRepository
+import com.example.bookanalyzer.domain.repositories.LoaderScreenRepository
 import com.example.bookanalyzer.mvp.views.LoaderScreenView
 import moxy.MvpAppCompatActivity
 import moxy.ktx.moxyPresenter
+import moxy.presenter.InjectPresenter
+import moxy.presenter.ProvidePresenter
+import javax.inject.Inject
 
 
 class LoaderScreenActivity : MvpAppCompatActivity(), LoaderScreenView {
     private lateinit var toolBar: androidx.appcompat.widget.Toolbar
 
-    private val repository = LoaderScreenRepository(this)
-    private val presenter by moxyPresenter { LoaderScreenPresenter(repository) }
+    @Inject
+    lateinit var repository: LoaderScreenRepository
+
+    @InjectPresenter
+    lateinit var presenter: LoaderScreenPresenter
+
+    @ProvidePresenter
+    fun provideStartScreenPresenter(): LoaderScreenPresenter {
+        MyApp.appComponent.inject(this)
+        return LoaderScreenPresenter(repository)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

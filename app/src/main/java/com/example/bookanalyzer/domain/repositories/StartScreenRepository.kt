@@ -1,35 +1,29 @@
-package com.example.bookanalyzer.mvp.repositories
+package com.example.bookanalyzer.domain.repositories
 
-import android.content.Context
-import com.example.bookanalyzer.data.database.AppDataBase
 import com.example.bookanalyzer.data.database.daos.BookAnalysisDao
 import com.example.bookanalyzer.data.database.daos.BookPreviewDao
 import com.example.bookanalyzer.data.database.models.DbBookPreviewData
-import com.example.bookanalyzer.data.filesystem.ImageStorage
-import com.example.bookanalyzer.data.filesystem.preview_parser.BookPreviewListParser
-import com.example.bookanalyzer.data.filesystem.preview_parser.ParsedPreviewData
-import com.example.bookanalyzer.mvp.presenters.BookData
+import com.example.bookanalyzer.data.filesystem.storage.ImageStorage
+import com.example.bookanalyzer.data.filesystem.data_extractors.preview_parser.BookPreviewListParser
+import com.example.bookanalyzer.data.filesystem.data_extractors.preview_parser.ParsedPreviewData
+import com.example.bookanalyzer.domain.models.BookPreviewEntity
 import com.example.bookanalyzer.mvp.presenters.ANALYSIS_NOT_EXIST
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.collections.ArrayList
 
-class StartScreenRepository(private val ctx: Context) {
-
-    private var bookPreviewListParser = BookPreviewListParser(ctx)
-    private var analysisDao: BookAnalysisDao? = null
-    private var previewDao: BookPreviewDao? = null
-
-    fun initDataSources() {
-        analysisDao = AppDataBase.getDataBase(ctx)?.bookAnalysisDao()
-        previewDao = AppDataBase.getDataBase(ctx)?.bookPreviewDao()
-    }
+class StartScreenRepository(
+    private val analysisDao: BookAnalysisDao?,
+    private val previewDao: BookPreviewDao?,
+    private val bookPreviewListParser: BookPreviewListParser,
+    private val imageStorage: ImageStorage
+) {
 
     suspend fun getInitialDataList(paths: ArrayList<String>) =
         withContext(Dispatchers.Default) {
-            val bookDataList = ArrayList<BookData>().apply {
+            val bookDataList = ArrayList<BookPreviewEntity>().apply {
                 paths.forEach { path ->
-                    val data = BookData(
+                    val data = BookPreviewEntity(
                         path,
                         null,
                         null,
@@ -59,10 +53,10 @@ class StartScreenRepository(private val ctx: Context) {
 
     private fun saveImageFromBookInLocalStorage(parsedData: ParsedPreviewData): String? {
         parsedData.imgByteArray?.let { imgByteArray ->
-            val forSavingImgPath = ImageStorage.getSaveImgPathByTitle(parsedData.title)
+            val forSavingImgPath = imageStorage.getSaveImgPathByTitle(parsedData.title)
             if (forSavingImgPath != null) {
                 val isSuccessfullySaved =
-                    ImageStorage.saveImage(ctx, imgByteArray, forSavingImgPath)
+                    imageStorage.saveImage(imgByteArray, forSavingImgPath)
                 return if (isSuccessfullySaved) {
                     (forSavingImgPath)
                 } else {
@@ -75,7 +69,7 @@ class StartScreenRepository(private val ctx: Context) {
 
     suspend fun getCompleteDataList() = withContext(Dispatchers.Default) {
         val dbItems = previewDao?.getBookPreviews() ?: ArrayList()
-        val bookDataList = ArrayList<BookData>().apply {
+        val bookDataList = ArrayList<BookPreviewEntity>().apply {
             for (dbItem in dbItems) {
                 val bookData = dbItem.toBookData().apply {
                     uniqueWordCount = getUniqueWordCountByPath(path)
@@ -97,19 +91,19 @@ class StartScreenRepository(private val ctx: Context) {
         (analysis?.uniqueWordCount ?: 0)
     }
 
-    suspend fun saveCurrentBookList(dataList: ArrayList<BookData>) =
+    suspend fun saveCurrentBookList(previewEntityList: ArrayList<BookPreviewEntity>) =
         withContext(Dispatchers.Default) {
             previewDao?.nukeTable()
-            for (item in dataList) {
+            for (item in previewEntityList) {
                 previewDao?.insertBookPreview(item.toDbBookPreviewData())
             }
         }
 
-    private fun DbBookPreviewData.toBookData(): BookData {
-        return BookData(path, title, author, imgPath, 0, analysisId)
+    private fun DbBookPreviewData.toBookData(): BookPreviewEntity {
+        return BookPreviewEntity(path, title, author, imgPath, 0, analysisId)
     }
 
-    private fun BookData.toDbBookPreviewData(): DbBookPreviewData {
+    private fun BookPreviewEntity.toDbBookPreviewData(): DbBookPreviewData {
         return DbBookPreviewData(path, title, author, imgPath, analysisId)
     }
 

@@ -15,6 +15,8 @@ interface StartView : MvpView {
     fun setLoadingStateViewText(text: String)
     fun updateLoadingStateView(text: String, animDownDuration: Long, animUpDuration: Long)
     fun showSearchSettingsDialog()
+
+    @Skip
     fun showSideMenu()
 
     @AddToEndSingle
