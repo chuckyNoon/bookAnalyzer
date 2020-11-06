@@ -1,6 +1,6 @@
 package com.example.bookanalyzer.mvp.views
 
-import com.example.bookanalyzer.ui.adapters.WordListItem
+import com.example.bookanalyzer.ui.adapters.word_list_adapter.WordListItem
 import moxy.MvpView
 import moxy.viewstate.strategy.alias.AddToEnd
 import moxy.viewstate.strategy.alias.AddToEndSingle

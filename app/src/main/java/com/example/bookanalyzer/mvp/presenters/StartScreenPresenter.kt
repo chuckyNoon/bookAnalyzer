@@ -3,18 +3,22 @@ package com.example.bookanalyzer.mvp.presenters
 import com.example.bookanalyzer.common.FilesSearch
 import com.example.bookanalyzer.domain.repositories.StartScreenRepository
 import com.example.bookanalyzer.domain.models.BookPreviewEntity
-import com.example.bookanalyzer.mvp.views.StartView
-import com.example.bookanalyzer.ui.adapters.BookItem
+import com.example.bookanalyzer.mvp.views.StartScreenView
+import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookItem
 import kotlinx.coroutines.*
 import moxy.MvpPresenter
 import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
+import kotlin.coroutines.CoroutineContext
 
 const val ANALYSIS_NOT_EXIST = -1
 
-class StartScreenPresenter(private val repository: StartScreenRepository) :
-    MvpPresenter<StartView>() {
+class StartScreenPresenter(
+    private val repository: StartScreenRepository,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Main
+) :
+    MvpPresenter<StartScreenView>(), CoroutineScope {
 
     companion object {
         private const val LOADING_CONTENT_TEXT = "Loading content..."
@@ -24,99 +28,21 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
         private const val NO_BOOK_OPENED = -1
     }
 
+    override val coroutineContext: CoroutineContext
+        get() = job + dispatcher
+
     private var bookPreviewEntityList: ArrayList<BookPreviewEntity>? = null
     private val job = SupervisorJob()
-    private val scope = CoroutineScope(Dispatchers.Main + job)
     private var lastOpenedBookInd = NO_BOOK_OPENED
 
     fun onViewCreated() {
-        scope.launch {
+        launch {
             buildListFromSavedData()
         }
     }
 
-    private suspend fun buildListFromSavedData() {
-        indicateContentLoadingStart()
-        buildCompleteBookList()
-        indicateContentLoadingEnd()
-    }
-
-    private suspend fun buildListFromNewData(bookPaths: ArrayList<String>) {
-        indicateContentLoadingStart()
-        buildInitialBookList(bookPaths)
-        repository.insertDataFromPathsInDb(bookPaths)
-        buildCompleteBookList()
-        indicateContentLoadingEnd()
-    }
-
-    private suspend fun buildInitialBookList(bookPaths: ArrayList<String>) {
-        val initialDataList = repository.getInitialDataList(bookPaths)
-        bookPreviewEntityList = initialDataList
-        val initialItemList = convertDataListToItemList(initialDataList)
-        viewState.showBookList(initialItemList)
-    }
-
-    private suspend fun buildCompleteBookList() {
-        val completeDataList = (repository.getCompleteDataList())
-        bookPreviewEntityList = completeDataList
-        val completeItemList = convertDataListToItemList(completeDataList)
-        viewState.showBookList(completeItemList)
-    }
-
-    private fun indicateContentLoadingStart() {
-        viewState.showLoadingStateView()
-        viewState.moveLoadingStateViewUp(300)
-        viewState.setLoadingStateViewText(LOADING_CONTENT_TEXT)
-    }
-
-    private suspend fun indicateContentLoadingEnd() {
-        viewState.updateLoadingStateView(LOADING_ENDED_TEXT, 250, 300)
-        delay(TIME_BEFORE_HIDING_LOADING_STATE_VIEW)
-        viewState.moveLoadingStateViewDown(250)
-        viewState.hideLoadingStateView()
-    }
-
-    private fun convertDataListToItemList(previewEntityList: ArrayList<BookPreviewEntity>): ArrayList<BookItem> {
-        return ArrayList<BookItem>().apply {
-            for (data in previewEntityList) {
-                add(data.toBookListItem())
-            }
-        }
-    }
-
-    private fun BookPreviewEntity.toBookListItem(): BookItem {
-        val bookFormat = path.split(".").last().toUpperCase(Locale.ROOT)
-        val relativePath = path.split("/").last()
-        val title = title ?: relativePath
-        val author = author ?: UNKNOWN_AUTHOR_TEXT
-        val uniqueWordCountText = makeWordCountText(uniqueWordCount)
-        return BookItem(
-            path = relativePath,
-            title = title,
-            author = author,
-            format = bookFormat,
-            imgPath = imgPath,
-            uniqueWordCount = uniqueWordCountText,
-            barProgress = uniqueWordCount,
-            analysisId = analysisId
-        )
-    }
-
-    private fun makeWordCountText(uniqueWordCount: Int): String {
-        val firstPart = if (uniqueWordCount != 0) {
-            (uniqueWordCount.toString())
-        } else {
-            ("?")
-        }
-        return "$firstPart words"
-    }
-
-    private fun addBookItemToList(bookPath: String) {
-        //to fix
-    }
-
     fun onSelectedSearchSettings(bookFormats: ArrayList<String>, rootDir: File) {
-        scope.launch {
+        launch {
             val bookPaths = FilesSearch.findFiles(rootDir, bookFormats)
             buildListFromNewData(bookPaths)
         }
@@ -161,12 +87,10 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
         }
     }
 
-    private fun isBookAnalyzed(analysisId: Int) = (analysisId != ANALYSIS_NOT_EXIST)
-
     fun onRestart() {
         bookPreviewEntityList?.let { bookDataList ->
             if (lastOpenedBookInd in bookDataList.indices) {
-                scope.launch {
+                launch {
                     val newUniqueWordCount =
                         repository.getUniqueWordCountByPath(bookDataList[lastOpenedBookInd].path)
                     val newId =
@@ -184,10 +108,93 @@ class StartScreenPresenter(private val repository: StartScreenRepository) :
 
     fun onStop() {
         bookPreviewEntityList?.let { bookDataList ->
-            scope.launch {
+            launch {
                 repository.saveCurrentBookList(bookDataList)
             }
         }
     }
+
+    private suspend fun buildListFromSavedData() {
+        indicateContentLoadingStart()
+        buildCompleteBookList()
+        delay(TIME_BEFORE_HIDING_LOADING_STATE_VIEW)
+        indicateContentLoadingEnd()
+    }
+
+    private suspend fun buildListFromNewData(bookPaths: ArrayList<String>) {
+        indicateContentLoadingStart()
+        buildInitialBookList(bookPaths)
+        repository.insertDataFromPathsInDb(bookPaths)
+        buildCompleteBookList()
+        indicateContentLoadingEnd()
+    }
+
+    private fun indicateContentLoadingStart() {
+        viewState.showLoadingStateView()
+        viewState.moveLoadingStateViewUp(300)
+        viewState.setLoadingStateViewText(LOADING_CONTENT_TEXT)
+    }
+
+    private suspend fun indicateContentLoadingEnd() {
+        viewState.updateLoadingStateView(LOADING_ENDED_TEXT, 250, 300)
+        delay(TIME_BEFORE_HIDING_LOADING_STATE_VIEW)
+        viewState.moveLoadingStateViewDown(250)
+        viewState.hideLoadingStateView()
+    }
+
+    private suspend fun buildInitialBookList(bookPaths: ArrayList<String>) {
+        val initialDataList = repository.getInitialDataList(bookPaths)
+        bookPreviewEntityList = initialDataList
+        val initialItemList = convertDataListToItemList(initialDataList)
+        viewState.showBookList(initialItemList)
+    }
+
+    private suspend fun buildCompleteBookList() {
+        val completeDataList = (repository.getCompleteDataList())
+        bookPreviewEntityList = completeDataList
+        val completeItemList = convertDataListToItemList(completeDataList)
+        viewState.showBookList(completeItemList)
+    }
+
+    private fun convertDataListToItemList(previewEntityList: ArrayList<BookPreviewEntity>): ArrayList<BookItem> {
+        return ArrayList<BookItem>().apply {
+            for (data in previewEntityList) {
+                add(data.toBookListItem())
+            }
+        }
+    }
+
+    private fun BookPreviewEntity.toBookListItem(): BookItem {
+        val bookFormat = path.split(".").last().toUpperCase(Locale.ROOT)
+        val relativePath = path.split("/").last()
+        val title = title ?: relativePath
+        val author = author ?: UNKNOWN_AUTHOR_TEXT
+        val uniqueWordCountText = makeWordCountText(uniqueWordCount)
+        return BookItem(
+            path = relativePath,
+            title = title,
+            author = author,
+            format = bookFormat,
+            imgPath = imgPath,
+            uniqueWordCount = uniqueWordCountText,
+            barProgress = uniqueWordCount,
+            analysisId = analysisId
+        )
+    }
+
+    private fun makeWordCountText(uniqueWordCount: Int): String {
+        val firstPart = if (uniqueWordCount != 0) {
+            (uniqueWordCount.toString())
+        } else {
+            ("?")
+        }
+        return "$firstPart words"
+    }
+
+    private fun addBookItemToList(bookPath: String) {
+        //to fix
+    }
+
+    private fun isBookAnalyzed(analysisId: Int) = (analysisId != ANALYSIS_NOT_EXIST)
 }
 

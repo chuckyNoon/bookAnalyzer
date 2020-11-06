@@ -23,14 +23,7 @@ class StartScreenRepository(
         withContext(Dispatchers.Default) {
             val bookDataList = ArrayList<BookPreviewEntity>().apply {
                 paths.forEach { path ->
-                    val data = BookPreviewEntity(
-                        path,
-                        null,
-                        null,
-                        null,
-                        0,
-                        ANALYSIS_NOT_EXIST
-                    )
+                    val data = BookPreviewEntity(path = path, analysisId = ANALYSIS_NOT_EXIST)
                     add(data)
                 }
             }

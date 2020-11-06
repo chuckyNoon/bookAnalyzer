@@ -3,30 +3,21 @@ package com.example.bookanalyzer.ui.activities
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
-import android.widget.Button
-import android.widget.TextView
 import com.example.bookanalyzer.MyApp
 import com.example.bookanalyzer.R
+import com.example.bookanalyzer.databinding.ActivityBookInfoBinding
 import com.example.bookanalyzer.mvp.presenters.BookInfoPresenter
 import com.example.bookanalyzer.domain.repositories.BookInfoRepository
 import com.example.bookanalyzer.mvp.views.BookInfoView
 import moxy.MvpAppCompatActivity
-import moxy.ktx.moxyPresenter
 import moxy.presenter.InjectPresenter
 import moxy.presenter.ProvidePresenter
 import javax.inject.Inject
 
 class BookInfoActivity : MvpAppCompatActivity(),
     BookInfoView {
-    private lateinit var toolBar: androidx.appcompat.widget.Toolbar
-    private lateinit var bookNameView: TextView
-    private lateinit var wordCountView: TextView
-    private lateinit var charCountView: TextView
-    private lateinit var uniqueWordView: TextView
-    private lateinit var avgSentenceLenViewWrd: TextView
-    private lateinit var avgSentenceLenViewChr: TextView
-    private lateinit var avgWordLenView: TextView
-    private lateinit var toWordListButton: Button
+
+    private lateinit var binding: ActivityBookInfoBinding
 
     @Inject
     lateinit var repository: BookInfoRepository
@@ -42,11 +33,11 @@ class BookInfoActivity : MvpAppCompatActivity(),
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_book_info)
+        binding = ActivityBookInfoBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        initFields()
-        setToolBar()
-        setToWordListButton()
+        setupToolBar()
+        setupWordListButton()
         selectLaunchOption(savedInstanceState != null)
     }
 
@@ -63,28 +54,16 @@ class BookInfoActivity : MvpAppCompatActivity(),
         return intent.extras?.getInt(EXTRA_ANALYSIS_ID)
     }
 
-    private fun initFields() {
-        toolBar = findViewById(R.id.toolbar)
-        bookNameView = findViewById(R.id.bookNameView)
-        wordCountView = findViewById(R.id.allWordCountView)
-        uniqueWordView = findViewById(R.id.uniqWordView)
-        charCountView = findViewById(R.id.allCharsCountView)
-        avgSentenceLenViewWrd = findViewById(R.id.avgSentenceLenView1)
-        avgSentenceLenViewChr = findViewById(R.id.avgSentenceLenView2)
-        avgWordLenView = findViewById(R.id.avgWordLenView)
-        toWordListButton = findViewById(R.id.toWordListButton)
+    private fun setupToolBar() {
+        binding.toolbar.title = resources.getString(R.string.info_activity_title)
+        binding.toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
+        setSupportActionBar(binding.toolbar)
     }
 
-    private fun setToolBar() {
-        toolBar.title = resources.getString(R.string.info_activity_title)
-        toolBar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
-        setSupportActionBar(toolBar)
-    }
-
-    private fun setToWordListButton() {
+    private fun setupWordListButton() {
         val analysisId = getAnalysisIdFromIntent()
         analysisId?.let {
-            toWordListButton.setOnClickListener {
+            binding.toWordListButton.setOnClickListener {
                 presenter.onWordListButtonClicked(analysisId)
             }
         }
@@ -98,13 +77,13 @@ class BookInfoActivity : MvpAppCompatActivity(),
     }
 
     override fun setViewsText(bookInfoModel: BookInfoModel) {
-        bookNameView.text = bookInfoModel.path
-        uniqueWordView.text = bookInfoModel.uniqueWordCount
-        wordCountView.text = bookInfoModel.allWordCount
-        charCountView.text = bookInfoModel.allCharsCount
-        avgSentenceLenViewWrd.text = bookInfoModel.avgSentenceLenInWrd
-        avgSentenceLenViewChr.text = bookInfoModel.avgSentenceLenInChr
-        avgWordLenView.text = bookInfoModel.avgWordLen
+        binding.bookNameView.text = bookInfoModel.path
+        binding.uniqWordView.text = bookInfoModel.uniqueWordCount
+        binding.allWordCountView.text = bookInfoModel.allWordCount
+        binding.allCharCountView.text = bookInfoModel.allCharsCount
+        binding.avgSentenceLenInWordsView.text = bookInfoModel.avgSentenceLenInWrd
+        binding.avgSentenceLenInCharsView.text = bookInfoModel.avgSentenceLenInChr
+        binding.avgWordLenView.text = bookInfoModel.avgWordLen
     }
 
     override fun startWordListActivity(analysisId: Int) {

@@ -10,10 +10,10 @@ import javax.inject.Singleton
 @Module
 class RoomModule {
     @Provides
-    fun provideBookAnalysisDao(appDataBase: AppDataBase) = appDataBase?.bookAnalysisDao()
+    fun provideBookAnalysisDao(appDataBase: AppDataBase) = appDataBase.bookAnalysisDao()
 
     @Provides
-    fun provideBookPreviewDao(appDataBase: AppDataBase) = appDataBase?.bookPreviewDao()
+    fun provideBookPreviewDao(appDataBase: AppDataBase) = appDataBase.bookPreviewDao()
 
     @Provides
     @Singleton

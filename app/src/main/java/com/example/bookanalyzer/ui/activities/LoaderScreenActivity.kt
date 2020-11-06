@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.MenuItem
 import com.example.bookanalyzer.MyApp
 import com.example.bookanalyzer.R
+import com.example.bookanalyzer.databinding.ActivityLoaderScreenBinding
 import com.example.bookanalyzer.mvp.presenters.LoaderScreenPresenter
 import com.example.bookanalyzer.domain.repositories.LoaderScreenRepository
 import com.example.bookanalyzer.mvp.views.LoaderScreenView
@@ -16,7 +17,8 @@ import javax.inject.Inject
 
 
 class LoaderScreenActivity : MvpAppCompatActivity(), LoaderScreenView {
-    private lateinit var toolBar: androidx.appcompat.widget.Toolbar
+
+    private lateinit var binding: ActivityLoaderScreenBinding
 
     @Inject
     lateinit var repository: LoaderScreenRepository
@@ -32,9 +34,9 @@ class LoaderScreenActivity : MvpAppCompatActivity(), LoaderScreenView {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_loader_screen)
+        binding = ActivityLoaderScreenBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
-        initFields()
         setToolBar()
         selectLaunchOption(savedInstanceState != null)
     }
@@ -50,14 +52,11 @@ class LoaderScreenActivity : MvpAppCompatActivity(), LoaderScreenView {
         }
     }
 
-    private fun initFields() {
-        toolBar = findViewById(R.id.toolbar)
-    }
 
     private fun setToolBar() {
-        toolBar.title = resources.getString(R.string.loader_activity_title)
-        toolBar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
-        setSupportActionBar(toolBar)
+        binding.toolbar.title = resources.getString(R.string.loader_activity_title)
+        binding.toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
+        setSupportActionBar(binding.toolbar)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {

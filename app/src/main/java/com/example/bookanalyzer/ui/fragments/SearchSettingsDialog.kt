@@ -5,34 +5,28 @@ import android.app.Dialog
 import android.content.Context
 import android.os.Bundle
 import android.os.Environment
-import android.view.View
-import android.widget.Button
-import android.widget.CheckBox
-import android.widget.RadioGroup
+import android.view.LayoutInflater
 import androidx.fragment.app.DialogFragment
 import com.example.bookanalyzer.R
+import com.example.bookanalyzer.databinding.DialogSearchSettingsBinding
 import java.io.File
 
 class SearchSettingsDialog : DialogFragment() {
+
     private var callback: OnSelectedSearchSettings? = null
-    private lateinit var epubCheckBox: CheckBox
-    private lateinit var fb2CheckBox: CheckBox
-    private lateinit var txtCheckBox: CheckBox
-    private lateinit var radioGroup: RadioGroup
-    private lateinit var startSearchButton: Button
+    private lateinit var binding: DialogSearchSettingsBinding
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
-        val view = layoutInflater.inflate(R.layout.dialog_search_settings, null)
-        initFields(view)
-        setStartSearchButton()
+        binding =  DialogSearchSettingsBinding.inflate(LayoutInflater.from(context))
+        setupStartSearchButton()
 
         val builder: AlertDialog.Builder = AlertDialog.Builder(activity)
-        builder.setView(view)
+        builder.setView(binding.root)
         return builder.create()
     }
 
-    private fun setStartSearchButton() {
-        startSearchButton.setOnClickListener {
+    private fun setupStartSearchButton() {
+        binding.startSearchButton.setOnClickListener {
             val selectedFormats = getSelectedFormats()
             val selectedSearchRootDir = getSelectedSearchRootDir()
 
@@ -42,9 +36,9 @@ class SearchSettingsDialog : DialogFragment() {
     }
 
     private fun getSelectedFormats(): ArrayList<String> {
-        val isEpubFormatSelected = epubCheckBox.isChecked
-        val isFb2FormatSelected = fb2CheckBox.isChecked
-        val isTxtFormatSelected = txtCheckBox.isChecked
+        val isEpubFormatSelected = binding.epubBox.isChecked
+        val isFb2FormatSelected = binding.fb2Box.isChecked
+        val isTxtFormatSelected = binding.txtBox.isChecked
 
         val selectedFormats = ArrayList<String>()
         if (isEpubFormatSelected) {
@@ -60,20 +54,12 @@ class SearchSettingsDialog : DialogFragment() {
     }
 
     private fun getSelectedSearchRootDir(): File {
-        val checkedRadioButtonId = radioGroup.checkedRadioButtonId
+        val checkedRadioButtonId = binding.radioGroup.checkedRadioButtonId
         return if (checkedRadioButtonId == R.id.allDirsRadioButton) {
             (Environment.getExternalStorageDirectory())
         } else {
             (Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
         }
-    }
-
-    private fun initFields(view: View) {
-        epubCheckBox = view.findViewById(R.id.epubBox)
-        fb2CheckBox = view.findViewById(R.id.fb2Box)
-        txtCheckBox = view.findViewById(R.id.txtBox)
-        radioGroup = view.findViewById(R.id.radioGroup)
-        startSearchButton = view.findViewById(R.id.startSearchButton)
     }
 
     override fun onAttach(context: Context) {

@@ -1,16 +1,13 @@
 package com.example.bookanalyzer.di
 
-import com.example.bookanalyzer.di.modules.ContextModule
-import com.example.bookanalyzer.di.modules.FileSystemModule
-import com.example.bookanalyzer.di.modules.RepositoryModule
-import com.example.bookanalyzer.di.modules.RoomModule
+import com.example.bookanalyzer.di.modules.*
 import com.example.bookanalyzer.domain.repositories.BookInfoRepository
 import com.example.bookanalyzer.domain.repositories.LoaderScreenRepository
 import com.example.bookanalyzer.domain.repositories.StartScreenRepository
 import com.example.bookanalyzer.domain.repositories.WordListRepository
 import com.example.bookanalyzer.ui.activities.BookInfoActivity
 import com.example.bookanalyzer.ui.activities.LoaderScreenActivity
-import com.example.bookanalyzer.ui.activities.StartActivity
+import com.example.bookanalyzer.ui.activities.StartScreenActivity
 import com.example.bookanalyzer.ui.activities.WordListActivity
 import dagger.Component
 import javax.inject.Singleton
@@ -21,7 +18,7 @@ import javax.inject.Singleton
 )
 @Singleton
 interface AppComponent {
-    fun inject(activity: StartActivity)
+    fun inject(activity: StartScreenActivity)
     fun inject(activity: BookInfoActivity)
     fun inject(activity: LoaderScreenActivity)
     fun inject(activity: WordListActivity)

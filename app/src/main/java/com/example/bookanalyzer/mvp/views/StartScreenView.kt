@@ -1,13 +1,13 @@
 package com.example.bookanalyzer.mvp.views
 
-import com.example.bookanalyzer.ui.adapters.BookItem
+import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookItem
 import moxy.MvpView
 import moxy.viewstate.strategy.alias.AddToEnd
 import moxy.viewstate.strategy.alias.AddToEndSingle
 import moxy.viewstate.strategy.alias.Skip
 
 @AddToEnd
-interface StartView : MvpView {
+interface StartScreenView : MvpView {
     fun showLoadingStateView()
     fun hideLoadingStateView()
     fun moveLoadingStateViewUp(animDuration: Int)

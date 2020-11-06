@@ -1,4 +1,4 @@
-package com.example.bookanalyzer.ui.adapters
+package com.example.bookanalyzer.ui.adapters.book_items_adapter
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -7,33 +7,19 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.ProgressBar
-import android.widget.TextView
 import androidx.core.content.res.ResourcesCompat
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.bookanalyzer.R
+import com.example.bookanalyzer.databinding.ItemBookBinding
 import com.example.bookanalyzer.mvp.presenters.StartScreenPresenter
 import com.squareup.picasso.Picasso
-import kotlinx.android.synthetic.main.item_book.view.*
 import java.io.File
-
-data class BookItem(
-    var path: String,
-    var title: String,
-    var author: String,
-    var format: String,
-    var imgPath: String?,
-    var uniqueWordCount: String,
-    var barProgress: Int,
-    var analysisId: Int,
-)
 
 class BookItemsAdapter(
     private val ctx: Context,
-    private val presenter: StartScreenPresenter
+    private val presenter: StartScreenPresenter,
 ) : RecyclerView.Adapter<BookItemsAdapter.ItemViewHolder>() {
 
     private val defaultBookImage = ResourcesCompat.getDrawable(ctx.resources, R.drawable.book, null)
@@ -63,8 +49,7 @@ class BookItemsAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ItemViewHolder {
-        val view: View =
-            LayoutInflater.from(parent.context).inflate(R.layout.item_book, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.item_book, parent, false)
         return ItemViewHolder(view)
     }
 
@@ -74,18 +59,20 @@ class BookItemsAdapter(
         bindTextViews(holder, book)
         bindProgressBar(holder, book)
         bindImage(holder, book)
-        bindOnTouchListener(holder, book)
+        bindOnTouchListener(holder)
     }
 
+    override fun getItemCount() = differ.currentList.size
+
     private fun bindTextViews(holder: ItemViewHolder, book: BookItem) {
-        holder.bookTitleView.text = book.title
-        holder.bookAuthorView.text = book.author
-        holder.wordCountView.text = book.uniqueWordCount
-        holder.bookFormatView.text = book.format
+        holder.binding.bookNameView.text = book.title
+        holder.binding.bookAuthorView.text = book.author
+        holder.binding.wordCountView.text = book.uniqueWordCount
+        holder.binding.bookFormatView.text = book.format
     }
 
     private fun bindProgressBar(holder: ItemViewHolder, book: BookItem) {
-        holder.progressBar.apply {
+        holder.binding.progressBar.apply {
             max = 20000
             progress = book.barProgress
         }
@@ -96,16 +83,16 @@ class BookItemsAdapter(
             book.imgPath?.let { imgPath ->
                 Picasso.get()
                     .load(File(ctx.filesDir, imgPath))
-                    .into(holder.bookImage)
+                    .into(holder.binding.bookImage)
             } ?: run {
-                holder.bookImage.setImageDrawable(defaultBookImage)
+                holder.binding.bookImage.setImageDrawable(defaultBookImage)
             }
         }
     }
 
     @SuppressLint("ClickableViewAccessibility")
-    private fun bindOnTouchListener(holder: ItemViewHolder, book: BookItem) {
-        holder.foregroundView.setOnTouchListener { view, event ->
+    private fun bindOnTouchListener(holder: ItemViewHolder) {
+        holder.binding.foregroundView.setOnTouchListener { view, event ->
             val itemBackgroundTransition = view.background as TransitionDrawable
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
@@ -127,28 +114,18 @@ class BookItemsAdapter(
         }
     }
 
-    override fun getItemCount(): Int {
-        return differ.currentList.size
-    }
-
     class ItemViewHolder(val view: View) : RecyclerView.ViewHolder(view),
         ItemTouchHelperViewHolder {
 
-        val foregroundView: View = view.view_foreground
-        val bookTitleView: TextView = view.bookNameView
-        val bookAuthorView: TextView = view.bookAuthorView
-        val wordCountView: TextView = view.wordCountView
-        val bookFormatView: TextView = view.bookFormatView
-        val progressBar: ProgressBar = view.progressBar2
-        val bookImage: ImageView = view.bookImage
+        val binding = ItemBookBinding.bind(view)
 
         override fun onItemSelected() {
-            val backgroundTransition = foregroundView.background as TransitionDrawable
+            val backgroundTransition = binding.foregroundView.background as TransitionDrawable
             backgroundTransition.startTransition(200)
         }
 
         override fun onItemClear() {
-            val backgroundTransition = foregroundView.background as TransitionDrawable
+            val backgroundTransition = binding.foregroundView.background as TransitionDrawable
             backgroundTransition.reverseTransition(100)
         }
     }

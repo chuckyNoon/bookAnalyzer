@@ -130,7 +130,7 @@
                 android:textSize="18sp" />
 
             <TextView
-                android:id="@+id/allCharsCountView"
+                android:id="@+id/allCharCountView"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_marginEnd="15dp"
@@ -160,7 +160,7 @@
                 android:textSize="18sp" />
 
             <TextView
-                android:id="@+id/avgSentenceLenView1"
+                android:id="@+id/avgSentenceLenInWordsView"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_marginEnd="15dp"
@@ -190,7 +190,7 @@
                 android:textSize="18sp" />
 
             <TextView
-                android:id="@+id/avgSentenceLenView2"
+                android:id="@+id/avgSentenceLenInCharsView"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_marginEnd="15dp"

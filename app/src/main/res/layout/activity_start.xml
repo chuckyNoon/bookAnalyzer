@@ -21,7 +21,7 @@
             app:layout_constraintTop_toTopOf="parent" />
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_view_books"
+            android:id="@+id/books"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:background="#CFCFCF"
@@ -31,7 +31,7 @@
             app:layout_constraintTop_toBottomOf="@+id/toolbar" />
 
         <TextView
-            android:id="@+id/text_view_loading_state"
+            android:id="@+id/loadingStateView"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:background="#474747"
@@ -55,6 +55,7 @@
         android:layout_gravity="start">
 
         <include
+            android:id="@+id/sideMenu"
             layout="@layout/content_side_menu"
             android:layout_width="match_parent"
             android:layout_height="match_parent" />

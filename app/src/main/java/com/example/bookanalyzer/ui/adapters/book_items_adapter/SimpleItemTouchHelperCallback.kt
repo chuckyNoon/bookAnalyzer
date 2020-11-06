@@ -1,4 +1,4 @@
-package com.example.bookanalyzer.ui.adapters
+package com.example.bookanalyzer.ui.adapters.book_items_adapter
 
 import android.graphics.Canvas
 import android.view.View
@@ -9,7 +9,9 @@ import kotlinx.android.synthetic.main.item_book.view.*
 
 class SimpleItemTouchHelperCallback(private val presenter: StartScreenPresenter) :
     ItemTouchHelper.Callback() {
+
     private var lastDraggedViewHolder: ItemTouchHelperViewHolder? = null
+
     override fun isLongPressDragEnabled(): Boolean {
         return false //need to fix
     }
@@ -53,7 +55,7 @@ class SimpleItemTouchHelperCallback(private val presenter: StartScreenPresenter)
     }
 
     override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
-        val foregroundView: View = viewHolder.itemView.view_foreground
+        val foregroundView: View = viewHolder.itemView.foregroundView
 
         getDefaultUIUtil().clearView(foregroundView)
     }
@@ -65,7 +67,7 @@ class SimpleItemTouchHelperCallback(private val presenter: StartScreenPresenter)
     ) {
         if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
             val foregroundView: View =
-                (viewHolder as BookItemsAdapter.ItemViewHolder).view.view_foreground
+                (viewHolder as BookItemsAdapter.ItemViewHolder).binding.foregroundView
             drawBackground(viewHolder, dX, actionState)
             getDefaultUIUtil().onDraw(
                 c, recyclerView, foregroundView, dX, dY,
@@ -82,7 +84,7 @@ class SimpleItemTouchHelperCallback(private val presenter: StartScreenPresenter)
         actionState: Int, isCurrentlyActive: Boolean
     ) {
         val foregroundView: View =
-            (viewHolder as BookItemsAdapter.ItemViewHolder).view.view_foreground
+            (viewHolder as BookItemsAdapter.ItemViewHolder).binding.foregroundView
         drawBackground(viewHolder, dX, actionState)
         getDefaultUIUtil().onDrawOver(
             c, recyclerView, foregroundView, dX, dY,
@@ -92,7 +94,7 @@ class SimpleItemTouchHelperCallback(private val presenter: StartScreenPresenter)
 
     private fun drawBackground(viewHolder: RecyclerView.ViewHolder, dX: Float, actionState: Int) {
         val backgroundView: View =
-            (viewHolder as BookItemsAdapter.ItemViewHolder).view.view_background
+            (viewHolder as BookItemsAdapter.ItemViewHolder).binding.backgroundView.root
         if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
             backgroundView.left = Math.max(dX, 0f).toInt()
         }

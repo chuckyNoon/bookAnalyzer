@@ -11,13 +11,16 @@ android {
     kapt {
         generateStubs = true
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
     defaultConfig {
         applicationId "com.example.bookanalyzer"
         minSdkVersion 24
@@ -28,11 +31,19 @@ android {
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    viewBinding{
+        enabled = true
+    }
+
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
     }
 
 
@@ -55,7 +66,7 @@ dependencies {
     def material_version = "1.2.1"
     def coordinator_layout_version = "1.1.0"
     def picasso_version = "2.71828"
-    def junit_version = "4.12"
+    def junit_version = "5"
     def androidx_junit_version = "1.1.1"
     def espresso_core_version = "3.2.0"
     def jars_dir = "libs"
@@ -100,10 +111,8 @@ dependencies {
     implementation "com.google.dagger:dagger-android:2.15"
     kapt "com.google.dagger:dagger-compiler:2.13"
     kapt "com.google.dagger:dagger-android-processor:2.14"
-    //mockito
-    implementation 'org.greenrobot:eventbus:3.0.0'
-    testImplementation 'org.mockito:mockito-core:2.8.47'
-    testImplementation "com.nhaarman:mockito-kotlin-kt1.1:1.5.0"
+
+
     
     //androidx
     implementation "androidx.navigation:navigation-fragment-ktx:$navigation_version"
@@ -115,10 +124,14 @@ dependencies {
     implementation "androidx.constraintlayout:constraintlayout:$constraint_layout_version"
     implementation "androidx.coordinatorlayout:coordinatorlayout:$coordinator_layout_version"
 
+    //mokk
+    testImplementation "io.mockk:mockk:1.10.2"
+
     //tests
-    testImplementation "junit:junit:$junit_version"
-    androidTestImplementation "androidx.test.ext:junit:$androidx_junit_version"
-    androidTestImplementation "androidx.test.espresso:espresso-core:$espresso_core_version"
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.4.0-M1'
 
     //jars
     implementation fileTree(dir: "libs", include: ["*.jar"])

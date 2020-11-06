@@ -1,4 +1,4 @@
-package com.example.bookanalyzer.ui.adapters
+package com.example.bookanalyzer.ui.adapters.side_menu_adapter
 
 import android.content.Context
 import android.view.LayoutInflater
@@ -8,16 +8,10 @@ import android.widget.*
 import com.example.bookanalyzer.R
 import kotlinx.android.synthetic.main.item_side_menu_row.view.*
 
-class SideMenuItem(
-    var text: String,
-    var iconRes: Int?,
-    var onTouchListener: View.OnTouchListener
-)
-
 //to remake
 class SideMenuAdapter(
     ctx: Context,
-    private val sideMenuItemList: ArrayList<SideMenuItem>
+    private val sideMenuItems: ArrayList<SideMenuItem>
 ) : BaseAdapter() {
 
     private val layoutInflater =
@@ -25,7 +19,7 @@ class SideMenuAdapter(
 
     override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
         val view = convertView ?: layoutInflater.inflate(R.layout.item_side_menu_row, parent, false)
-        val sideMenuItem = sideMenuItemList[position]
+        val sideMenuItem = sideMenuItems[position]
         val iconView = view.findViewById<ImageView>(R.id.iconView)
 
         iconView.visibility = ImageView.INVISIBLE
@@ -39,7 +33,7 @@ class SideMenuAdapter(
     }
 
     override fun getItem(position: Int): Any {
-        return sideMenuItemList[position]
+        return sideMenuItems[position]
     }
 
     override fun getItemId(position: Int): Long {
@@ -47,6 +41,6 @@ class SideMenuAdapter(
     }
 
     override fun getCount(): Int {
-        return sideMenuItemList.size
+        return sideMenuItems.size
     }
 }

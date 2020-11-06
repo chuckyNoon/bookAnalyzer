@@ -1,16 +1,22 @@
 package com.example.bookanalyzer.mvp.presenters
 
+import android.provider.Contacts
 import com.example.bookanalyzer.domain.models.WordListRowEntity
 import com.example.bookanalyzer.domain.repositories.WordListRepository
 import com.example.bookanalyzer.mvp.views.WordListView
-import com.example.bookanalyzer.ui.adapters.WordListItem
+import com.example.bookanalyzer.ui.adapters.word_list_adapter.WordListItem
 import kotlinx.coroutines.*
 import moxy.MvpPresenter
+import kotlin.coroutines.CoroutineContext
 
-class WordListPresenter(private val repository: WordListRepository) : MvpPresenter<WordListView>() {
+class WordListPresenter(
+    private val repository: WordListRepository,
+) : MvpPresenter<WordListView>(), CoroutineScope {
+
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.Main
+
     private var wordListSize = 0
-    private val job = SupervisorJob()
-    private val scope = CoroutineScope(Dispatchers.Main + job)
 
     fun onProgressChanged(Progress: Int) {
         var progress = Progress
@@ -22,8 +28,9 @@ class WordListPresenter(private val repository: WordListRepository) : MvpPresent
     }
 
     fun onViewCreated(analysisId: Int) {
-        scope.launch {
+        launch {
             val rowEntities = repository.getWordList(analysisId)
+
             rowEntities?.let {
                 wordListSize = rowEntities.size
                 val wordListItems = ArrayList<WordListItem>().apply {
@@ -38,14 +45,14 @@ class WordListPresenter(private val repository: WordListRepository) : MvpPresent
         }
     }
 
+    fun onOptionsItemBackSelected() {
+        viewState.finishActivity()
+    }
+
+
     private fun wordListRowEntityToItem(entity: WordListRowEntity) = WordListItem(
         entity.word,
         entity.frequency.toString(),
         entity.pos.toString()
     )
-
-
-    fun onOptionsItemBackSelected() {
-        viewState.finishActivity()
-    }
 }

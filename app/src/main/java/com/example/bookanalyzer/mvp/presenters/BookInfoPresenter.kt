@@ -5,14 +5,18 @@ import com.example.bookanalyzer.mvp.views.BookInfoView
 import com.example.bookanalyzer.ui.activities.BookInfoModel
 import kotlinx.coroutines.*
 import moxy.MvpPresenter
+import kotlin.coroutines.CoroutineContext
 
-class BookInfoPresenter(private val repository: BookInfoRepository) : MvpPresenter<BookInfoView>() {
+class BookInfoPresenter(private val repository: BookInfoRepository) : MvpPresenter<BookInfoView>(),
+    CoroutineScope {
+
+    override val coroutineContext: CoroutineContext
+        get() = Dispatchers.Main + job
 
     private val job = SupervisorJob()
-    private val scope = CoroutineScope(Dispatchers.Main + job)
 
     fun onViewCreated(analysisId: Int) {
-        scope.launch {
+        launch {
             val bookData = repository.readInfo(analysisId)
             val bookInfoModel = BookInfoModel(
                 bookData.path.split("/").last(),

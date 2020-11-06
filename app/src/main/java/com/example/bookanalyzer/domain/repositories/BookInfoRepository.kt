@@ -10,6 +10,7 @@ class BookInfoRepository(private val analysisDao: BookAnalysisDao?) {
 
     suspend fun readInfo(analysisId: Int) = withContext(Dispatchers.Default) {
         var data = analysisDao?.getBookAnalysisById(analysisId)?.toBookAnalysisData()
+
         if (data == null) {
             data = BookInfoEntity(
                 "",

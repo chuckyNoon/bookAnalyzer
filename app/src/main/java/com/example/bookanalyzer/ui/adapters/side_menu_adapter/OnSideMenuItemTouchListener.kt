@@ -1,8 +1,7 @@
-package com.example.bookanalyzer.ui.adapters
+package com.example.bookanalyzer.ui.adapters.side_menu_adapter
 
 import android.animation.ArgbEvaluator
 import android.animation.ValueAnimator
-import android.graphics.Color
 import android.view.MotionEvent
 import android.view.View
 import com.example.bookanalyzer.R
