@@ -7,20 +7,15 @@ import com.example.bookanalyzer.mvp.views.WordListView
 import com.example.bookanalyzer.mvp.views.`WordListView$$State`
 import io.mockk.*
 import io.mockk.impl.annotations.RelaxedMockK
-import io.mockk.junit5.MockKExtension
 import kotlinx.coroutines.*
-import kotlinx.coroutines.test.TestCoroutineDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runBlockingTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 class WordListPresenterTest {
 
-    @ExperimentalCoroutinesApi
-    private val testDispatcher = TestCoroutineDispatcher()
+    @get:Rule
+    val testCoroutineRule = TestCoroutineRule()
 
     private lateinit var presenter: WordListPresenter
 
@@ -36,18 +31,10 @@ class WordListPresenterTest {
     @ExperimentalCoroutinesApi
     @Before
     fun setup() {
-        Dispatchers.setMain(testDispatcher)
         MockKAnnotations.init(this)
         presenter = WordListPresenter(repository)
         presenter.attachView(view)
         presenter.setViewState(viewState)
-    }
-
-    @ExperimentalCoroutinesApi
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-        testDispatcher.cleanupTestCoroutines()
     }
 
     @Test
@@ -80,27 +67,27 @@ class WordListPresenterTest {
     @ExperimentalCoroutinesApi
     @Test
     fun `onViewCreated should create word list and init bottom panel`() =
-        testDispatcher.runBlockingTest {
+        testCoroutineRule.runBlockingTest {
             coEvery { repository.getWordList(any()) } returns getSomeRowEntityList()
 
             presenter.onViewCreated(0)
 
             coVerify { repository.getWordList(any()) }
-            coVerify { viewState.setupWordItems(any()) }
+            coVerify { viewState.setupWordCells(any()) }
             coVerify { viewState.setPositionViewText(ofType(String::class)) }
         }
 
     @ExperimentalCoroutinesApi
     @Test
-    fun `onViewCreated should do nothing`() = testDispatcher.runBlockingTest {
+    fun `onViewCreated should do nothing`() = testCoroutineRule.runBlockingTest {
         val analysisId = 0
         coEvery { repository.getWordList(analysisId) } returns null
 
         presenter.onViewCreated(analysisId)
 
         coVerify { repository.getWordList(analysisId) }
-        coVerify (exactly = 0){ viewState.setupWordItems(any()) }
-        coVerify (exactly = 0){ viewState.setPositionViewText(ofType(String::class)) }
+        coVerify(exactly = 0) { viewState.setupWordCells(any()) }
+        coVerify(exactly = 0) { viewState.setPositionViewText(ofType(String::class)) }
     }
 
     private fun getSomeRowEntityList(): ArrayList<WordListRowEntity> {
@@ -110,6 +97,5 @@ class WordListPresenterTest {
         }
         return (list)
     }
-
 }
 

@@ -3,32 +3,32 @@ package com.example.bookanalyzer.ui.activities
 import android.Manifest
 import android.animation.Animator
 import android.animation.ObjectAnimator
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.drawable.TransitionDrawable
 import android.os.Bundle
 import android.view.MenuItem
-import android.view.MotionEvent
 import android.view.View
 import android.widget.Toast
 import androidx.core.app.ActivityCompat
+import androidx.core.content.res.ResourcesCompat
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.bookanalyzer.*
 import com.example.bookanalyzer.common.FileUtils
 import com.example.bookanalyzer.databinding.ActivityStartBinding
-import com.example.bookanalyzer.ui.adapters.side_menu_adapter.OnSideMenuItemTouchListener
-import com.example.bookanalyzer.ui.adapters.side_menu_adapter.SideMenuAdapter
+import com.example.bookanalyzer.ui.adapters.side_menu_adapter.SideMenuRowsAdapter
 import com.example.bookanalyzer.ui.fragments.SearchSettingsDialog
 import com.example.bookanalyzer.ui.adapters.book_items_adapter.SimpleItemTouchHelperCallback
 import com.example.bookanalyzer.mvp.presenters.StartScreenPresenter
 import com.example.bookanalyzer.domain.repositories.StartScreenRepository
 import com.example.bookanalyzer.mvp.views.StartScreenView
-import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookItemsAdapter
-import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookItem
-import com.example.bookanalyzer.ui.adapters.side_menu_adapter.SideMenuItem
+import com.example.bookanalyzer.ui.adapters.book_items_adapter.BooksAdapter
+import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookCell
+import com.example.bookanalyzer.ui.adapters.side_menu_adapter.SideMenuRowCell
 import com.example.bookanalyzer.ui.fragments.FirstLaunchDialog
 import moxy.MvpAppCompatActivity
 import moxy.presenter.InjectPresenter
@@ -52,7 +52,7 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
         private const val SELECT_FILE_REQUEST_CODE = 123
     }
 
-    private lateinit var adapter: BookItemsAdapter
+    private lateinit var adapter: BooksAdapter
     private lateinit var binding: ActivityStartBinding
 
     @Inject
@@ -103,7 +103,8 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
     }
 
     private fun setupRecyclerView() {
-        adapter = BookItemsAdapter(this, presenter)
+        val defaultBookImage = ResourcesCompat.getDrawable(resources, R.drawable.book, null)
+        adapter = BooksAdapter(filesDir, defaultBookImage, bookCellInteraction)
         binding.books.setHasFixedSize(true)
         val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(presenter)
         val itemTouchHelper = ItemTouchHelper(callback)
@@ -201,7 +202,7 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
 
     override fun moveLoadingStateViewUp(animDuration: Int) {
         ObjectAnimator.ofFloat(binding.loadingStateView, "translationY", 0f).apply {
-            this.duration = animDuration.toLong()
+            duration = animDuration.toLong()
             start()
         }
     }
@@ -209,7 +210,7 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
     override fun moveLoadingStateViewDown(animDuration: Int) {
         val height = binding.loadingStateView.height.toFloat()
         ObjectAnimator.ofFloat(binding.loadingStateView, "translationY", height).apply {
-            this.duration = animDuration.toLong()
+            duration = animDuration.toLong()
             start()
         }
     }
@@ -250,41 +251,34 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
         binding.drawerLayout.open()
     }
 
-    override fun showBookList(bookItems: ArrayList<BookItem>) {
-        adapter.setupBooks(bookItems)
+    override fun showBookList(bookCells: ArrayList<BookCell>) {
+        adapter.setupBooks(bookCells)
     }
 
-    //remake
-    @SuppressLint("ClickableViewAccessibility")
     private fun setupSideMenu() {
-        val sideMenuItemList = ArrayList<SideMenuItem>()
-        sideMenuItemList.add(SideMenuItem(
-            "",
-            null,
-            View.OnTouchListener { view: View, motionEvent: MotionEvent ->
-                false
-            }
-        ))
-        sideMenuItemList.add(SideMenuItem(
-            resources.getString(R.string.select_new_file),
-            R.drawable.baseline_folder_24,
-            object : OnSideMenuItemTouchListener {
-                override fun doAction() {
-                    requestReadPermission(REQUEST_PERMISSION_FOR_BOOK_ADD_CODE)
-                }
-            }
-        ))
-        sideMenuItemList.add(SideMenuItem(
-            resources.getString(R.string.search_books),
-            R.drawable.baseline_search_24,
-            object : OnSideMenuItemTouchListener {
-                override fun doAction() {
-                    requestReadPermission(REQUEST_PERMISSION_FOR_BOOK_SEARCH_CODE)
-                }
-            }
-        ))
-        val sideMenuAdapter = SideMenuAdapter(this, sideMenuItemList)
-        binding.sideMenu.sideMenuListView.adapter = sideMenuAdapter
+        val sideMenuRowCells = ArrayList<SideMenuRowCell>()
+        sideMenuRowCells.add(
+            SideMenuRowCell(
+                resources.getString(R.string.select_new_file),
+                R.drawable.baseline_folder_24
+            )
+        )
+        sideMenuRowCells.add(
+            SideMenuRowCell(
+                resources.getString(R.string.search_books),
+                R.drawable.baseline_search_24
+            )
+        )
+        val sideMenuAdapter = SideMenuRowsAdapter(sideMenuRowInteraction)
+        sideMenuAdapter.setupCells(sideMenuRowCells)
+        binding.sideMenu.sideMenuList.addItemDecoration(
+            DividerItemDecoration(
+                this,
+                DividerItemDecoration.VERTICAL
+            )
+        )
+        binding.sideMenu.sideMenuList.layoutManager = LinearLayoutManager(this)
+        binding.sideMenu.sideMenuList.adapter = sideMenuAdapter
     }
 
     override fun onRestart() {
@@ -295,6 +289,27 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
     override fun onStop() {
         super.onStop()
         presenter.onStop()
+    }
+
+    private val bookCellInteraction = object : BooksAdapter.BookCellInteraction {
+        override fun onBookClicked(view: View, position: Int) {
+            if (view.background is TransitionDrawable) {
+                val itemBackgroundTransition = view.background as TransitionDrawable
+                itemBackgroundTransition.startTransition(200)
+                itemBackgroundTransition.reverseTransition(200)
+            }
+            presenter.onBookClicked(position)
+        }
+    }
+
+    private val sideMenuRowInteraction = object : SideMenuRowsAdapter.SideMenuRowInteraction {
+        override fun onRowClicked(position: Int) {
+            when (position) {
+                //to remake with enums
+                0 -> requestReadPermission(REQUEST_PERMISSION_FOR_BOOK_ADD_CODE)
+                1 -> requestReadPermission(REQUEST_PERMISSION_FOR_BOOK_SEARCH_CODE)
+            }
+        }
     }
 }
 

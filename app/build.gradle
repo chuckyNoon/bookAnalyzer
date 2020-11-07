@@ -40,13 +40,12 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+
     }
 
     testOptions {
         unitTests.returnDefaultValues = true
     }
-
-
 }
 
 dependencies {
@@ -112,8 +111,6 @@ dependencies {
     kapt "com.google.dagger:dagger-compiler:2.13"
     kapt "com.google.dagger:dagger-android-processor:2.14"
 
-
-    
     //androidx
     implementation "androidx.navigation:navigation-fragment-ktx:$navigation_version"
     implementation "androidx.navigation:navigation-ui-ktx:$navigation_version"

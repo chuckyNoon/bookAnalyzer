@@ -7,7 +7,8 @@ import android.view.View
 import com.example.bookanalyzer.R
 
 interface OnSideMenuItemTouchListener : View.OnTouchListener {
-    fun doAction()
+
+    fun onClick()
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
         if (v == null)
@@ -42,7 +43,7 @@ interface OnSideMenuItemTouchListener : View.OnTouchListener {
 
     private fun onActionUp(view: View?, startColor: Int, pressedColor: Int) {
         createValueAnimator(view, startColor, pressedColor).start()
-        doAction()
+        onClick()
         createValueAnimator(view, pressedColor, startColor).start()
     }
 

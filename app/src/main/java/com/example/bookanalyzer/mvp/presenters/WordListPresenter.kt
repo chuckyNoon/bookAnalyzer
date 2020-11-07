@@ -1,10 +1,9 @@
 package com.example.bookanalyzer.mvp.presenters
 
-import android.provider.Contacts
 import com.example.bookanalyzer.domain.models.WordListRowEntity
 import com.example.bookanalyzer.domain.repositories.WordListRepository
 import com.example.bookanalyzer.mvp.views.WordListView
-import com.example.bookanalyzer.ui.adapters.word_list_adapter.WordListItem
+import com.example.bookanalyzer.ui.adapters.word_list_adapter.WordCell
 import kotlinx.coroutines.*
 import moxy.MvpPresenter
 import kotlin.coroutines.CoroutineContext
@@ -33,12 +32,12 @@ class WordListPresenter(
 
             rowEntities?.let {
                 wordListSize = rowEntities.size
-                val wordListItems = ArrayList<WordListItem>().apply {
+                val wordListItems = ArrayList<WordCell>().apply {
                     rowEntities.forEach { entity ->
                         add(wordListRowEntityToItem(entity))
                     }
                 }
-                viewState.setupWordItems(wordListItems)
+                viewState.setupWordCells(wordListItems)
                 viewState.setSeekBarMaxValue(wordListSize)
                 viewState.setPositionViewText("1 from $wordListSize")
             }
@@ -50,7 +49,7 @@ class WordListPresenter(
     }
 
 
-    private fun wordListRowEntityToItem(entity: WordListRowEntity) = WordListItem(
+    private fun wordListRowEntityToItem(entity: WordListRowEntity) = WordCell(
         entity.word,
         entity.frequency.toString(),
         entity.pos.toString()

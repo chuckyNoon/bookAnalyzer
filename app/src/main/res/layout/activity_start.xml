@@ -35,7 +35,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:background="#474747"
-            android:paddingLeft="20dp"
+            android:paddingStart="20dp"
             android:paddingTop="12dp"
             android:paddingBottom="12dp"
             android:text="Loading content..."
@@ -44,7 +44,8 @@
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            android:visibility="invisible"/>
+            android:visibility="invisible"
+            tools:ignore="RtlSymmetry" />
     </androidx.constraintlayout.widget.ConstraintLayout>
 
     <com.google.android.material.navigation.NavigationView

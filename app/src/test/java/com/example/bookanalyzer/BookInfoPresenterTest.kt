@@ -15,12 +15,13 @@ import kotlinx.coroutines.test.runBlockingTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 
 class BookInfoPresenterTest {
 
-    @ExperimentalCoroutinesApi
-    private val testDispatcher = TestCoroutineDispatcher()
+    @get:Rule
+    val testCoroutineRule = TestCoroutineRule()
 
     private lateinit var presenter: BookInfoPresenter
 
@@ -36,7 +37,6 @@ class BookInfoPresenterTest {
     @ExperimentalCoroutinesApi
     @Before
     fun setup() {
-        Dispatchers.setMain(testDispatcher)
         MockKAnnotations.init(this)
         presenter = BookInfoPresenter(repository)
         presenter.attachView(view)
@@ -44,15 +44,8 @@ class BookInfoPresenterTest {
     }
 
     @ExperimentalCoroutinesApi
-    @After
-    fun tearDown() {
-        Dispatchers.resetMain()
-        testDispatcher.cleanupTestCoroutines()
-    }
-
-    @ExperimentalCoroutinesApi
     @Test
-    fun `onViewCreated should set Views text`() = testDispatcher.runBlockingTest {
+    fun `onViewCreated should set Views text`() = testCoroutineRule.runBlockingTest {
         coEvery { repository.readInfo(any()) } returns BookInfoEntity()
 
         presenter.onViewCreated(0)

@@ -1,6 +1,6 @@
 package com.example.bookanalyzer.mvp.views
 
-import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookItem
+import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookCell
 import moxy.MvpView
 import moxy.viewstate.strategy.alias.AddToEnd
 import moxy.viewstate.strategy.alias.AddToEndSingle
@@ -20,7 +20,7 @@ interface StartScreenView : MvpView {
     fun showSideMenu()
 
     @AddToEndSingle
-    fun showBookList(bookItems: ArrayList<BookItem>)
+    fun showBookList(bookCells: ArrayList<BookCell>)
 
     @Skip
     fun startLoaderScreenActivity(bookPath: String)

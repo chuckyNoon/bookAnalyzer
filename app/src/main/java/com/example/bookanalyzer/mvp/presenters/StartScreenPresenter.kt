@@ -4,7 +4,7 @@ import com.example.bookanalyzer.common.FilesSearch
 import com.example.bookanalyzer.domain.repositories.StartScreenRepository
 import com.example.bookanalyzer.domain.models.BookPreviewEntity
 import com.example.bookanalyzer.mvp.views.StartScreenView
-import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookItem
+import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookCell
 import kotlinx.coroutines.*
 import moxy.MvpPresenter
 import java.io.File
@@ -14,7 +14,7 @@ import kotlin.coroutines.CoroutineContext
 
 const val ANALYSIS_NOT_EXIST = -1
 
-class StartScreenPresenter(
+open class StartScreenPresenter(
     private val repository: StartScreenRepository,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Main
 ) :
@@ -117,7 +117,6 @@ class StartScreenPresenter(
     private suspend fun buildListFromSavedData() {
         indicateContentLoadingStart()
         buildCompleteBookList()
-        delay(TIME_BEFORE_HIDING_LOADING_STATE_VIEW)
         indicateContentLoadingEnd()
     }
 
@@ -156,22 +155,22 @@ class StartScreenPresenter(
         viewState.showBookList(completeItemList)
     }
 
-    private fun convertDataListToItemList(previewEntityList: ArrayList<BookPreviewEntity>): ArrayList<BookItem> {
-        return ArrayList<BookItem>().apply {
+    private fun convertDataListToItemList(previewEntityList: ArrayList<BookPreviewEntity>): ArrayList<BookCell> {
+        return ArrayList<BookCell>().apply {
             for (data in previewEntityList) {
                 add(data.toBookListItem())
             }
         }
     }
 
-    private fun BookPreviewEntity.toBookListItem(): BookItem {
+    private fun BookPreviewEntity.toBookListItem(): BookCell {
         val bookFormat = path.split(".").last().toUpperCase(Locale.ROOT)
         val relativePath = path.split("/").last()
         val title = title ?: relativePath
         val author = author ?: UNKNOWN_AUTHOR_TEXT
         val uniqueWordCountText = makeWordCountText(uniqueWordCount)
-        return BookItem(
-            path = relativePath,
+        return BookCell(
+            filePath = relativePath,
             title = title,
             author = author,
             format = bookFormat,
