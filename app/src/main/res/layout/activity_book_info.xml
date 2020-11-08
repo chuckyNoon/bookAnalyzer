@@ -35,7 +35,7 @@
                 android:layout_weight="1"
                 android:gravity="start|center_vertical"
                 android:text="@string/file_name"
-                android:textColor="#000000"
+                android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -46,7 +46,7 @@
                 android:layout_marginEnd="15dp"
                 android:layout_weight="1"
                 android:gravity="center_vertical|end"
-                android:textColor="#673AB7"
+                android:textColor="@color/purple"
                 android:textSize="18sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -65,7 +65,7 @@
                 android:layout_weight="1"
                 android:gravity="start|center_vertical"
                 android:text="@string/unique_word_count"
-                android:textColor="#000000"
+                android:textColor="@android:color/black"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -76,7 +76,7 @@
                 android:layout_marginEnd="15dp"
                 android:layout_weight="1"
                 android:gravity="center_vertical|end"
-                android:textColor="#673AB7"
+                android:textColor="@color/purple"
                 android:textSize="18sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -93,10 +93,9 @@
                 android:layout_height="match_parent"
                 android:layout_marginStart="20dp"
                 android:layout_weight="1"
-                android:background="#FFFFFF"
                 android:gravity="start|center_vertical"
                 android:text="@string/word_count"
-                android:textColor="#000000"
+                android:textColor="@android:color/black"
                 android:textSize="18sp" />
 
             <TextView
@@ -107,7 +106,7 @@
                 android:layout_weight="1"
                 android:background="#FFFFFF"
                 android:gravity="center_vertical|end"
-                android:textColor="#673AB7"
+                android:textColor="@color/purple"
                 android:textSize="18sp" />
         </LinearLayout>
 
@@ -126,7 +125,7 @@
                 android:background="#FFFFFF"
                 android:gravity="start|center_vertical"
                 android:text="@string/character_count"
-                android:textColor="#000000"
+                android:textColor="@android:color/black"
                 android:textSize="18sp" />
 
             <TextView
@@ -137,7 +136,7 @@
                 android:layout_weight="1"
                 android:background="#FFFFFF"
                 android:gravity="center_vertical|end"
-                android:textColor="#673AB7"
+                android:textColor="@color/purple"
                 android:textSize="18sp" />
         </LinearLayout>
 
@@ -156,7 +155,7 @@
                 android:background="#FFFFFF"
                 android:gravity="start|center_vertical"
                 android:text="@string/average_sentence_length_wrd"
-                android:textColor="#000000"
+                android:textColor="@android:color/black"
                 android:textSize="18sp" />
 
             <TextView
@@ -167,7 +166,7 @@
                 android:layout_weight="1"
                 android:background="#FFFFFF"
                 android:gravity="center_vertical|end"
-                android:textColor="#673AB7"
+                android:textColor="@color/purple"
                 android:textSize="18sp" />
         </LinearLayout>
 
@@ -186,7 +185,7 @@
                 android:background="#FFFFFF"
                 android:gravity="start|center_vertical"
                 android:text="@string/average_sentence_length_chr"
-                android:textColor="#000000"
+                android:textColor="@android:color/black"
                 android:textSize="18sp" />
 
             <TextView
@@ -197,7 +196,7 @@
                 android:layout_weight="1"
                 android:background="#FFFFFF"
                 android:gravity="center_vertical|end"
-                android:textColor="#673AB7"
+                android:textColor="@color/purple"
                 android:textSize="18sp" />
         </LinearLayout>
 
@@ -216,7 +215,7 @@
                 android:background="#FFFFFF"
                 android:gravity="start|center_vertical"
                 android:text="@string/average_word_length"
-                android:textColor="#000000"
+                android:textColor="@android:color/black"
                 android:textSize="18sp" />
 
             <TextView
@@ -227,7 +226,7 @@
                 android:layout_weight="1"
                 android:background="#FFFFFF"
                 android:gravity="center_vertical|end"
-                android:textColor="#673AB7"
+                android:textColor="@color/purple"
                 android:textSize="18sp" />
         </LinearLayout>
 

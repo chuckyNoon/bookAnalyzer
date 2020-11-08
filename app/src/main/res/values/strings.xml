@@ -10,9 +10,12 @@
     <string name="average_word_length">Average Word Length</string>
     <string name="list_button_text">List of words</string>
 
+    <string name="unknown_author">Unknown</string>
     <string name="waiting_text">Analysing…</string>
     <string name="select_new_file">Select new file</string>
     <string name="search_books">Search books…</string>
+    <string name="loading_content_started">Loading content…</string>
+    <string name="loading_content_ended">Loading ended</string>
 
     <string name="start_screen_title">Books</string>
     <string name="info_activity_title">Info</string>

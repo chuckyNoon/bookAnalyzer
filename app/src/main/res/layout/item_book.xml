@@ -1,15 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="180dp">
 
     <include
-        android:id = "@+id/backgroundView"
+        android:id="@+id/backgroundView"
+        layout="@layout/delete_book_background"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        layout="@layout/delete_book_background" />
+        android:layout_height="match_parent" />
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/foregroundView"
@@ -34,9 +33,9 @@
             android:layout_marginStart="29dp"
             android:layout_marginEnd="19dp"
             android:maxLines="2"
-            android:textColor="#000000"
             android:textSize="16sp"
             android:textStyle="bold"
+            android:textColor="@android:color/black"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/bookImage"
             app:layout_constraintTop_toTopOf="@+id/bookImage" />
@@ -46,7 +45,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:maxLines="2"
-            android:textColor="#383838"
+            android:textColor="@color/middle_dark"
             android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="@+id/bookNameView"
             app:layout_constraintStart_toStartOf="@+id/bookNameView"
@@ -57,7 +56,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxLines="2"
-            android:textColor="#383838"
+            android:textColor="@color/middle_dark"
             android:textSize="12sp"
             app:layout_constraintStart_toStartOf="@+id/bookAuthorView"
             app:layout_constraintTop_toBottomOf="@+id/bookAuthorView" />
@@ -78,7 +77,7 @@
             android:id="@+id/wordCountView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#383838"
+            android:textColor="@color/middle_dark"
             app:layout_constraintBottom_toTopOf="@+id/progressBar"
             app:layout_constraintStart_toStartOf="@+id/progressBar" />
 

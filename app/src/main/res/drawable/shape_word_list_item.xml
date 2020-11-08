@@ -4,10 +4,10 @@
         <shape
             android:shape="rectangle">
             <stroke
-                android:width="0.5dp"
-                android:color="#BBBABA" />
+
+                android:color="@color/grey" />
             <solid
-                android:color="#FFFFFF"/>
+                android:color="@android:color/white"/>
         </shape>
     </item>
 </selector>

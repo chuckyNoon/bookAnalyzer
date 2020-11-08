@@ -2,6 +2,7 @@ package com.example.bookanalyzer.ui.adapters.book_items_adapter
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.TransitionDrawable
 import android.view.LayoutInflater
@@ -18,6 +19,7 @@ import java.io.File
 
 class BooksAdapter(
     private val appFilesDir: File,
+    private val resources: Resources,
     private val defaultBookImage: Drawable?,
     private val interaction: BookCellInteraction
 ) : RecyclerView.Adapter<BooksAdapter.BookCellHolder>() {
@@ -42,6 +44,7 @@ class BooksAdapter(
         BookCellHolder(
             LayoutInflater.from(parent.context).inflate(R.layout.item_book, parent, false),
             defaultBookImage,
+            resources,
             appFilesDir,
             interaction
         )
@@ -55,6 +58,7 @@ class BooksAdapter(
     class BookCellHolder(
         private val view: View,
         private val defaultBookImage: Drawable?,
+        private val resources: Resources,
         private val appFilesDir: File,
         private val bookCellInteraction: BookCellInteraction
     ) :
@@ -84,7 +88,7 @@ class BooksAdapter(
         }
 
         @SuppressLint("ClickableViewAccessibility")
-        private fun setupOnTouchListener(){
+        private fun setupOnTouchListener() {
             binding.foregroundView.setOnTouchListener { view, event ->
                 when (event.action) {
                     MotionEvent.ACTION_DOWN -> {
@@ -106,9 +110,13 @@ class BooksAdapter(
 
         private fun bindTextViews(cell: BookCell) {
             binding.bookNameView.text = cell.title
-            binding.bookAuthorView.text = cell.author
             binding.wordCountView.text = cell.uniqueWordCount
             binding.bookFormatView.text = cell.format
+            binding.bookAuthorView.text = if (cell.author.isNotEmpty()) {
+                cell.author
+            } else {
+                resources.getString(R.string.unknown_author)
+            }
         }
 
         private fun bindProgressBar(book: BookCell) {

@@ -13,8 +13,8 @@ interface OnSideMenuItemTouchListener : View.OnTouchListener {
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
         if (v == null)
             return false
-        val startColor = v.resources.getColor(R.color.colorMenuItemDefault)
-        val pressedColor = v.resources.getColor(R.color.colorMenuItemPressed)
+        val startColor = v.resources.getColor(R.color.dark)
+        val pressedColor = v.resources.getColor(R.color.purple)
 
         when (event?.action) {
             MotionEvent.ACTION_DOWN -> {

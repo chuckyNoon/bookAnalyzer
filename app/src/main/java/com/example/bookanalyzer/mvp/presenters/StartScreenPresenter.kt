@@ -1,5 +1,6 @@
 package com.example.bookanalyzer.mvp.presenters
 
+import com.example.bookanalyzer.R
 import com.example.bookanalyzer.common.FilesSearch
 import com.example.bookanalyzer.domain.repositories.StartScreenRepository
 import com.example.bookanalyzer.domain.models.BookPreviewEntity
@@ -21,9 +22,6 @@ open class StartScreenPresenter(
     MvpPresenter<StartScreenView>(), CoroutineScope {
 
     companion object {
-        private const val LOADING_CONTENT_TEXT = "Loading content..."
-        private const val LOADING_ENDED_TEXT = "Loading ended"
-        private const val UNKNOWN_AUTHOR_TEXT = "Unknown"
         private const val TIME_BEFORE_HIDING_LOADING_STATE_VIEW: Long = 3000
         private const val NO_BOOK_OPENED = -1
     }
@@ -131,11 +129,11 @@ open class StartScreenPresenter(
     private fun indicateContentLoadingStart() {
         viewState.showLoadingStateView()
         viewState.moveLoadingStateViewUp(300)
-        viewState.setLoadingStateViewText(LOADING_CONTENT_TEXT)
+        viewState.setLoadingStateViewText(R.string.loading_content_started)
     }
 
     private suspend fun indicateContentLoadingEnd() {
-        viewState.updateLoadingStateView(LOADING_ENDED_TEXT, 250, 300)
+        viewState.updateLoadingStateView(R.string.loading_content_ended, 250, 300)
         delay(TIME_BEFORE_HIDING_LOADING_STATE_VIEW)
         viewState.moveLoadingStateViewDown(250)
         viewState.hideLoadingStateView()
@@ -167,7 +165,7 @@ open class StartScreenPresenter(
         val bookFormat = path.split(".").last().toUpperCase(Locale.ROOT)
         val relativePath = path.split("/").last()
         val title = title ?: relativePath
-        val author = author ?: UNKNOWN_AUTHOR_TEXT
+        val author = author ?: ""
         val uniqueWordCountText = makeWordCountText(uniqueWordCount)
         return BookCell(
             filePath = relativePath,
@@ -182,12 +180,12 @@ open class StartScreenPresenter(
     }
 
     private fun makeWordCountText(uniqueWordCount: Int): String {
-        val firstPart = if (uniqueWordCount != 0) {
+        val wordCount = if (uniqueWordCount != 0) {
             (uniqueWordCount.toString())
         } else {
             ("?")
         }
-        return "$firstPart words"
+        return "$wordCount words"
     }
 
     private fun addBookItemToList(bookPath: String) {

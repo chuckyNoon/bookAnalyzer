@@ -12,8 +12,8 @@ interface StartScreenView : MvpView {
     fun hideLoadingStateView()
     fun moveLoadingStateViewUp(animDuration: Int)
     fun moveLoadingStateViewDown(animDuration: Int)
-    fun setLoadingStateViewText(text: String)
-    fun updateLoadingStateView(text: String, animDownDuration: Long, animUpDuration: Long)
+    fun setLoadingStateViewText(stringResId: Int)
+    fun updateLoadingStateView(stringResId: Int, animDownDuration: Long, animUpDuration: Long)
     fun showSearchSettingsDialog()
 
     @Skip

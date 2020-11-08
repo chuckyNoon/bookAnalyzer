@@ -104,7 +104,12 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
 
     private fun setupRecyclerView() {
         val defaultBookImage = ResourcesCompat.getDrawable(resources, R.drawable.book, null)
-        adapter = BooksAdapter(filesDir, defaultBookImage, bookCellInteraction)
+        adapter = BooksAdapter(
+            filesDir,
+            resources,
+            defaultBookImage,
+            bookCellInteraction
+        )
         binding.books.setHasFixedSize(true)
         val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(presenter)
         val itemTouchHelper = ItemTouchHelper(callback)
@@ -215,12 +220,12 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
         }
     }
 
-    override fun setLoadingStateViewText(text: String) {
-        binding.loadingStateView.text = text
+    override fun setLoadingStateViewText(stringResId: Int) {
+        binding.loadingStateView.text = resources.getString(stringResId)
     }
 
     override fun updateLoadingStateView(
-        text: String,
+        stringResId: Int,
         animDownDuration: Long,
         animUpDuration: Long
     ) {
@@ -233,7 +238,7 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
                 }
 
                 override fun onAnimationEnd(animation: Animator?) {
-                    setLoadingStateViewText(text)
+                    setLoadingStateViewText(stringResId)
                     moveLoadingStateViewUp(animUpDuration.toInt())
                 }
 
