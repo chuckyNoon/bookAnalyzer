@@ -26,12 +26,12 @@ class LoaderScreenRepository(
     suspend fun saveAnalysis(analysisEntity: BookAnalysisEntity) =
         withContext(Dispatchers.Default) {
             val listInd = getNewListInd()
-            val wordListPath = wordListStorage.savedWordListPathByInd(listInd)
+            val wordListPath = wordListStorage.getPathForListSaveByInd(listInd)
             val dbBookAnalysisData = analysisEntityToDbData(analysisEntity).apply {
                 this.wordListPath = wordListPath
             }
             analysisDao?.insertBookAnalysis(dbBookAnalysisData)
-            wordListStorage.saveWordList(analysisEntity.wordMap, listInd)
+            wordListStorage.saveWordDataList(analysisEntity.wordMap, listInd)
         }
 
     private suspend fun getNewListInd() = withContext(Dispatchers.Default) {

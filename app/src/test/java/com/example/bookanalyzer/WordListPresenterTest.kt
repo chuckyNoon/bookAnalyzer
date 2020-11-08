@@ -1,6 +1,6 @@
 package com.example.bookanalyzer
 
-import com.example.bookanalyzer.domain.models.WordListRowEntity
+import com.example.bookanalyzer.domain.models.WordEntity
 import com.example.bookanalyzer.domain.repositories.WordListRepository
 import com.example.bookanalyzer.mvp.presenters.WordListPresenter
 import com.example.bookanalyzer.mvp.views.WordListView
@@ -68,11 +68,11 @@ class WordListPresenterTest {
     @Test
     fun `onViewCreated should create word list and init bottom panel`() =
         testCoroutineRule.runBlockingTest {
-            coEvery { repository.getWordList(any()) } returns getSomeRowEntityList()
+            coEvery { repository.getWordEntities(any()) } returns getSomeRowEntityList()
 
             presenter.onViewCreated(0)
 
-            coVerify { repository.getWordList(any()) }
+            coVerify { repository.getWordEntities(any()) }
             coVerify { viewState.setupWordCells(any()) }
             coVerify { viewState.setPositionViewText(ofType(String::class)) }
         }
@@ -81,19 +81,19 @@ class WordListPresenterTest {
     @Test
     fun `onViewCreated should do nothing`() = testCoroutineRule.runBlockingTest {
         val analysisId = 0
-        coEvery { repository.getWordList(analysisId) } returns null
+        coEvery { repository.getWordEntities(analysisId) } returns null
 
         presenter.onViewCreated(analysisId)
 
-        coVerify { repository.getWordList(analysisId) }
+        coVerify { repository.getWordEntities(analysisId) }
         coVerify(exactly = 0) { viewState.setupWordCells(any()) }
         coVerify(exactly = 0) { viewState.setPositionViewText(ofType(String::class)) }
     }
 
-    private fun getSomeRowEntityList(): ArrayList<WordListRowEntity> {
-        val list = ArrayList<WordListRowEntity>()
+    private fun getSomeRowEntityList(): ArrayList<WordEntity> {
+        val list = ArrayList<WordEntity>()
         for (i in 0..10) {
-            list.add(WordListRowEntity("123", 123, 1))
+            list.add(WordEntity("123", 123, 1))
         }
         return (list)
     }

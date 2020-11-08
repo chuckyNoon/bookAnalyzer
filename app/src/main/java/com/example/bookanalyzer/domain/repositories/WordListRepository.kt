@@ -1,9 +1,9 @@
 package com.example.bookanalyzer.domain.repositories
 
 import com.example.bookanalyzer.data.database.daos.BookAnalysisDao
-import com.example.bookanalyzer.data.filesystem.storage.WordListRowData
+import com.example.bookanalyzer.data.filesystem.storage.WordData
 import com.example.bookanalyzer.data.filesystem.storage.WordListStorage
-import com.example.bookanalyzer.domain.models.WordListRowEntity
+import com.example.bookanalyzer.domain.models.WordEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -12,19 +12,20 @@ class WordListRepository(
     private var analysisDao: BookAnalysisDao?
 ) {
 
-    suspend fun getWordList(analysisId: Int) = withContext(Dispatchers.Default) {
+    suspend fun getWordEntities(analysisId: Int) = withContext(Dispatchers.Default) {
         val listPath = analysisDao?.getBookAnalysisById(analysisId)?.wordListPath
         listPath?.let {
-            val dataList = wordListStorage?.getWordList(listPath)
-            val entityList = ArrayList<WordListRowEntity>().apply {
+            val dataList = wordListStorage?.getWordDataList(listPath)
+            val entityList = ArrayList<WordEntity>().apply {
                 dataList?.forEach { data ->
-                    this.add(wordListRowDataToEntity(data))
+                    this.add(data.toWordEntity())
                 }
             }
             (entityList)
         }
     }
 
-    private fun wordListRowDataToEntity(data: WordListRowData) =
-        WordListRowEntity(data.word, data.frequency, data.pos)
+    private fun WordData.toWordEntity() =
+        WordEntity(word, frequency, pos)
+
 }

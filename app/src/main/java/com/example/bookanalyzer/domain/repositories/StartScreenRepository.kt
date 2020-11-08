@@ -6,7 +6,7 @@ import com.example.bookanalyzer.data.database.models.DbBookPreviewData
 import com.example.bookanalyzer.data.filesystem.storage.ImageStorage
 import com.example.bookanalyzer.data.filesystem.data_extractors.preview_parser.BookPreviewListParser
 import com.example.bookanalyzer.data.filesystem.data_extractors.preview_parser.ParsedPreviewData
-import com.example.bookanalyzer.domain.models.BookPreviewEntity
+import com.example.bookanalyzer.domain.models.BookEntity
 import com.example.bookanalyzer.mvp.presenters.ANALYSIS_NOT_EXIST
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -17,17 +17,48 @@ class StartScreenRepository(
     private val previewDao: BookPreviewDao?,
     private val bookPreviewListParser: BookPreviewListParser,
     private val imageStorage: ImageStorage
-) {
-
-    suspend fun getInitialDataList(paths: ArrayList<String>) =
+){
+    suspend fun getInitialBookEntities(paths: ArrayList<String>) =
         withContext(Dispatchers.Default) {
-            val bookDataList = ArrayList<BookPreviewEntity>().apply {
+            val bookEntity = ArrayList<BookEntity>().apply {
                 paths.forEach { path ->
-                    val data = BookPreviewEntity(path = path, analysisId = ANALYSIS_NOT_EXIST)
-                    add(data)
+                    val entity = BookEntity(path = path, analysisId = ANALYSIS_NOT_EXIST)
+                    add(entity)
                 }
             }
-            (bookDataList)
+            (bookEntity)
+        }
+
+    suspend fun getCompleteBookEntities() = withContext(Dispatchers.Default) {
+        val dbItems = previewDao?.getBookPreviews() ?: ArrayList()
+        val bookEntities = ArrayList<BookEntity>().apply {
+            for (dbItem in dbItems) {
+                val bookEntity = dbItem.toBookEntity().apply {
+                    uniqueWordCount = getUniqueWordCountByPath(path)
+                    analysisId = getAnalysisIdByPath(path)
+                }
+                add(bookEntity)
+            }
+        }
+        (bookEntities)
+    }
+
+    suspend fun getAnalysisIdByPath(bookPath: String) =
+        withContext(Dispatchers.Default) {
+            (analysisDao?.getBookAnalysisByPath(bookPath)?.id ?: ANALYSIS_NOT_EXIST)
+        }
+
+    suspend fun getUniqueWordCountByPath(bookPath: String) = withContext(Dispatchers.Default) {
+        val analysis = analysisDao?.getBookAnalysisByPath(bookPath)
+        (analysis?.uniqueWordCount ?: 0)
+    }
+
+    suspend fun saveCurrentBookList(entityList: ArrayList<BookEntity>) =
+        withContext(Dispatchers.Default) {
+            previewDao?.nukeTable()
+            for (item in entityList) {
+                previewDao?.insertBookPreview(item.toDbBookPreviewData())
+            }
         }
 
     suspend fun insertDataFromPathsInDb(bookPaths: ArrayList<String>) =
@@ -60,43 +91,11 @@ class StartScreenRepository(
         return null
     }
 
-    suspend fun getCompleteDataList() = withContext(Dispatchers.Default) {
-        val dbItems = previewDao?.getBookPreviews() ?: ArrayList()
-        val bookDataList = ArrayList<BookPreviewEntity>().apply {
-            for (dbItem in dbItems) {
-                val bookData = dbItem.toBookData().apply {
-                    uniqueWordCount = getUniqueWordCountByPath(path)
-                    analysisId = getAnalysisIdByPath(path)
-                }
-                add(bookData)
-            }
-        }
-        (bookDataList)
+    private fun DbBookPreviewData.toBookEntity(): BookEntity {
+        return BookEntity(path, title, author, imgPath, 0, analysisId)
     }
 
-    suspend fun getAnalysisIdByPath(bookPath: String) =
-        withContext(Dispatchers.Default) {
-            (analysisDao?.getBookAnalysisByPath(bookPath)?.id ?: ANALYSIS_NOT_EXIST)
-        }
-
-    suspend fun getUniqueWordCountByPath(bookPath: String) = withContext(Dispatchers.Default) {
-        val analysis = analysisDao?.getBookAnalysisByPath(bookPath)
-        (analysis?.uniqueWordCount ?: 0)
-    }
-
-    suspend fun saveCurrentBookList(previewEntityList: ArrayList<BookPreviewEntity>) =
-        withContext(Dispatchers.Default) {
-            previewDao?.nukeTable()
-            for (item in previewEntityList) {
-                previewDao?.insertBookPreview(item.toDbBookPreviewData())
-            }
-        }
-
-    private fun DbBookPreviewData.toBookData(): BookPreviewEntity {
-        return BookPreviewEntity(path, title, author, imgPath, 0, analysisId)
-    }
-
-    private fun BookPreviewEntity.toDbBookPreviewData(): DbBookPreviewData {
+    private fun BookEntity.toDbBookPreviewData(): DbBookPreviewData {
         return DbBookPreviewData(path, title, author, imgPath, analysisId)
     }
 

@@ -3,7 +3,7 @@ package com.example.bookanalyzer.mvp.presenters
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.common.FilesSearch
 import com.example.bookanalyzer.domain.repositories.StartScreenRepository
-import com.example.bookanalyzer.domain.models.BookPreviewEntity
+import com.example.bookanalyzer.domain.models.BookEntity
 import com.example.bookanalyzer.mvp.views.StartScreenView
 import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookCell
 import kotlinx.coroutines.*
@@ -29,7 +29,7 @@ open class StartScreenPresenter(
     override val coroutineContext: CoroutineContext
         get() = job + dispatcher
 
-    private var bookPreviewEntityList: ArrayList<BookPreviewEntity>? = null
+    private var bookEntities = ArrayList<BookEntity>()
     private val job = SupervisorJob()
     private var lastOpenedBookInd = NO_BOOK_OPENED
 
@@ -55,10 +55,8 @@ open class StartScreenPresenter(
     }
 
     fun onBookDismiss(position: Int) {
-        bookPreviewEntityList?.let { bookDataList ->
-            bookDataList.removeAt(position)
-            viewState.showBookList(convertDataListToItemList(bookDataList))
-        }
+        bookEntities.removeAt(position)
+        viewState.showBookList(convertBookEntitiesToCells(bookEntities))
     }
 
     fun onBookMove(fromPosition: Int, toPosition: Int) {
@@ -73,42 +71,37 @@ open class StartScreenPresenter(
         if (lastOpenedBookInd != NO_BOOK_OPENED) {
             return
         }
-        bookPreviewEntityList?.let { bookDataList ->
-            lastOpenedBookInd = position
-            val book = bookDataList[position]
-            val analysisId = book.analysisId
-            if (isBookAnalyzed(analysisId)) {
-                viewState.startBookInfoActivity(analysisId)
-            } else {
-                viewState.startLoaderScreenActivity(book.path)
-            }
+        lastOpenedBookInd = position
+        val book = bookEntities[position]
+        val analysisId = book.analysisId
+        if (isBookAnalyzed(analysisId)) {
+            viewState.startBookInfoActivity(analysisId)
+        } else {
+            viewState.startLoaderScreenActivity(book.path)
         }
     }
 
     fun onRestart() {
-        bookPreviewEntityList?.let { bookDataList ->
-            if (lastOpenedBookInd in bookDataList.indices) {
-                launch {
-                    val newUniqueWordCount =
-                        repository.getUniqueWordCountByPath(bookDataList[lastOpenedBookInd].path)
-                    val newId =
-                        repository.getAnalysisIdByPath(bookDataList[lastOpenedBookInd].path)
-                    if (bookDataList[lastOpenedBookInd].analysisId != newId) {
-                        bookDataList[lastOpenedBookInd].uniqueWordCount = newUniqueWordCount
-                        bookDataList[lastOpenedBookInd].analysisId = newId
-                        viewState.showBookList(convertDataListToItemList(bookDataList))
-                    }
-                    lastOpenedBookInd = NO_BOOK_OPENED
+        if (lastOpenedBookInd in bookEntities.indices) {
+            val entity = bookEntities[lastOpenedBookInd]
+            launch {
+                val newUniqueWordCount =
+                    repository.getUniqueWordCountByPath(entity.path)
+                val newAnalysisId =
+                    repository.getAnalysisIdByPath(entity.path)
+                if (entity.analysisId != newAnalysisId) {
+                    entity.uniqueWordCount = newUniqueWordCount
+                    entity.analysisId = newAnalysisId
+                    viewState.showBookList(convertBookEntitiesToCells(bookEntities))
                 }
+                lastOpenedBookInd = NO_BOOK_OPENED
             }
         }
     }
 
     fun onStop() {
-        bookPreviewEntityList?.let { bookDataList ->
-            launch {
-                repository.saveCurrentBookList(bookDataList)
-            }
+        launch {
+            repository.saveCurrentBookList(bookEntities)
         }
     }
 
@@ -140,28 +133,24 @@ open class StartScreenPresenter(
     }
 
     private suspend fun buildInitialBookList(bookPaths: ArrayList<String>) {
-        val initialDataList = repository.getInitialDataList(bookPaths)
-        bookPreviewEntityList = initialDataList
-        val initialItemList = convertDataListToItemList(initialDataList)
-        viewState.showBookList(initialItemList)
+        bookEntities = repository.getInitialBookEntities(bookPaths)
+        viewState.showBookList(convertBookEntitiesToCells(bookEntities))
     }
 
     private suspend fun buildCompleteBookList() {
-        val completeDataList = (repository.getCompleteDataList())
-        bookPreviewEntityList = completeDataList
-        val completeItemList = convertDataListToItemList(completeDataList)
-        viewState.showBookList(completeItemList)
+        bookEntities = repository.getCompleteBookEntities()
+        viewState.showBookList(convertBookEntitiesToCells(bookEntities))
     }
 
-    private fun convertDataListToItemList(previewEntityList: ArrayList<BookPreviewEntity>): ArrayList<BookCell> {
+    private fun convertBookEntitiesToCells(entities: ArrayList<BookEntity>): ArrayList<BookCell> {
         return ArrayList<BookCell>().apply {
-            for (data in previewEntityList) {
-                add(data.toBookListItem())
+            for (entity in entities) {
+                add(entity.toBookCell())
             }
         }
     }
 
-    private fun BookPreviewEntity.toBookListItem(): BookCell {
+    private fun BookEntity.toBookCell(): BookCell {
         val bookFormat = path.split(".").last().toUpperCase(Locale.ROOT)
         val relativePath = path.split("/").last()
         val title = title ?: relativePath

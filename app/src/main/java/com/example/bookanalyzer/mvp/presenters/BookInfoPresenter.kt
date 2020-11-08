@@ -17,15 +17,15 @@ class BookInfoPresenter(private val repository: BookInfoRepository) : MvpPresent
 
     fun onViewCreated(analysisId: Int) {
         launch {
-            val bookData = repository.readInfo(analysisId)
+            val bookInfoEntity = repository.readInfo(analysisId)
             val bookInfoModel = BookInfoModel(
-                bookData.path.split("/").last(),
-                bookData.uniqueWordCount.toString(),
-                bookData.allWordCount.toString(),
-                bookData.allCharsCount.toString(),
-                bookData.avgSentenceLenInWrd.toString(),
-                bookData.avgSentenceLenInChr.toString(),
-                bookData.avgWordLen.toString()
+                bookInfoEntity.path.split("/").last(),
+                bookInfoEntity.uniqueWordCount.toString(),
+                bookInfoEntity.allWordCount.toString(),
+                bookInfoEntity.allCharsCount.toString(),
+                bookInfoEntity.avgSentenceLenInWrd.toString(),
+                bookInfoEntity.avgSentenceLenInChr.toString(),
+                bookInfoEntity.avgWordLen.toString()
             )
             viewState.setViewsText(bookInfoModel)
         }

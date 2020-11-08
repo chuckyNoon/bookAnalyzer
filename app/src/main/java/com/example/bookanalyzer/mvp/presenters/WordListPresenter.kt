@@ -1,6 +1,6 @@
 package com.example.bookanalyzer.mvp.presenters
 
-import com.example.bookanalyzer.domain.models.WordListRowEntity
+import com.example.bookanalyzer.domain.models.WordEntity
 import com.example.bookanalyzer.domain.repositories.WordListRepository
 import com.example.bookanalyzer.mvp.views.WordListView
 import com.example.bookanalyzer.ui.adapters.word_list_adapter.WordCell
@@ -28,16 +28,16 @@ class WordListPresenter(
 
     fun onViewCreated(analysisId: Int) {
         launch {
-            val rowEntities = repository.getWordList(analysisId)
+            val wordEntities = repository.getWordEntities(analysisId)
 
-            rowEntities?.let {
-                wordListSize = rowEntities.size
-                val wordListItems = ArrayList<WordCell>().apply {
-                    rowEntities.forEach { entity ->
-                        add(wordListRowEntityToItem(entity))
+            wordEntities?.let {
+                wordListSize = wordEntities.size
+                val wordCells = ArrayList<WordCell>().apply {
+                    wordEntities.forEach { entity ->
+                        add(wordEntityToCell(entity))
                     }
                 }
-                viewState.setupWordCells(wordListItems)
+                viewState.setupWordCells(wordCells)
                 viewState.setSeekBarMaxValue(wordListSize)
                 viewState.setPositionViewText("1 from $wordListSize")
             }
@@ -49,7 +49,7 @@ class WordListPresenter(
     }
 
 
-    private fun wordListRowEntityToItem(entity: WordListRowEntity) = WordCell(
+    private fun wordEntityToCell(entity: WordEntity) = WordCell(
         entity.word,
         entity.frequency.toString(),
         entity.pos.toString()

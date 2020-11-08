@@ -9,10 +9,10 @@ import kotlinx.coroutines.withContext
 class BookInfoRepository(private val analysisDao: BookAnalysisDao?) {
 
     suspend fun readInfo(analysisId: Int) = withContext(Dispatchers.Default) {
-        var data = analysisDao?.getBookAnalysisById(analysisId)?.toBookAnalysisData()
+        var bookInfoEntity = analysisDao?.getBookAnalysisById(analysisId)?.toBookAnalysisEntity()
 
-        if (data == null) {
-            data = BookInfoEntity(
+        if (bookInfoEntity == null) {
+            bookInfoEntity = BookInfoEntity(
                 "",
                 0,
                 0,
@@ -23,10 +23,10 @@ class BookInfoRepository(private val analysisDao: BookAnalysisDao?) {
                 ""
             )
         }
-        (data)
+        (bookInfoEntity)
     }
 
-    private fun DbBookAnalysisData.toBookAnalysisData(): BookInfoEntity {
+    private fun DbBookAnalysisData.toBookAnalysisEntity(): BookInfoEntity {
         return BookInfoEntity(
             path,
             uniqueWordCount,

@@ -1,6 +1,6 @@
 package com.example.bookanalyzer.domain.models
 
-data class BookPreviewEntity(
+data class BookEntity(
     var path: String = "",
     var title: String? = null,
     var author: String? = null,

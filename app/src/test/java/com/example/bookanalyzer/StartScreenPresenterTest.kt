@@ -1,6 +1,5 @@
 package com.example.bookanalyzer
 
-import com.example.bookanalyzer.domain.models.BookPreviewEntity
 import com.example.bookanalyzer.domain.repositories.StartScreenRepository
 import com.example.bookanalyzer.mvp.presenters.StartScreenPresenter
 import com.example.bookanalyzer.mvp.views.StartScreenView
@@ -9,9 +8,7 @@ import io.mockk.*
 import io.mockk.impl.annotations.RelaxedMockK
 import kotlinx.coroutines.*
 import org.junit.Before
-import org.junit.Rule
 import org.junit.Test
-import java.io.File
 import kotlin.time.ExperimentalTime
 
 class StartScreenPresenterTest {

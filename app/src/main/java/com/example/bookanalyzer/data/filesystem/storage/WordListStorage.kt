@@ -4,14 +4,18 @@ import android.content.Context
 import java.io.IOException
 import kotlin.collections.ArrayList
 
-class WordListRowData(var word: String, var frequency: Int, var pos: Int)
+class WordData(
+    var word: String,
+    var frequency: Int,
+    var pos: Int
+)
 
 class WordListStorage(val ctx: Context) {
-    fun savedWordListPathByInd(ind: Int) = "list$ind"
+    fun getPathForListSaveByInd(ind: Int) = "list$ind"
 
-    fun saveWordList(wordMap: Map<String, Int>, ind: Int) {
+    fun saveWordDataList(wordMap: Map<String, Int>, ind: Int) {
         try {
-            val lstOut = ctx.openFileOutput(savedWordListPathByInd(ind), 0)
+            val lstOut = ctx.openFileOutput(getPathForListSaveByInd(ind), 0)
             lstOut.write(wordMap.toString().toByteArray())
             lstOut.close()
         } catch (e: IOException) {
@@ -19,7 +23,7 @@ class WordListStorage(val ctx: Context) {
         }
     }
 
-    fun getWordList(listPath:String): ArrayList<WordListRowData>? {
+    fun getWordDataList(listPath: String): ArrayList<WordData>? {
         val listFileContent = readWordListFile(listPath)
         listFileContent?.let {
             val lines = (listFileContent.substring(1, listFileContent.length - 1).split(','))
@@ -40,24 +44,24 @@ class WordListStorage(val ctx: Context) {
         }
     }
 
-    private fun convertFileLinesToRowDataList(lines: ArrayList<String>): ArrayList<WordListRowData> {
-        val rowDataList = ArrayList<WordListRowData>()
+    private fun convertFileLinesToRowDataList(lines: ArrayList<String>): ArrayList<WordData> {
+        val wordDataList = ArrayList<WordData>()
         for (i in lines.indices) {
-            val rowData = convertFileLineToRowData(lines[i], i)
-            rowData?.let {
-                rowDataList.add(it)
+            val wordData = convertFileLineToWordData(lines[i], i)
+            wordData?.let {
+                wordDataList.add(it)
             }
         }
-        return rowDataList
+        return wordDataList
     }
 
-    private fun convertFileLineToRowData(line: String, ind: Int): WordListRowData? {
+    private fun convertFileLineToWordData(line: String, ind: Int): WordData? {
         val parts = line.split("=")
         return if (parts.size == 2) {
             val word = parts[0]
             val count = parts[1].toInt()
             val pos = ind + 1
-            (WordListRowData(word, count, pos))
+            (WordData(word, count, pos))
         } else {
             (null)
         }

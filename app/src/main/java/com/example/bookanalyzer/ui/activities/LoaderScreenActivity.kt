@@ -52,7 +52,6 @@ class LoaderScreenActivity : MvpAppCompatActivity(), LoaderScreenView {
         }
     }
 
-
     private fun setToolBar() {
         binding.toolbar.title = resources.getString(R.string.loader_activity_title)
         binding.toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
