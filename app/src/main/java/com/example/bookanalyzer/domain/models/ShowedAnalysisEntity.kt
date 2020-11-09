@@ -1,6 +1,6 @@
 package com.example.bookanalyzer.domain.models
 
-data class BookInfoEntity(
+data class ShowedAnalysisEntity(
     var path: String = "",
     var uniqueWordCount: Int = 0,
     var allWordCount: Int = 0,

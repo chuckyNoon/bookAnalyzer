@@ -10,7 +10,6 @@ import com.example.bookanalyzer.mvp.presenters.LoaderScreenPresenter
 import com.example.bookanalyzer.domain.repositories.LoaderScreenRepository
 import com.example.bookanalyzer.mvp.views.LoaderScreenView
 import moxy.MvpAppCompatActivity
-import moxy.ktx.moxyPresenter
 import moxy.presenter.InjectPresenter
 import moxy.presenter.ProvidePresenter
 import javax.inject.Inject
@@ -41,6 +40,29 @@ class LoaderScreenActivity : MvpAppCompatActivity(), LoaderScreenView {
         selectLaunchOption(savedInstanceState != null)
     }
 
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            presenter.onOptionsItemBackSelected()
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    override fun goToAnalysisActivity(analysisId: Int) {
+        val intent = Intent(this@LoaderScreenActivity, BookAnalysisActivity::class.java).apply {
+            putExtra(EXTRA_ANALYSIS_ID, analysisId)
+        }
+        startActivity(intent)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        presenter.onStop()
+    }
+
+    override fun finishActivity() {
+        finish()
+    }
+
     private fun getBookPathFromIntent(): String? {
         return intent.extras?.getString(EXTRA_BOOK_PATH)
     }
@@ -56,28 +78,5 @@ class LoaderScreenActivity : MvpAppCompatActivity(), LoaderScreenView {
         binding.toolbar.title = resources.getString(R.string.loader_activity_title)
         binding.toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
         setSupportActionBar(binding.toolbar)
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == android.R.id.home) {
-            presenter.onOptionsItemBackSelected()
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
-    override fun goToInfoActivity(analysisId: Int) {
-        val intent = Intent(this@LoaderScreenActivity, BookInfoActivity::class.java).apply {
-            putExtra(EXTRA_ANALYSIS_ID, analysisId)
-        }
-        startActivity(intent)
-    }
-
-    override fun onStop() {
-        super.onStop()
-        presenter.onStop()
-    }
-
-    override fun finishActivity() {
-        finish()
     }
 }

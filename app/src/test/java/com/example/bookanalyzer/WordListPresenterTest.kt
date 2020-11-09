@@ -73,7 +73,7 @@ class WordListPresenterTest {
             presenter.onViewCreated(0)
 
             coVerify { repository.getWordEntities(any()) }
-            coVerify { viewState.setupWordCells(any()) }
+            coVerify { viewState.setupCells(any()) }
             coVerify { viewState.setPositionViewText(ofType(String::class)) }
         }
 
@@ -86,7 +86,7 @@ class WordListPresenterTest {
         presenter.onViewCreated(analysisId)
 
         coVerify { repository.getWordEntities(analysisId) }
-        coVerify(exactly = 0) { viewState.setupWordCells(any()) }
+        coVerify(exactly = 0) { viewState.setupCells(any()) }
         coVerify(exactly = 0) { viewState.setPositionViewText(ofType(String::class)) }
     }
 

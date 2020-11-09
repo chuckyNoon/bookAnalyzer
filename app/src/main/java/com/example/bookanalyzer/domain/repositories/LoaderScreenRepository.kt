@@ -5,7 +5,7 @@ import com.example.bookanalyzer.data.filesystem.storage.WordListStorage
 import com.example.bookanalyzer.data.filesystem.data_extractors.analyzer.BookAnalyzer
 import com.example.bookanalyzer.data.database.daos.BookAnalysisDao
 import com.example.bookanalyzer.data.database.models.DbBookAnalysisData
-import com.example.bookanalyzer.domain.models.BookAnalysisEntity
+import com.example.bookanalyzer.domain.models.SourceAnalysisEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -23,7 +23,7 @@ class LoaderScreenRepository(
         (analysisDao?.getBookAnalysisByPath(path)?.id)
     }
 
-    suspend fun saveAnalysis(analysisEntity: BookAnalysisEntity) =
+    suspend fun saveAnalysis(analysisEntity: SourceAnalysisEntity) =
         withContext(Dispatchers.Default) {
             val listInd = getNewListInd()
             val wordListPath = wordListStorage.getPathForListSaveByInd(listInd)
@@ -41,7 +41,7 @@ class LoaderScreenRepository(
     }
 
     private fun analysisDataToEntity(entity: BookAnalysisData) =
-        BookAnalysisEntity(
+        SourceAnalysisEntity(
             entity.path,
             entity.uniqueWordCount,
             entity.allWordCount,
@@ -52,7 +52,7 @@ class LoaderScreenRepository(
             entity.wordMap
         )
 
-    private fun analysisEntityToDbData(entity: BookAnalysisEntity) = DbBookAnalysisData(
+    private fun analysisEntityToDbData(entity: SourceAnalysisEntity) = DbBookAnalysisData(
         path = entity.path,
         uniqueWordCount = entity.uniqueWordCount,
         allWordCount = entity.allWordCount,

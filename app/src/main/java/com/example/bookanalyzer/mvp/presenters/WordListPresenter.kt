@@ -37,7 +37,7 @@ class WordListPresenter(
                         add(wordEntityToCell(entity))
                     }
                 }
-                viewState.setupWordCells(wordCells)
+                viewState.setupCells(wordCells)
                 viewState.setSeekBarMaxValue(wordListSize)
                 viewState.setPositionViewText("1 from $wordListSize")
             }

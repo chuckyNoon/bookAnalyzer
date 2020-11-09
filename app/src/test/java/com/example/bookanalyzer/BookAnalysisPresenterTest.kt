@@ -1,44 +1,38 @@
 package com.example.bookanalyzer
 
-import com.example.bookanalyzer.domain.models.BookInfoEntity
-import com.example.bookanalyzer.domain.repositories.BookInfoRepository
-import com.example.bookanalyzer.mvp.presenters.BookInfoPresenter
-import com.example.bookanalyzer.mvp.views.BookInfoView
+import com.example.bookanalyzer.domain.models.ShowedAnalysisEntity
+import com.example.bookanalyzer.domain.repositories.BookAnalysisRepository
+import com.example.bookanalyzer.mvp.presenters.BookAnalysisPresenter
+import com.example.bookanalyzer.mvp.views.BookAnalysisView
 import com.example.bookanalyzer.mvp.views.`BookInfoView$$State`
 import io.mockk.*
 import io.mockk.impl.annotations.RelaxedMockK
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.TestCoroutineDispatcher
-import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runBlockingTest
-import kotlinx.coroutines.test.setMain
-import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 
-class BookInfoPresenterTest {
+class BookAnalysisPresenterTest {
 
     @get:Rule
     val testCoroutineRule = TestCoroutineRule()
 
-    private lateinit var presenter: BookInfoPresenter
+    private lateinit var presenter: BookAnalysisPresenter
 
     @RelaxedMockK
     private lateinit var viewState: `BookInfoView$$State`
 
     @RelaxedMockK
-    private lateinit var view: BookInfoView
+    private lateinit var view: BookAnalysisView
 
     @RelaxedMockK
-    private lateinit var repository: BookInfoRepository
+    private lateinit var repository: BookAnalysisRepository
 
     @ExperimentalCoroutinesApi
     @Before
     fun setup() {
         MockKAnnotations.init(this)
-        presenter = BookInfoPresenter(repository)
+        presenter = BookAnalysisPresenter(repository)
         presenter.attachView(view)
         presenter.setViewState(viewState)
     }
@@ -46,11 +40,11 @@ class BookInfoPresenterTest {
     @ExperimentalCoroutinesApi
     @Test
     fun `onViewCreated should set Views text`() = testCoroutineRule.runBlockingTest {
-        coEvery { repository.readInfo(any()) } returns BookInfoEntity()
+        coEvery { repository.getAnalysis(any()) } returns ShowedAnalysisEntity()
 
         presenter.onViewCreated(0)
 
-        coVerify { repository.readInfo(any()) }
+        coVerify { repository.getAnalysis(any()) }
         coVerify { viewState.setViewsText(any()) }
     }
 

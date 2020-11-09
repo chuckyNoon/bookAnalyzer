@@ -67,7 +67,7 @@ class SimpleItemTouchHelperCallback(private val presenter: StartScreenPresenter)
     ) {
         if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
             val foregroundView: View =
-                (viewHolder as BooksAdapter.BookCellHolder).binding.foregroundView
+                (viewHolder as BooksAdapter.BookHolder).binding.foregroundView
             drawBackground(viewHolder, dX, actionState)
             getDefaultUIUtil().onDraw(
                 c, recyclerView, foregroundView, dX, dY,
@@ -84,7 +84,7 @@ class SimpleItemTouchHelperCallback(private val presenter: StartScreenPresenter)
         actionState: Int, isCurrentlyActive: Boolean
     ) {
         val foregroundView: View =
-            (viewHolder as BooksAdapter.BookCellHolder).binding.foregroundView
+            (viewHolder as BooksAdapter.BookHolder).binding.foregroundView
         drawBackground(viewHolder, dX, actionState)
         getDefaultUIUtil().onDrawOver(
             c, recyclerView, foregroundView, dX, dY,
@@ -94,7 +94,7 @@ class SimpleItemTouchHelperCallback(private val presenter: StartScreenPresenter)
 
     private fun drawBackground(viewHolder: RecyclerView.ViewHolder, dX: Float, actionState: Int) {
         val backgroundView: View =
-            (viewHolder as BooksAdapter.BookCellHolder).binding.backgroundView.root
+            (viewHolder as BooksAdapter.BookHolder).binding.backgroundView.root
         if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
             backgroundView.left = Math.max(dX, 0f).toInt()
         }

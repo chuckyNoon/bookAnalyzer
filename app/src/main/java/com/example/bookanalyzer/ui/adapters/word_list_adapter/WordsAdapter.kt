@@ -14,6 +14,7 @@ class WordsAdapter(private val interaction: WordInteraction) :
 
     fun setupCells(cells: ArrayList<WordCell>) {
         this.cells = cells
+        notifyDataSetChanged()
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =

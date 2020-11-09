@@ -1,11 +1,11 @@
 package com.example.bookanalyzer.di
 
 import com.example.bookanalyzer.di.modules.*
-import com.example.bookanalyzer.domain.repositories.BookInfoRepository
+import com.example.bookanalyzer.domain.repositories.BookAnalysisRepository
 import com.example.bookanalyzer.domain.repositories.LoaderScreenRepository
 import com.example.bookanalyzer.domain.repositories.StartScreenRepository
 import com.example.bookanalyzer.domain.repositories.WordListRepository
-import com.example.bookanalyzer.ui.activities.BookInfoActivity
+import com.example.bookanalyzer.ui.activities.BookAnalysisActivity
 import com.example.bookanalyzer.ui.activities.LoaderScreenActivity
 import com.example.bookanalyzer.ui.activities.StartScreenActivity
 import com.example.bookanalyzer.ui.activities.WordListActivity
@@ -19,12 +19,12 @@ import javax.inject.Singleton
 @Singleton
 interface AppComponent {
     fun inject(activity: StartScreenActivity)
-    fun inject(activity: BookInfoActivity)
+    fun inject(activity: BookAnalysisActivity)
     fun inject(activity: LoaderScreenActivity)
     fun inject(activity: WordListActivity)
 
     fun inject(repository: StartScreenRepository)
     fun inject(repository: LoaderScreenRepository)
-    fun inject(repository: BookInfoRepository)
+    fun inject(repository: BookAnalysisRepository)
     fun inject(repository: WordListRepository)
 }

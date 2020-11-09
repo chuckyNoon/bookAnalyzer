@@ -2,17 +2,17 @@ package com.example.bookanalyzer.domain.repositories
 
 import com.example.bookanalyzer.data.database.daos.BookAnalysisDao
 import com.example.bookanalyzer.data.database.models.DbBookAnalysisData
-import com.example.bookanalyzer.domain.models.BookInfoEntity
+import com.example.bookanalyzer.domain.models.ShowedAnalysisEntity
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class BookInfoRepository(private val analysisDao: BookAnalysisDao?) {
+class BookAnalysisRepository(private val analysisDao: BookAnalysisDao?) {
 
-    suspend fun readInfo(analysisId: Int) = withContext(Dispatchers.Default) {
-        var bookInfoEntity = analysisDao?.getBookAnalysisById(analysisId)?.toBookAnalysisEntity()
+    suspend fun getAnalysis(analysisId: Int) = withContext(Dispatchers.Default) {
+        var showedAnalysisEntity = analysisDao?.getBookAnalysisById(analysisId)?.toShowedAnalysisEntity()
 
-        if (bookInfoEntity == null) {
-            bookInfoEntity = BookInfoEntity(
+        if (showedAnalysisEntity == null) {
+            showedAnalysisEntity = ShowedAnalysisEntity(
                 "",
                 0,
                 0,
@@ -23,11 +23,11 @@ class BookInfoRepository(private val analysisDao: BookAnalysisDao?) {
                 ""
             )
         }
-        (bookInfoEntity)
+        (showedAnalysisEntity)
     }
 
-    private fun DbBookAnalysisData.toBookAnalysisEntity(): BookInfoEntity {
-        return BookInfoEntity(
+    private fun DbBookAnalysisData.toShowedAnalysisEntity(): ShowedAnalysisEntity {
+        return ShowedAnalysisEntity(
             path,
             uniqueWordCount,
             allWordCount,

@@ -4,6 +4,7 @@ import android.os.Bundle
 import android.view.MenuItem
 import android.view.View
 import android.widget.SeekBar
+import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.bookanalyzer.MyApp
 import com.example.bookanalyzer.R
@@ -22,7 +23,6 @@ import javax.inject.Inject
 class WordListActivity : MvpAppCompatActivity(), WordListView {
 
     private lateinit var binding: ActivityWordListBinding
-    private lateinit var adapter: WordsAdapter
 
     @Inject
     lateinit var repository: WordListRepository
@@ -55,7 +55,7 @@ class WordListActivity : MvpAppCompatActivity(), WordListView {
     }
 
     override fun scrollToPosition(position: Int) {
-        binding.wordList.scrollToPosition(position - 1)
+        binding.wordsRecycler.scrollToPosition(position - 1)
     }
 
     override fun setPositionViewText(text: String) {
@@ -66,7 +66,8 @@ class WordListActivity : MvpAppCompatActivity(), WordListView {
         binding.bottomPanel.seekBar.max = maxValue
     }
 
-    override fun setupWordCells(wordCells: ArrayList<WordCell>) {
+    override fun setupCells(wordCells: ArrayList<WordCell>) {
+        val adapter = binding.wordsRecycler.adapter as WordsAdapter
         adapter.setupCells(wordCells)
     }
 
@@ -86,9 +87,15 @@ class WordListActivity : MvpAppCompatActivity(), WordListView {
     }
 
     private fun setupRecyclerView() {
-        adapter = WordsAdapter(wordInteraction)
-        binding.wordList.adapter = adapter
-        binding.wordList.layoutManager = LinearLayoutManager(this)
+        val adapter = WordsAdapter(wordInteraction)
+        binding.wordsRecycler.adapter = adapter
+        binding.wordsRecycler.layoutManager = LinearLayoutManager(this)
+        binding.wordsRecycler.addItemDecoration(
+            DividerItemDecoration(
+                this,
+                LinearLayoutManager.VERTICAL
+            )
+        )
     }
 
     private fun setupToolBar() {

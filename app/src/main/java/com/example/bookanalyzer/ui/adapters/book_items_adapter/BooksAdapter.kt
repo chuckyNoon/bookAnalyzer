@@ -1,8 +1,6 @@
 package com.example.bookanalyzer.ui.adapters.book_items_adapter
 
 import android.annotation.SuppressLint
-import android.content.Context
-import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.TransitionDrawable
 import android.view.LayoutInflater
@@ -19,10 +17,9 @@ import java.io.File
 
 class BooksAdapter(
     private val appFilesDir: File,
-    private val resources: Resources,
     private val defaultBookImage: Drawable?,
-    private val interaction: BookCellInteraction
-) : RecyclerView.Adapter<BooksAdapter.BookCellHolder>() {
+    private val interaction: BookInteraction
+) : RecyclerView.Adapter<BooksAdapter.BookHolder>() {
 
     private val diffUtilCallback = object : DiffUtil.ItemCallback<BookCell>() {
         override fun areItemsTheSame(oldItem: BookCell, newItem: BookCell): Boolean {
@@ -41,26 +38,24 @@ class BooksAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) =
-        BookCellHolder(
+        BookHolder(
             LayoutInflater.from(parent.context).inflate(R.layout.item_book, parent, false),
             defaultBookImage,
-            resources,
             appFilesDir,
             interaction
         )
 
-    override fun onBindViewHolder(holder: BookCellHolder, position: Int) {
+    override fun onBindViewHolder(holder: BookHolder, position: Int) {
         holder.bind(differ.currentList[position])
     }
 
     override fun getItemCount() = differ.currentList.size
 
-    class BookCellHolder(
+    class BookHolder(
         private val view: View,
         private val defaultBookImage: Drawable?,
-        private val resources: Resources,
         private val appFilesDir: File,
-        private val bookCellInteraction: BookCellInteraction
+        private val bookInteraction: BookInteraction
     ) :
         RecyclerView.ViewHolder(view),
         ItemTouchHelperViewHolder {
@@ -98,7 +93,7 @@ class BooksAdapter(
                         (true)
                     }
                     MotionEvent.ACTION_UP -> {
-                        bookCellInteraction.onBookClicked(view, adapterPosition)
+                        bookInteraction.onBookClicked(view, adapterPosition)
                         (true)
                     }
                     else -> {
@@ -112,11 +107,7 @@ class BooksAdapter(
             binding.bookNameView.text = cell.title
             binding.wordCountView.text = cell.uniqueWordCount
             binding.bookFormatView.text = cell.format
-            binding.bookAuthorView.text = if (cell.author.isNotEmpty()) {
-                cell.author
-            } else {
-                resources.getString(R.string.unknown_author)
-            }
+            binding.bookAuthorView.text = cell.author
         }
 
         private fun bindProgressBar(book: BookCell) {
@@ -139,7 +130,7 @@ class BooksAdapter(
         }
     }
 
-    interface BookCellInteraction {
+    interface BookInteraction {
         fun onBookClicked(view: View, position: Int)
     }
 }

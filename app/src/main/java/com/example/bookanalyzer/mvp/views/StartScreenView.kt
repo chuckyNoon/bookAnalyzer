@@ -20,7 +20,7 @@ interface StartScreenView : MvpView {
     fun showSideMenu()
 
     @AddToEndSingle
-    fun showBookList(bookCells: ArrayList<BookCell>)
+    fun setupCells(bookCells: ArrayList<BookCell>)
 
     @Skip
     fun startLoaderScreenActivity(bookPath: String)

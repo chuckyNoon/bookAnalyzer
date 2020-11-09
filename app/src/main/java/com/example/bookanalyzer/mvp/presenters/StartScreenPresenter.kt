@@ -1,6 +1,7 @@
 package com.example.bookanalyzer.mvp.presenters
 
 import com.example.bookanalyzer.R
+import com.example.bookanalyzer.ResourceManager
 import com.example.bookanalyzer.common.FilesSearch
 import com.example.bookanalyzer.domain.repositories.StartScreenRepository
 import com.example.bookanalyzer.domain.models.BookEntity
@@ -15,8 +16,9 @@ import kotlin.coroutines.CoroutineContext
 
 const val ANALYSIS_NOT_EXIST = -1
 
-open class StartScreenPresenter(
+class StartScreenPresenter(
     private val repository: StartScreenRepository,
+    private val resourceManager: ResourceManager,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Main
 ) :
     MvpPresenter<StartScreenView>(), CoroutineScope {
@@ -56,7 +58,7 @@ open class StartScreenPresenter(
 
     fun onBookDismiss(position: Int) {
         bookEntities.removeAt(position)
-        viewState.showBookList(convertBookEntitiesToCells(bookEntities))
+        viewState.setupCells(convertBookEntitiesToCells(bookEntities))
     }
 
     fun onBookMove(fromPosition: Int, toPosition: Int) {
@@ -92,7 +94,7 @@ open class StartScreenPresenter(
                 if (entity.analysisId != newAnalysisId) {
                     entity.uniqueWordCount = newUniqueWordCount
                     entity.analysisId = newAnalysisId
-                    viewState.showBookList(convertBookEntitiesToCells(bookEntities))
+                    viewState.setupCells(convertBookEntitiesToCells(bookEntities))
                 }
                 lastOpenedBookInd = NO_BOOK_OPENED
             }
@@ -134,12 +136,12 @@ open class StartScreenPresenter(
 
     private suspend fun buildInitialBookList(bookPaths: ArrayList<String>) {
         bookEntities = repository.getInitialBookEntities(bookPaths)
-        viewState.showBookList(convertBookEntitiesToCells(bookEntities))
+        viewState.setupCells(convertBookEntitiesToCells(bookEntities))
     }
 
     private suspend fun buildCompleteBookList() {
         bookEntities = repository.getCompleteBookEntities()
-        viewState.showBookList(convertBookEntitiesToCells(bookEntities))
+        viewState.setupCells(convertBookEntitiesToCells(bookEntities))
     }
 
     private fun convertBookEntitiesToCells(entities: ArrayList<BookEntity>): ArrayList<BookCell> {
@@ -154,7 +156,7 @@ open class StartScreenPresenter(
         val bookFormat = path.split(".").last().toUpperCase(Locale.ROOT)
         val relativePath = path.split("/").last()
         val title = title ?: relativePath
-        val author = author ?: ""
+        val author = author ?: resourceManager.getString(R.string.unknown_author)
         val uniqueWordCountText = makeWordCountText(uniqueWordCount)
         return BookCell(
             filePath = relativePath,

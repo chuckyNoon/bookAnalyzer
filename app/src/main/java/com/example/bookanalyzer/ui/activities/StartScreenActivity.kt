@@ -52,8 +52,10 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
         private const val SELECT_FILE_REQUEST_CODE = 123
     }
 
-    private lateinit var adapter: BooksAdapter
     private lateinit var binding: ActivityStartBinding
+
+    @Inject
+    lateinit var resourceManager: ResourceManager
 
     @Inject
     lateinit var repository: StartScreenRepository
@@ -64,7 +66,7 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
     @ProvidePresenter
     fun provideStartScreenPresenter(): StartScreenPresenter {
         MyApp.appComponent.inject(this)
-        return StartScreenPresenter(repository)
+        return StartScreenPresenter(repository, resourceManager)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,47 +78,6 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
         setupSideMenu()
         setupRecyclerView()
         selectLaunchOption(savedInstanceState != null)
-    }
-
-    private fun isFirstApplicationLaunch(): Boolean {
-        val prefs = getSharedPreferences(PREFERENCES_TAG, Context.MODE_PRIVATE)
-        return if (!prefs.contains(FIRST_LAUNCH_TAG)) {
-            prefs.edit().putBoolean(FIRST_LAUNCH_TAG, true).apply()
-            (true)
-        } else {
-            (false)
-        }
-    }
-
-    private fun selectLaunchOption(isActivityRecreated: Boolean) {
-        if (isFirstApplicationLaunch()) {
-            FirstLaunchDialog().show(supportFragmentManager, "123")
-        } else if (!isActivityRecreated) {
-            presenter.onViewCreated()
-        }
-    }
-
-    private fun setupToolBar() {
-        binding.toolbar.title = resources.getString(R.string.start_screen_title)
-        binding.toolbar.setNavigationIcon(R.drawable.baseline_menu_24)
-        setSupportActionBar(binding.toolbar)
-    }
-
-    private fun setupRecyclerView() {
-        val defaultBookImage = ResourcesCompat.getDrawable(resources, R.drawable.book, null)
-        adapter = BooksAdapter(
-            filesDir,
-            resources,
-            defaultBookImage,
-            bookCellInteraction
-        )
-        binding.books.setHasFixedSize(true)
-        val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(presenter)
-        val itemTouchHelper = ItemTouchHelper(callback)
-        itemTouchHelper.attachToRecyclerView(binding.books)
-
-        binding.books.adapter = adapter
-        binding.books.layoutManager = LinearLayoutManager(this)
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -134,7 +95,7 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
     }
 
     override fun startBookInfoActivity(analysisId: Int) {
-        val intent = Intent(this, BookInfoActivity::class.java).apply {
+        val intent = Intent(this, BookAnalysisActivity::class.java).apply {
             putExtra(EXTRA_ANALYSIS_ID, analysisId)
         }
         startActivity(intent)
@@ -150,11 +111,6 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
                 }
             }
         }
-    }
-
-    private fun requestReadPermission(requestCode: Int) {
-        val requiredPermissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
-        ActivityCompat.requestPermissions(this, requiredPermissions, requestCode)
     }
 
     override fun onSelectedLaunchOption(isScanSelected: Boolean) {
@@ -256,8 +212,64 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
         binding.drawerLayout.open()
     }
 
-    override fun showBookList(bookCells: ArrayList<BookCell>) {
+    override fun setupCells(bookCells: ArrayList<BookCell>) {
+        val adapter = binding.booksRecycler.adapter as BooksAdapter
         adapter.setupBooks(bookCells)
+    }
+
+    override fun onRestart() {
+        super.onRestart()
+        presenter.onRestart()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        presenter.onStop()
+    }
+
+    private fun isFirstApplicationLaunch(): Boolean {
+        val prefs = getSharedPreferences(PREFERENCES_TAG, Context.MODE_PRIVATE)
+        return if (!prefs.contains(FIRST_LAUNCH_TAG)) {
+            prefs.edit().putBoolean(FIRST_LAUNCH_TAG, true).apply()
+            (true)
+        } else {
+            (false)
+        }
+    }
+
+    private fun selectLaunchOption(isActivityRecreated: Boolean) {
+        if (isFirstApplicationLaunch()) {
+            FirstLaunchDialog().show(supportFragmentManager, "123")
+        } else if (!isActivityRecreated) {
+            presenter.onViewCreated()
+        }
+    }
+
+    private fun setupToolBar() {
+        binding.toolbar.title = resources.getString(R.string.start_screen_title)
+        binding.toolbar.setNavigationIcon(R.drawable.baseline_menu_24)
+        setSupportActionBar(binding.toolbar)
+    }
+
+    private fun setupRecyclerView() {
+        val defaultBookImage = ResourcesCompat.getDrawable(resources, R.drawable.book, null)
+        val adapter = BooksAdapter(
+            filesDir,
+            defaultBookImage,
+            bookCellInteraction
+        )
+        binding.booksRecycler.setHasFixedSize(true)
+        val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(presenter)
+        val itemTouchHelper = ItemTouchHelper(callback)
+        itemTouchHelper.attachToRecyclerView(binding.booksRecycler)
+
+        binding.booksRecycler.adapter = adapter
+        binding.booksRecycler.layoutManager = LinearLayoutManager(this)
+    }
+
+    private fun requestReadPermission(requestCode: Int) {
+        val requiredPermissions = arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE)
+        ActivityCompat.requestPermissions(this, requiredPermissions, requestCode)
     }
 
     private fun setupSideMenu() {
@@ -286,17 +298,7 @@ class StartScreenActivity : MvpAppCompatActivity(), SearchSettingsDialog.OnSelec
         binding.sideMenu.sideMenuList.adapter = sideMenuAdapter
     }
 
-    override fun onRestart() {
-        super.onRestart()
-        presenter.onRestart()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        presenter.onStop()
-    }
-
-    private val bookCellInteraction = object : BooksAdapter.BookCellInteraction {
+    private val bookCellInteraction = object : BooksAdapter.BookInteraction {
         override fun onBookClicked(view: View, position: Int) {
             if (view.background is TransitionDrawable) {
                 val itemBackgroundTransition = view.background as TransitionDrawable

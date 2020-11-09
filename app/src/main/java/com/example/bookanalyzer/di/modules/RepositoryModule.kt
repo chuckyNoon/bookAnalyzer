@@ -6,7 +6,7 @@ import com.example.bookanalyzer.data.database.daos.BookPreviewDao
 import com.example.bookanalyzer.data.filesystem.storage.ImageStorage
 import com.example.bookanalyzer.data.filesystem.storage.WordListStorage
 import com.example.bookanalyzer.data.filesystem.data_extractors.preview_parser.BookPreviewListParser
-import com.example.bookanalyzer.domain.repositories.BookInfoRepository
+import com.example.bookanalyzer.domain.repositories.BookAnalysisRepository
 import com.example.bookanalyzer.domain.repositories.LoaderScreenRepository
 import com.example.bookanalyzer.domain.repositories.StartScreenRepository
 import com.example.bookanalyzer.domain.repositories.WordListRepository
@@ -24,7 +24,7 @@ class RepositoryModule {
     ) = StartScreenRepository(analysisDao, previewDao, bookPreviewListParser, imageStorage)
 
     @Provides
-    fun provideBookInfoRepository(analysisDao: BookAnalysisDao) = BookInfoRepository(analysisDao)
+    fun provideBookInfoRepository(analysisDao: BookAnalysisDao) = BookAnalysisRepository(analysisDao)
 
     @Provides
     fun provideLoaderScreenRepository(

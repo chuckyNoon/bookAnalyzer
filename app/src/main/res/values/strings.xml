@@ -18,7 +18,7 @@
     <string name="loading_content_ended">Loading ended</string>
 
     <string name="start_screen_title">Books</string>
-    <string name="info_activity_title">Info</string>
+    <string name="analysis_activity_title">Analysis</string>
     <string name="loader_activity_title"> </string>
     <string name="word_list_activity_title">Word list</string>
 

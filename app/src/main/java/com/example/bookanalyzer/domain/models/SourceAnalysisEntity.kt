@@ -1,6 +1,6 @@
 package com.example.bookanalyzer.domain.models
 
-class BookAnalysisEntity(
+class SourceAnalysisEntity(
     var path: String,
     var uniqueWordCount: Int,
     var allWordCount: Int,
