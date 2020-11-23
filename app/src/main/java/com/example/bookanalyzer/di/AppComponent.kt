@@ -5,10 +5,10 @@ import com.example.bookanalyzer.domain.repositories.BookAnalysisRepository
 import com.example.bookanalyzer.domain.repositories.LoaderScreenRepository
 import com.example.bookanalyzer.domain.repositories.StartScreenRepository
 import com.example.bookanalyzer.domain.repositories.WordListRepository
-import com.example.bookanalyzer.ui.activities.BookAnalysisActivity
-import com.example.bookanalyzer.ui.activities.LoaderScreenActivity
-import com.example.bookanalyzer.ui.activities.StartScreenActivity
-import com.example.bookanalyzer.ui.activities.WordListActivity
+import com.example.bookanalyzer.ui.fragments.AnalysisProcessFragment
+import com.example.bookanalyzer.ui.fragments.AnalysisResultFragment
+import com.example.bookanalyzer.ui.fragments.BooksFragment
+import com.example.bookanalyzer.ui.fragments.WordsFragment
 import dagger.Component
 import javax.inject.Singleton
 
@@ -18,10 +18,10 @@ import javax.inject.Singleton
 )
 @Singleton
 interface AppComponent {
-    fun inject(activity: StartScreenActivity)
-    fun inject(activity: BookAnalysisActivity)
-    fun inject(activity: LoaderScreenActivity)
-    fun inject(activity: WordListActivity)
+    fun inject(fragment: BooksFragment)
+    fun inject(fragment: AnalysisResultFragment)
+    fun inject(fragment: AnalysisProcessFragment)
+    fun inject(fragment: WordsFragment)
 
     fun inject(repository: StartScreenRepository)
     fun inject(repository: LoaderScreenRepository)

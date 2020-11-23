@@ -1,4 +1,4 @@
-package com.example.bookanalyzer.ui.fragments
+package com.example.bookanalyzer.ui.fragments.dialogs
 
 import android.app.AlertDialog
 import android.app.Dialog
@@ -24,8 +24,8 @@ class FirstLaunchDialog : DialogFragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (activity is OnSelectedLaunchOption) {
-            callback = activity as OnSelectedLaunchOption
+        if (parentFragment is OnSelectedLaunchOption) {
+            callback = parentFragment as OnSelectedLaunchOption
         }
     }
 

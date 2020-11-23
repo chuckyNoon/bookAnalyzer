@@ -22,11 +22,16 @@ class BookAnalysisPresenter(
         get() = Dispatchers.Main + job
 
     private val job = SupervisorJob()
+    private var isFirstLaunch = true
 
     fun onViewCreated(analysisId: Int) {
+        if (!isFirstLaunch) {
+            return
+        }
         launch {
             val bookAnalysis = repository.getAnalysis(analysisId)
             viewState.setupCells(bookAnalysis.toParamCells())
+            isFirstLaunch = true
         }
     }
 

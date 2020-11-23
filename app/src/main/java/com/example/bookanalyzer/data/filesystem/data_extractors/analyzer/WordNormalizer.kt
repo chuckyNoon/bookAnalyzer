@@ -6,6 +6,7 @@ import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
 class WordNormalizer(private val ctx: Context) {
+
     private val nounMap: MutableMap<String, Int> = mutableMapOf()
     private val verbMap: MutableMap<String, Int> = mutableMapOf()
     private val adjMap: MutableMap<String, Int> = mutableMapOf()
@@ -33,16 +34,9 @@ class WordNormalizer(private val ctx: Context) {
     }
 
     fun getWordBase(word: String): String? {
-        checkWordBaseInExceptionWordDictionaries(word)?.let {
-            return it
-        }
-        tryNormalizeWordByAnyRules(word)?.let {
-            return it
-        }
-        checkWordBaseInUsualWordDictionaries(word)?.let {
-            return it
-        }
-        return null
+        return checkWordBaseInExceptionWordDictionaries(word)
+            ?: tryNormalizeWordByAnyRules(word)
+            ?: checkWordBaseInUsualWordDictionaries(word)
     }
 
     private fun initRules() {
@@ -196,15 +190,8 @@ class WordNormalizer(private val ctx: Context) {
     }
 
     private fun tryNormalizeWordByAnyRules(word: String): String? {
-        tryNormalizeWordBySelectedRules(word, verbMap, verbRules)?.let {
-            return it
-        }
-        tryNormalizeWordBySelectedRules(word, adjMap, adjRules)?.let {
-            return it
-        }
-        tryNormalizeWordBySelectedRules(word, nounMap, nounRules)?.let {
-            return it
-        }
-        return null
+        return tryNormalizeWordBySelectedRules(word, verbMap, verbRules)
+            ?: tryNormalizeWordBySelectedRules(word, adjMap, adjRules)
+            ?: tryNormalizeWordBySelectedRules(word, nounMap, nounRules)
     }
 }

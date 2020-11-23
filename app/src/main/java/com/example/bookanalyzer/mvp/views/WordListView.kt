@@ -5,14 +5,10 @@ import moxy.MvpView
 import moxy.viewstate.strategy.alias.AddToEnd
 import moxy.viewstate.strategy.alias.AddToEndSingle
 
-@AddToEnd
+@AddToEndSingle
 interface WordListView : MvpView {
     fun finishActivity()
-
-    @AddToEndSingle
     fun scrollToPosition(position: Int)
-
-    @AddToEndSingle
     fun setPositionViewText(text: String)
     fun setSeekBarMaxValue(maxValue: Int)
     fun setupCells(wordCells: ArrayList<WordCell>)

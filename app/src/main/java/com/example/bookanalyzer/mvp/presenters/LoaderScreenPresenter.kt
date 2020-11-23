@@ -9,12 +9,16 @@ class LoaderScreenPresenter(private val repository: LoaderScreenRepository) :
     MvpPresenter<LoaderScreenView>() {
     private val job = SupervisorJob()
     private val scope = CoroutineScope(Dispatchers.Main + job)
+    private var firstLaunch = true
 
     fun onOptionsItemBackSelected() {
         viewState.finishActivity()
     }
 
     fun onViewCreated(bookPath: String) {
+        if (!firstLaunch){
+            return
+        }
         scope.launch {
             val sourceAnalysisEntity = repository.analyzeBook(bookPath)
             sourceAnalysisEntity.let {
@@ -23,6 +27,7 @@ class LoaderScreenPresenter(private val repository: LoaderScreenRepository) :
                 analysisId?.let {
                     viewState.goToAnalysisActivity(analysisId)
                 }
+                firstLaunch = false
             }
         }
     }

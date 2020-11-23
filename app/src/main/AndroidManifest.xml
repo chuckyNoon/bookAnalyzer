@@ -12,7 +12,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true">
 
-        <activity android:name="com.example.bookanalyzer.ui.activities.StartScreenActivity" android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge" >
+        <activity android:name="com.example.bookanalyzer.ui.MainActivity" android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -23,7 +23,6 @@
             android:name="com.example.bookanalyzer.ui.activities.LoaderScreenActivity"
             android:noHistory="true"
             android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge" />
-        <activity android:name="com.example.bookanalyzer.ui.activities.BookAnalysisActivity" android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge"/>
         <activity android:name="com.example.bookanalyzer.ui.activities.WordListActivity" android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge" />
 
 

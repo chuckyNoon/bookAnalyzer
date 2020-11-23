@@ -16,17 +16,22 @@ class WordListPresenter(
         get() = Dispatchers.Main
 
     private var wordListSize = 0
+    private var position = 1
+    private var isFirstLaunch = true
 
-    fun onProgressChanged(Progress: Int) {
-        var progress = Progress
-        if (progress == 0) {
-            progress++
+    fun onProgressChanged(progress: Int) {
+        position = progress
+        if (position == 0) {
+            position++
         }
-        viewState.setPositionViewText("$progress from $wordListSize")
-        viewState.scrollToPosition(progress)
+        viewState.setPositionViewText("$position from $wordListSize")
+        viewState.scrollToPosition(position)
     }
 
     fun onViewCreated(analysisId: Int) {
+        if (!isFirstLaunch){
+            return
+        }
         launch {
             val wordEntities = repository.getWordEntities(analysisId)
 
@@ -34,12 +39,13 @@ class WordListPresenter(
                 wordListSize = wordEntities.size
                 val wordCells = ArrayList<WordCell>().apply {
                     wordEntities.forEach { entity ->
-                        add(wordEntityToCell(entity))
+                        this.add(wordEntityToCell(entity))
                     }
                 }
                 viewState.setupCells(wordCells)
                 viewState.setSeekBarMaxValue(wordListSize)
                 viewState.setPositionViewText("1 from $wordListSize")
+                isFirstLaunch = false
             }
         }
     }
@@ -47,7 +53,6 @@ class WordListPresenter(
     fun onOptionsItemBackSelected() {
         viewState.finishActivity()
     }
-
 
     private fun wordEntityToCell(entity: WordEntity) = WordCell(
         entity.word,

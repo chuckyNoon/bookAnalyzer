@@ -1,4 +1,4 @@
-package com.example.bookanalyzer.ui.fragments
+package com.example.bookanalyzer.ui.fragments.dialogs
 
 import android.app.AlertDialog
 import android.app.Dialog
@@ -13,7 +13,7 @@ import java.io.File
 
 class SearchSettingsDialog : DialogFragment() {
 
-    private var callback: OnSelectedSearchSettings? = null
+    private var callback: OnSearchSettingsSelected? = null
     private lateinit var binding: DialogSearchSettingsBinding
 
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
@@ -30,7 +30,7 @@ class SearchSettingsDialog : DialogFragment() {
             val selectedFormats = getSelectedFormats()
             val selectedSearchRootDir = getSelectedSearchRootDir()
 
-            callback?.onSelectedSearchSettings(selectedFormats, selectedSearchRootDir)
+            callback?.onSearchSettingsSelected(selectedFormats, selectedSearchRootDir)
             dismiss()
         }
     }
@@ -50,7 +50,7 @@ class SearchSettingsDialog : DialogFragment() {
         if (isTxtFormatSelected) {
             selectedFormats.add(resources.getString(R.string.txtFormat))
         }
-        return (selectedFormats)
+        return selectedFormats
     }
 
     private fun getSelectedSearchRootDir(): File {
@@ -65,13 +65,13 @@ class SearchSettingsDialog : DialogFragment() {
     override fun onAttach(context: Context) {
         super.onAttach(context)
 
-        if (activity is OnSelectedSearchSettings) {
-            callback = activity as OnSelectedSearchSettings
+        if (parentFragment is OnSearchSettingsSelected) {
+            callback = parentFragment as OnSearchSettingsSelected
         }
     }
 
-    interface OnSelectedSearchSettings {
-        fun onSelectedSearchSettings(bookFormats: ArrayList<String>, searchRootDir: File)
+    interface OnSearchSettingsSelected {
+        fun onSearchSettingsSelected(bookFormats: ArrayList<String>, searchRootDir: File)
     }
 }
 

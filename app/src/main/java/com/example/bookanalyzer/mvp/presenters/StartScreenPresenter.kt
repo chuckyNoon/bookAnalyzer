@@ -25,7 +25,6 @@ class StartScreenPresenter(
 
     companion object {
         private const val TIME_BEFORE_HIDING_LOADING_STATE_VIEW: Long = 3000
-        private const val NO_BOOK_OPENED = -1
     }
 
     override val coroutineContext: CoroutineContext
@@ -33,18 +32,36 @@ class StartScreenPresenter(
 
     private var bookEntities = ArrayList<BookEntity>()
     private val job = SupervisorJob()
-    private var lastOpenedBookInd = NO_BOOK_OPENED
+    private var isBookListCreated = false
 
-    fun onViewCreated() {
+    fun onStart() {
         launch {
-            buildListFromSavedData()
+            if (!isBookListCreated){
+                indicateContentLoadingStart()
+                buildCompleteBookList()
+                indicateContentLoadingEnd()
+            }else{
+                buildCompleteBookList()
+            }
+            isBookListCreated = true
         }
     }
 
-    fun onSelectedSearchSettings(bookFormats: ArrayList<String>, rootDir: File) {
+    fun onStop() {
+        launch {
+            repository.saveCurrentBookList(bookEntities)
+        }
+    }
+
+    fun onSearchSettingsSelected(bookFormats: ArrayList<String>, rootDir: File) {
         launch {
             val bookPaths = FilesSearch.findFiles(rootDir, bookFormats)
-            buildListFromNewData(bookPaths)
+            indicateContentLoadingStart()
+            buildInitialBookList(bookPaths)
+            repository.insertDataFromPathsInDb(bookPaths)
+            buildCompleteBookList()
+            isBookListCreated = true
+            indicateContentLoadingEnd()
         }
     }
 
@@ -70,10 +87,6 @@ class StartScreenPresenter(
     }
 
     fun onBookClicked(position: Int) {
-        if (lastOpenedBookInd != NO_BOOK_OPENED) {
-            return
-        }
-        lastOpenedBookInd = position
         val book = bookEntities[position]
         val analysisId = book.analysisId
         if (isBookAnalyzed(analysisId)) {
@@ -82,45 +95,7 @@ class StartScreenPresenter(
             viewState.startLoaderScreenActivity(book.path)
         }
     }
-
-    fun onRestart() {
-        if (lastOpenedBookInd in bookEntities.indices) {
-            val entity = bookEntities[lastOpenedBookInd]
-            launch {
-                val newUniqueWordCount =
-                    repository.getUniqueWordCountByPath(entity.path)
-                val newAnalysisId =
-                    repository.getAnalysisIdByPath(entity.path)
-                if (entity.analysisId != newAnalysisId) {
-                    entity.uniqueWordCount = newUniqueWordCount
-                    entity.analysisId = newAnalysisId
-                    viewState.setupCells(convertBookEntitiesToCells(bookEntities))
-                }
-                lastOpenedBookInd = NO_BOOK_OPENED
-            }
-        }
-    }
-
-    fun onStop() {
-        launch {
-            repository.saveCurrentBookList(bookEntities)
-        }
-    }
-
-    private suspend fun buildListFromSavedData() {
-        indicateContentLoadingStart()
-        buildCompleteBookList()
-        indicateContentLoadingEnd()
-    }
-
-    private suspend fun buildListFromNewData(bookPaths: ArrayList<String>) {
-        indicateContentLoadingStart()
-        buildInitialBookList(bookPaths)
-        repository.insertDataFromPathsInDb(bookPaths)
-        buildCompleteBookList()
-        indicateContentLoadingEnd()
-    }
-
+    
     private fun indicateContentLoadingStart() {
         viewState.showLoadingStateView()
         viewState.moveLoadingStateViewUp(300)

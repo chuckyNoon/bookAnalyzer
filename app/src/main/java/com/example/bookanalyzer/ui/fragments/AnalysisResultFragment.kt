@@ -1,26 +1,44 @@
-package com.example.bookanalyzer.ui.activities
+package com.example.bookanalyzer.ui.fragments
 
-import android.content.Intent
+import android.content.Context
 import android.os.Bundle
+import android.view.LayoutInflater
 import android.view.MenuItem
+import android.view.View
+import android.view.ViewGroup
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.bookanalyzer.MyApp
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.ResourceManager
 import com.example.bookanalyzer.databinding.ActivityBookAnalysisBinding
-import com.example.bookanalyzer.mvp.presenters.BookAnalysisPresenter
 import com.example.bookanalyzer.domain.repositories.BookAnalysisRepository
+import com.example.bookanalyzer.mvp.presenters.BookAnalysisPresenter
 import com.example.bookanalyzer.mvp.views.BookAnalysisView
+import com.example.bookanalyzer.ui.EXTRA_ANALYSIS_ID
 import com.example.bookanalyzer.ui.adapters.analysis_params_adapter.AbsAnalysisCell
 import com.example.bookanalyzer.ui.adapters.analysis_params_adapter.AnalysisParamsAdapter
-import moxy.MvpAppCompatActivity
+import moxy.MvpAppCompatFragment
 import moxy.presenter.InjectPresenter
 import moxy.presenter.ProvidePresenter
 import javax.inject.Inject
 
-class BookAnalysisActivity : MvpAppCompatActivity(),
-    BookAnalysisView {
+class AnalysisResultFragment : MvpAppCompatFragment(), BookAnalysisView {
+
+    companion object {
+        fun newInstance(id: Int) = AnalysisResultFragment().apply {
+            arguments = Bundle().apply {
+                putInt(EXTRA_ANALYSIS_ID, id)
+            }
+        }
+    }
+
+    val analysisId: Int? by lazy {
+        arguments?.getInt(EXTRA_ANALYSIS_ID)
+    }
+
+    private var interaction: ResultFragmentInteraction? = null
 
     private lateinit var binding: ActivityBookAnalysisBinding
 
@@ -39,14 +57,32 @@ class BookAnalysisActivity : MvpAppCompatActivity(),
         return BookAnalysisPresenter(repository, resourceManager)
     }
 
+    override fun onAttach(context: Context) {
+        super.onAttach(context)
+        interaction = context as? ResultFragmentInteraction
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityBookAnalysisBinding.inflate(layoutInflater)
-        setContentView(binding.root)
+        setHasOptionsMenu(true)
+    }
 
+    override fun onCreateView(
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
+    ): View? {
+        binding = ActivityBookAnalysisBinding.inflate(layoutInflater)
+        return binding.root
+    }
+
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
         setupToolBar()
         setupRecyclerView()
-        selectLaunchOption(savedInstanceState != null)
+        analysisId?.let {
+            presenter.onViewCreated(it)
+        }
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -62,44 +98,28 @@ class BookAnalysisActivity : MvpAppCompatActivity(),
     }
 
     override fun startWordListActivity(analysisId: Int) {
-        val intent = Intent(this, WordListActivity::class.java).apply {
-            putExtra(EXTRA_ANALYSIS_ID, analysisId)
-        }
-        startActivity(intent)
+        interaction?.onWordListButtonClicked(analysisId)
     }
 
     override fun finishActivity() {
-        finish()
-    }
-
-    private fun selectLaunchOption(isActivityRecreated: Boolean) {
-        val analysisId = getAnalysisIdFromIntent()
-        analysisId?.let {
-            if (!isActivityRecreated) {
-                presenter.onViewCreated(analysisId)
-            }
-        }
-    }
-
-    private fun getAnalysisIdFromIntent(): Int? {
-        return intent.extras?.getInt(EXTRA_ANALYSIS_ID)
+        activity?.onBackPressed()
     }
 
     private fun setupToolBar() {
         binding.toolbar.title = resources.getString(R.string.analysis_activity_title)
         binding.toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
-        setSupportActionBar(binding.toolbar)
+        (requireActivity() as AppCompatActivity).setSupportActionBar(binding.toolbar)
     }
 
     private fun setupRecyclerView() {
         val adapter = AnalysisParamsAdapter(wordListButtonInteraction)
-        val layoutManager = LinearLayoutManager(this)
+        val layoutManager = LinearLayoutManager(context)
         val recycler = binding.analysisParamsRecycler
         recycler.adapter = adapter
         recycler.layoutManager = layoutManager
         recycler.addItemDecoration(
             DividerItemDecoration(
-                this,
+                context,
                 layoutManager.orientation
             )
         )
@@ -108,10 +128,13 @@ class BookAnalysisActivity : MvpAppCompatActivity(),
     private val wordListButtonInteraction =
         object : AnalysisParamsAdapter.WordListButtonInteraction {
             override fun onButtonClicked() {
-                val analysisId = getAnalysisIdFromIntent()
                 analysisId?.let {
-                    presenter.onWordListButtonClicked(analysisId)
+                    presenter.onWordListButtonClicked(it)
                 }
             }
         }
+
+    interface ResultFragmentInteraction {
+        fun onWordListButtonClicked(analysisId: Int)
+    }
 }
