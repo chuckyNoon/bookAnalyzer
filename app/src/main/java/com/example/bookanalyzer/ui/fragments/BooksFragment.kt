@@ -55,7 +55,7 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
 
     private var interaction: BooksFragmentInteraction? = null
 
-    private lateinit var binding: ActivityStartBinding
+    private var binding: ActivityStartBinding? = null
 
     @Inject
     lateinit var resourceManager: ResourceManager
@@ -88,7 +88,7 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
         savedInstanceState: Bundle?
     ): View? {
         binding = ActivityStartBinding.inflate(layoutInflater)
-        return binding.root
+        return binding?.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -96,6 +96,11 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
         setupToolBar()
         setupSideMenu()
         setupRecyclerView()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding = null
     }
 
     override fun onStart() {
@@ -153,7 +158,7 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-            binding.drawerLayout.close()
+            binding?.drawerLayout?.close()
             when (requestCode) {
                 REQUEST_PERMISSION_FOR_BOOK_ADD_CODE -> {
                     val intent = Intent().setAction(Intent.ACTION_GET_CONTENT).setType("*/*")
@@ -175,30 +180,30 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
     }
 
     override fun showLoadingStateView() {
-        binding.loadingStateView.visibility = View.VISIBLE
+        binding?.loadingStateView?.visibility = View.VISIBLE
     }
 
     override fun hideLoadingStateView() {
-        binding.loadingStateView.visibility = View.INVISIBLE
+        binding?.loadingStateView?.visibility = View.INVISIBLE
     }
 
     override fun moveLoadingStateViewUp(animDuration: Int) {
-        ObjectAnimator.ofFloat(binding.loadingStateView, "translationY", 0f).apply {
+        ObjectAnimator.ofFloat(binding?.loadingStateView, "translationY", 0f).apply {
             duration = animDuration.toLong()
             start()
         }
     }
 
     override fun moveLoadingStateViewDown(animDuration: Int) {
-        val height = binding.loadingStateView.height.toFloat()
-        ObjectAnimator.ofFloat(binding.loadingStateView, "translationY", height).apply {
+        val height = binding?.loadingStateView?.height?.toFloat() ?: return
+        ObjectAnimator.ofFloat(binding?.loadingStateView, "translationY", height).apply {
             duration = animDuration.toLong()
             start()
         }
     }
 
     override fun setLoadingStateViewText(stringResId: Int) {
-        binding.loadingStateView.text = resources.getString(stringResId)
+        binding?.loadingStateView?.text = resources.getString(stringResId)
     }
 
     override fun updateLoadingStateView(
@@ -206,9 +211,9 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
         animDownDuration: Long,
         animUpDuration: Long
     ) {
-        val height = binding.loadingStateView.height.toFloat()
+        val height = binding?.loadingStateView?.height?.toFloat() ?: return
 
-        ObjectAnimator.ofFloat(binding.loadingStateView, "translationY", height).apply {
+        ObjectAnimator.ofFloat(binding?.loadingStateView, "translationY", height).apply {
             duration = animDownDuration
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationStart(animation: Animator?) {
@@ -230,11 +235,11 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
     }
 
     override fun showSideMenu() {
-        binding.drawerLayout.open()
+        binding?.drawerLayout?.open()
     }
 
     override fun setupCells(bookCells: ArrayList<BookCell>) {
-        val adapter = binding.booksRecycler.adapter as BooksAdapter
+        val adapter = binding?.booksRecycler?.adapter as BooksAdapter
         adapter.setupBooks(bookCells)
     }
 
@@ -259,9 +264,9 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
     }
 
     private fun setupToolBar() {
-        binding.toolbar.title = resources.getString(R.string.start_screen_title)
-        binding.toolbar.setNavigationIcon(R.drawable.baseline_menu_24)
-        (requireActivity() as AppCompatActivity).setSupportActionBar(binding.toolbar)
+        binding?.toolbar?.title = resources.getString(R.string.start_screen_title)
+        binding?.toolbar?.setNavigationIcon(R.drawable.baseline_menu_24)
+        (requireActivity() as AppCompatActivity).setSupportActionBar(binding?.toolbar)
     }
 
     private fun setupRecyclerView() {
@@ -271,13 +276,13 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
             defaultBookImage,
             bookInteraction
         )
-        binding.booksRecycler.setHasFixedSize(true)
+        binding?.booksRecycler?.setHasFixedSize(true)
         val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(presenter)
         val itemTouchHelper = ItemTouchHelper(callback)
-        itemTouchHelper.attachToRecyclerView(binding.booksRecycler)
+        itemTouchHelper.attachToRecyclerView(binding?.booksRecycler)
 
-        binding.booksRecycler.adapter = adapter
-        binding.booksRecycler.layoutManager = LinearLayoutManager(context)
+        binding?.booksRecycler?.adapter = adapter
+        binding?.booksRecycler?.layoutManager = LinearLayoutManager(context)
     }
 
     private fun requestReadPermission(requestCode: Int) {
@@ -301,14 +306,14 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
         )
         val sideMenuAdapter = SideMenuRowsAdapter(sideMenuRowInteraction)
         sideMenuAdapter.setupCells(sideMenuRowCells)
-        binding.sideMenu.sideMenuList.addItemDecoration(
+        binding?.sideMenu?.sideMenuList?.addItemDecoration(
             DividerItemDecoration(
                 context,
                 DividerItemDecoration.VERTICAL
             )
         )
-        binding.sideMenu.sideMenuList.layoutManager = LinearLayoutManager(context)
-        binding.sideMenu.sideMenuList.adapter = sideMenuAdapter
+        binding?.sideMenu?.sideMenuList?.layoutManager = LinearLayoutManager(context)
+        binding?.sideMenu?.sideMenuList?.adapter = sideMenuAdapter
     }
 
     private val bookInteraction = object : BooksAdapter.BookInteraction {

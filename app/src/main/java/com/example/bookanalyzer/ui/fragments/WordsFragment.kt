@@ -33,11 +33,11 @@ class WordsFragment() : MvpAppCompatFragment(), WordListView {
         }
     }
 
-    private val analysisId: Int? by lazy{
+    private val analysisId: Int? by lazy {
         arguments?.getInt(EXTRA_ANALYSIS_ID)
     }
 
-    private lateinit var binding: ActivityWordListBinding
+    private var binding: ActivityWordListBinding? = null
 
     @Inject
     lateinit var repository: WordListRepository
@@ -62,7 +62,7 @@ class WordsFragment() : MvpAppCompatFragment(), WordListView {
         savedInstanceState: Bundle?
     ): View? {
         binding = ActivityWordListBinding.inflate(layoutInflater)
-        return binding.root
+        return binding?.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -70,9 +70,14 @@ class WordsFragment() : MvpAppCompatFragment(), WordListView {
         setupToolBar()
         setupRecyclerView()
         setupSeekBar()
-        analysisId?.let{
+        analysisId?.let {
             presenter.onViewCreated(it)
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding = null
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -83,19 +88,19 @@ class WordsFragment() : MvpAppCompatFragment(), WordListView {
     }
 
     override fun scrollToPosition(position: Int) {
-        binding.wordsRecycler.scrollToPosition(position - 1)
+        binding?.wordsRecycler?.scrollToPosition(position - 1)
     }
 
     override fun setPositionViewText(text: String) {
-        binding.bottomPanel.positionTextView.text = text
+        binding?.bottomPanel?.positionTextView?.text = text
     }
 
     override fun setSeekBarMaxValue(maxValue: Int) {
-        binding.bottomPanel.seekBar.max = maxValue
+        binding?.bottomPanel?.seekBar?.max = maxValue
     }
 
     override fun setupCells(wordCells: ArrayList<WordCell>) {
-        val adapter = binding.wordsRecycler.adapter as WordsAdapter
+        val adapter = binding?.wordsRecycler?.adapter as WordsAdapter
         adapter.setupCells(wordCells)
     }
 
@@ -105,9 +110,9 @@ class WordsFragment() : MvpAppCompatFragment(), WordListView {
 
     private fun setupRecyclerView() {
         val adapter = WordsAdapter(wordInteraction)
-        binding.wordsRecycler.adapter = adapter
-        binding.wordsRecycler.layoutManager = LinearLayoutManager(context)
-        binding.wordsRecycler.addItemDecoration(
+        binding?.wordsRecycler?.adapter = adapter
+        binding?.wordsRecycler?.layoutManager = LinearLayoutManager(context)
+        binding?.wordsRecycler?.addItemDecoration(
             DividerItemDecoration(
                 context,
                 LinearLayoutManager.VERTICAL
@@ -116,13 +121,13 @@ class WordsFragment() : MvpAppCompatFragment(), WordListView {
     }
 
     private fun setupToolBar() {
-        binding.toolbar.title = resources.getString(R.string.word_list_activity_title)
-        binding.toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
-        (requireActivity() as AppCompatActivity).setSupportActionBar(binding.toolbar)
+        binding?.toolbar?.title = resources.getString(R.string.word_list_activity_title)
+        binding?.toolbar?.setNavigationIcon(R.drawable.baseline_arrow_back_24)
+        (requireActivity() as AppCompatActivity).setSupportActionBar(binding?.toolbar)
     }
 
     private fun setupSeekBar() {
-        binding.bottomPanel.seekBar.setOnSeekBarChangeListener(object :
+        binding?.bottomPanel?.seekBar?.setOnSeekBarChangeListener(object :
             SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
                 presenter.onProgressChanged(seekBar?.progress ?: 0)
@@ -138,8 +143,8 @@ class WordsFragment() : MvpAppCompatFragment(), WordListView {
 
     private val wordInteraction = object : WordsAdapter.WordInteraction {
         override fun onClick() {
-            binding.bottomPanel.root.visibility =
-                if (binding.bottomPanel.root.visibility == View.VISIBLE) {
+            binding?.bottomPanel?.root?.visibility =
+                if (binding?.bottomPanel?.root?.visibility == View.VISIBLE) {
                     View.INVISIBLE
                 } else {
                     View.VISIBLE

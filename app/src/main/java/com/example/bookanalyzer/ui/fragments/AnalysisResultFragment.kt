@@ -40,7 +40,7 @@ class AnalysisResultFragment : MvpAppCompatFragment(), BookAnalysisView {
 
     private var interaction: ResultFragmentInteraction? = null
 
-    private lateinit var binding: ActivityBookAnalysisBinding
+    private var binding: ActivityBookAnalysisBinding? = null
 
     @Inject
     lateinit var resourceManager: ResourceManager
@@ -73,7 +73,7 @@ class AnalysisResultFragment : MvpAppCompatFragment(), BookAnalysisView {
         savedInstanceState: Bundle?
     ): View? {
         binding = ActivityBookAnalysisBinding.inflate(layoutInflater)
-        return binding.root
+        return binding?.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -85,6 +85,11 @@ class AnalysisResultFragment : MvpAppCompatFragment(), BookAnalysisView {
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding = null
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
             presenter.onOptionsItemBackSelected()
@@ -93,7 +98,7 @@ class AnalysisResultFragment : MvpAppCompatFragment(), BookAnalysisView {
     }
 
     override fun setupCells(cells: ArrayList<AbsAnalysisCell>) {
-        val adapter = binding.analysisParamsRecycler.adapter as AnalysisParamsAdapter
+        val adapter = binding?.analysisParamsRecycler?.adapter as AnalysisParamsAdapter
         adapter.setupCells(cells)
     }
 
@@ -106,18 +111,18 @@ class AnalysisResultFragment : MvpAppCompatFragment(), BookAnalysisView {
     }
 
     private fun setupToolBar() {
-        binding.toolbar.title = resources.getString(R.string.analysis_activity_title)
-        binding.toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
-        (requireActivity() as AppCompatActivity).setSupportActionBar(binding.toolbar)
+        binding?.toolbar?.title = resources.getString(R.string.analysis_activity_title)
+        binding?.toolbar?.setNavigationIcon(R.drawable.baseline_arrow_back_24)
+        (requireActivity() as AppCompatActivity).setSupportActionBar(binding?.toolbar)
     }
 
     private fun setupRecyclerView() {
         val adapter = AnalysisParamsAdapter(wordListButtonInteraction)
         val layoutManager = LinearLayoutManager(context)
-        val recycler = binding.analysisParamsRecycler
-        recycler.adapter = adapter
-        recycler.layoutManager = layoutManager
-        recycler.addItemDecoration(
+        val recycler = binding?.analysisParamsRecycler
+        recycler?.adapter = adapter
+        recycler?.layoutManager = layoutManager
+        recycler?.addItemDecoration(
             DividerItemDecoration(
                 context,
                 layoutManager.orientation

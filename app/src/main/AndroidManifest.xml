@@ -19,12 +19,6 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name="com.example.bookanalyzer.ui.activities.LoaderScreenActivity"
-            android:noHistory="true"
-            android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge" />
-        <activity android:name="com.example.bookanalyzer.ui.activities.WordListActivity" android:theme="@style/Theme.MaterialComponents.NoActionBar.Bridge" />
-
 
     </application>
 

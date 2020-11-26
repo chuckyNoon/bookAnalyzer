@@ -35,7 +35,7 @@ class AnalysisProcessFragment() : MvpAppCompatFragment(), LoaderScreenView {
 
     private var interaction: ProcessFragmentInteraction? = null
 
-    private lateinit var binding: ActivityLoaderScreenBinding
+    private var binding: ActivityLoaderScreenBinding? = null
 
     @Inject
     lateinit var repository: LoaderScreenRepository
@@ -65,7 +65,7 @@ class AnalysisProcessFragment() : MvpAppCompatFragment(), LoaderScreenView {
         savedInstanceState: Bundle?
     ): View? {
         binding = ActivityLoaderScreenBinding.inflate(layoutInflater)
-        return binding.root
+        return binding?.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -74,6 +74,11 @@ class AnalysisProcessFragment() : MvpAppCompatFragment(), LoaderScreenView {
         bookPath?.let {
             presenter.onViewCreated(it)
         }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding = null
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -97,9 +102,9 @@ class AnalysisProcessFragment() : MvpAppCompatFragment(), LoaderScreenView {
     }
 
     private fun setupToolBar() {
-        binding.toolbar.title = resources.getString(R.string.loader_activity_title)
-        binding.toolbar.setNavigationIcon(R.drawable.baseline_arrow_back_24)
-        (requireActivity() as AppCompatActivity).setSupportActionBar(binding.toolbar)
+        binding?.toolbar?.title = resources.getString(R.string.loader_activity_title)
+        binding?.toolbar?.setNavigationIcon(R.drawable.baseline_arrow_back_24)
+        (requireActivity() as AppCompatActivity).setSupportActionBar(binding?.toolbar)
     }
 
     interface ProcessFragmentInteraction {
