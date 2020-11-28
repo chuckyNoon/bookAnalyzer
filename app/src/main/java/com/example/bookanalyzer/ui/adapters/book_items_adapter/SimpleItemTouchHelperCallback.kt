@@ -4,10 +4,10 @@ import android.graphics.Canvas
 import android.view.View
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
-import com.example.bookanalyzer.mvp.presenters.StartScreenPresenter
+import com.example.bookanalyzer.view_models.BooksViewModel
 import kotlinx.android.synthetic.main.item_book.view.*
 
-class SimpleItemTouchHelperCallback(private val presenter: StartScreenPresenter) :
+class SimpleItemTouchHelperCallback(private val viewModel: BooksViewModel) :
     ItemTouchHelper.Callback() {
 
     private var lastDraggedViewHolder: ItemTouchHelperViewHolder? = null
@@ -34,12 +34,12 @@ class SimpleItemTouchHelperCallback(private val presenter: StartScreenPresenter)
         source: RecyclerView.ViewHolder,
         target: RecyclerView.ViewHolder
     ): Boolean {
-        presenter.onBookMove(source.adapterPosition, target.adapterPosition)
+        viewModel.onBookMove(source.adapterPosition, target.adapterPosition)
         return true
     }
 
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, i: Int) {
-        presenter.onBookDismiss(viewHolder.adapterPosition)
+        viewModel.onBookDismiss(viewHolder.adapterPosition)
     }
 
     override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {

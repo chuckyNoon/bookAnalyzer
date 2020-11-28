@@ -7,23 +7,23 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.SeekBar
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.bookanalyzer.MyApp
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.databinding.ActivityWordListBinding
 import com.example.bookanalyzer.domain.repositories.WordListRepository
-import com.example.bookanalyzer.mvp.presenters.WordListPresenter
-import com.example.bookanalyzer.mvp.views.WordListView
+import com.example.bookanalyzer.view_models.WordsViewModel
+import com.example.bookanalyzer.view_models.WordsViewModelFactory
 import com.example.bookanalyzer.ui.EXTRA_ANALYSIS_ID
-import com.example.bookanalyzer.ui.adapters.word_list_adapter.WordCell
 import com.example.bookanalyzer.ui.adapters.word_list_adapter.WordsAdapter
-import moxy.MvpAppCompatFragment
-import moxy.presenter.InjectPresenter
-import moxy.presenter.ProvidePresenter
 import javax.inject.Inject
 
-class WordsFragment() : MvpAppCompatFragment(), WordListView {
+class WordsFragment() : Fragment(){
 
     companion object {
         fun newInstance(id: Int) = WordsFragment().apply {
@@ -33,27 +33,24 @@ class WordsFragment() : MvpAppCompatFragment(), WordListView {
         }
     }
 
+    @Inject
+    lateinit var repository: WordListRepository
+
+    private lateinit var viewModel: WordsViewModel
+
     private val analysisId: Int? by lazy {
         arguments?.getInt(EXTRA_ANALYSIS_ID)
     }
 
     private var binding: ActivityWordListBinding? = null
 
-    @Inject
-    lateinit var repository: WordListRepository
-
-    @InjectPresenter
-    lateinit var presenter: WordListPresenter
-
-    @ProvidePresenter
-    fun provideStartScreenPresenter(): WordListPresenter {
-        MyApp.appComponent.inject(this)
-        return WordListPresenter(repository)
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+        MyApp.appComponent.inject(this)
+        val viewModelFactory = WordsViewModelFactory(repository)
+        viewModel = ViewModelProvider(this, viewModelFactory).get(
+            WordsViewModel::class.java)
     }
 
     override fun onCreateView(
@@ -70,8 +67,9 @@ class WordsFragment() : MvpAppCompatFragment(), WordListView {
         setupToolBar()
         setupRecyclerView()
         setupSeekBar()
-        analysisId?.let {
-            presenter.onViewCreated(it)
+        setupObservers()
+        analysisId?.let{
+            viewModel.onViewCreated(it)
         }
     }
 
@@ -82,35 +80,12 @@ class WordsFragment() : MvpAppCompatFragment(), WordListView {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
-            presenter.onOptionsItemBackSelected()
+            viewModel.onOptionsItemBackSelected()
         }
         return super.onOptionsItemSelected(item)
     }
 
-    override fun scrollToPosition(position: Int) {
-        binding?.wordsRecycler?.scrollToPosition(position - 1)
-    }
-
-    override fun setPositionViewText(text: String) {
-        binding?.bottomPanel?.positionTextView?.text = text
-    }
-
-    override fun setSeekBarMaxValue(maxValue: Int) {
-        binding?.bottomPanel?.seekBar?.max = maxValue
-    }
-
-    override fun setupCells(wordCells: ArrayList<WordCell>) {
-        val adapter = binding?.wordsRecycler?.adapter as WordsAdapter
-        adapter.setupCells(wordCells)
-    }
-
-    override fun finishActivity() {
-        activity?.onBackPressed()
-    }
-
     private fun setupRecyclerView() {
-        val adapter = WordsAdapter(wordInteraction)
-        binding?.wordsRecycler?.adapter = adapter
         binding?.wordsRecycler?.layoutManager = LinearLayoutManager(context)
         binding?.wordsRecycler?.addItemDecoration(
             DividerItemDecoration(
@@ -130,7 +105,7 @@ class WordsFragment() : MvpAppCompatFragment(), WordListView {
         binding?.bottomPanel?.seekBar?.setOnSeekBarChangeListener(object :
             SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-                presenter.onProgressChanged(seekBar?.progress ?: 0)
+                viewModel.onProgressChanged(seekBar?.progress ?: 0)
             }
 
             override fun onStartTrackingTouch(seekBar: SeekBar?) {
@@ -141,14 +116,53 @@ class WordsFragment() : MvpAppCompatFragment(), WordListView {
         })
     }
 
+    private fun setupObservers() {
+        viewModel.wordCells.observe(viewLifecycleOwner, Observer { cells ->
+            if (cells == null) {
+                return@Observer
+            }
+            val adapter = binding?.wordsRecycler?.adapter as? WordsAdapter
+            if (adapter == null) {
+                val newAdapter = WordsAdapter(wordInteraction)
+                newAdapter.setupCells(cells)
+                binding?.wordsRecycler?.adapter = newAdapter
+            } else {
+                adapter.setupCells(cells)
+            }
+        })
+
+        viewModel.cursorPosition.observe(viewLifecycleOwner, Observer { position ->
+            if (position == null) {
+                return@Observer
+            }
+            binding?.wordsRecycler?.scrollToPosition(position - 1)
+        })
+
+        viewModel.bottomPanelViewState.observe(viewLifecycleOwner, Observer { panelState ->
+            if (panelState == null) {
+                return@Observer
+            }
+            binding?.bottomPanel?.apply {
+                seekBar.max = panelState.seekBarMaxValue
+                positionTextView.text = panelState.text
+                root.isVisible = panelState.isVisible
+            }
+        })
+
+        viewModel.isFragmentFinishRequired.observe(viewLifecycleOwner, Observer { isRequired->
+            if (isRequired == null){
+                return@Observer
+            }
+            if (isRequired){
+                activity?.onBackPressed()
+            }
+        })
+
+    }
+
     private val wordInteraction = object : WordsAdapter.WordInteraction {
         override fun onClick() {
-            binding?.bottomPanel?.root?.visibility =
-                if (binding?.bottomPanel?.root?.visibility == View.VISIBLE) {
-                    View.INVISIBLE
-                } else {
-                    View.VISIBLE
-                }
+            viewModel.onWordClicked()
         }
     }
 }

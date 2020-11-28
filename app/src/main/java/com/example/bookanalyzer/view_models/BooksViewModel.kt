@@ -1,14 +1,16 @@
-package com.example.bookanalyzer.mvp.presenters
+package com.example.bookanalyzer.view_models
 
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.ResourceManager
 import com.example.bookanalyzer.common.FilesSearch
-import com.example.bookanalyzer.domain.repositories.StartScreenRepository
 import com.example.bookanalyzer.domain.models.BookEntity
-import com.example.bookanalyzer.mvp.views.StartScreenView
+import com.example.bookanalyzer.domain.repositories.StartScreenRepository
 import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookCell
 import kotlinx.coroutines.*
-import moxy.MvpPresenter
 import java.io.File
 import java.util.*
 import kotlin.collections.ArrayList
@@ -16,12 +18,22 @@ import kotlin.coroutines.CoroutineContext
 
 const val ANALYSIS_NOT_EXIST = -1
 
-class StartScreenPresenter(
+class BooksViewModelFactory(
     private val repository: StartScreenRepository,
     private val resourceManager: ResourceManager,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Main
 ) :
-    MvpPresenter<StartScreenView>(), CoroutineScope {
+    ViewModelProvider.Factory {
+    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        return BooksViewModel(repository, resourceManager, dispatcher) as T
+    }
+}
+
+class BooksViewModel(
+    private val repository: StartScreenRepository,
+    private val resourceManager: ResourceManager,
+    private val dispatcher: CoroutineDispatcher,
+) : ViewModel(), CoroutineScope {
 
     companion object {
         private const val TIME_BEFORE_HIDING_LOADING_STATE_VIEW: Long = 3000
@@ -30,17 +42,39 @@ class StartScreenPresenter(
     override val coroutineContext: CoroutineContext
         get() = job + dispatcher
 
+    enum class ContentLoadingState{
+        Inactive, Active, Finished
+    }
+
+    enum class SideMenuState{
+        Hidden, Showed
+    }
+
     private var bookEntities = ArrayList<BookEntity>()
     private val job = SupervisorJob()
     private var isBookListCreated = false
 
+    private val _bookCells = MutableLiveData<ArrayList<BookCell>>()
+    private val _contentLoadingState = MutableLiveData<ContentLoadingState>()
+    private val _sideMenuState = MutableLiveData(SideMenuState.Hidden)
+    private val _bookToAnalyze = MutableLiveData<String?>(null)
+    private val _bookToShow =  MutableLiveData<Int?>(null)
+
+    val bookCells: LiveData<ArrayList<BookCell>> = _bookCells
+    val contentLoadingState: LiveData<ContentLoadingState> = _contentLoadingState
+    val sideMenuState: LiveData<SideMenuState> = _sideMenuState
+    val bookToAnalyze:LiveData<String?> = _bookToAnalyze
+    val bookToShow:LiveData<Int?> = _bookToShow
+
     fun onStart() {
         launch {
-            if (!isBookListCreated){
-                indicateContentLoadingStart()
+            if (!isBookListCreated) {
+                _contentLoadingState.value = ContentLoadingState.Active
                 buildCompleteBookList()
-                indicateContentLoadingEnd()
-            }else{
+                _contentLoadingState.value = ContentLoadingState.Finished
+                delay(TIME_BEFORE_HIDING_LOADING_STATE_VIEW)
+                _contentLoadingState.value = ContentLoadingState.Inactive
+            } else {
                 buildCompleteBookList()
             }
             isBookListCreated = true
@@ -56,17 +90,20 @@ class StartScreenPresenter(
     fun onSearchSettingsSelected(bookFormats: ArrayList<String>, rootDir: File) {
         launch {
             val bookPaths = FilesSearch.findFiles(rootDir, bookFormats)
-            indicateContentLoadingStart()
+            _contentLoadingState.value = ContentLoadingState.Active
             buildInitialBookList(bookPaths)
             repository.insertDataFromPathsInDb(bookPaths)
             buildCompleteBookList()
             isBookListCreated = true
-            indicateContentLoadingEnd()
+            _contentLoadingState.value = ContentLoadingState.Finished
+            delay(TIME_BEFORE_HIDING_LOADING_STATE_VIEW)
+            _contentLoadingState.value = ContentLoadingState.Inactive
         }
     }
 
     fun onOptionsMenuItemSelected() {
-        viewState.showSideMenu()
+        _sideMenuState.value = SideMenuState.Showed
+        _sideMenuState.value = SideMenuState.Hidden
     }
 
     fun onActivityResult(bookPath: String) {
@@ -75,7 +112,7 @@ class StartScreenPresenter(
 
     fun onBookDismiss(position: Int) {
         bookEntities.removeAt(position)
-        viewState.setupCells(convertBookEntitiesToCells(bookEntities))
+        _bookCells.value = convertBookEntitiesToCells(bookEntities)
     }
 
     fun onBookMove(fromPosition: Int, toPosition: Int) {
@@ -90,33 +127,22 @@ class StartScreenPresenter(
         val book = bookEntities[position]
         val analysisId = book.analysisId
         if (isBookAnalyzed(analysisId)) {
-            viewState.startBookInfoActivity(analysisId)
+            _bookToShow.value = analysisId
+            _bookToShow.value = null
         } else {
-            viewState.startLoaderScreenActivity(book.path)
+            _bookToAnalyze.value = book.path
+            _bookToAnalyze.value = null
         }
-    }
-    
-    private fun indicateContentLoadingStart() {
-        viewState.showLoadingStateView()
-        viewState.moveLoadingStateViewUp(300)
-        viewState.setLoadingStateViewText(R.string.loading_content_started)
-    }
-
-    private suspend fun indicateContentLoadingEnd() {
-        viewState.updateLoadingStateView(R.string.loading_content_ended, 250, 300)
-        delay(TIME_BEFORE_HIDING_LOADING_STATE_VIEW)
-        viewState.moveLoadingStateViewDown(250)
-        viewState.hideLoadingStateView()
     }
 
     private suspend fun buildInitialBookList(bookPaths: ArrayList<String>) {
         bookEntities = repository.getInitialBookEntities(bookPaths)
-        viewState.setupCells(convertBookEntitiesToCells(bookEntities))
+        _bookCells.value = convertBookEntitiesToCells(bookEntities)
     }
 
     private suspend fun buildCompleteBookList() {
         bookEntities = repository.getCompleteBookEntities()
-        viewState.setupCells(convertBookEntitiesToCells(bookEntities))
+        _bookCells.value = convertBookEntitiesToCells(bookEntities)
     }
 
     private fun convertBookEntitiesToCells(entities: ArrayList<BookEntity>): ArrayList<BookCell> {
@@ -160,4 +186,3 @@ class StartScreenPresenter(
 
     private fun isBookAnalyzed(analysisId: Int) = (analysisId != ANALYSIS_NOT_EXIST)
 }
-

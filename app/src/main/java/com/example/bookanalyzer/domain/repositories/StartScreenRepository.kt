@@ -7,7 +7,7 @@ import com.example.bookanalyzer.data.filesystem.storage.ImageStorage
 import com.example.bookanalyzer.data.filesystem.data_extractors.preview_parser.BookPreviewListParser
 import com.example.bookanalyzer.data.filesystem.data_extractors.preview_parser.ParsedPreviewData
 import com.example.bookanalyzer.domain.models.BookEntity
-import com.example.bookanalyzer.mvp.presenters.ANALYSIS_NOT_EXIST
+import com.example.bookanalyzer.view_models.ANALYSIS_NOT_EXIST
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlin.collections.ArrayList

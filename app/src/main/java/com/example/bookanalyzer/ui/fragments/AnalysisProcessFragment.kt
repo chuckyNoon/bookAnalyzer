@@ -7,19 +7,19 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import com.example.bookanalyzer.MyApp
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.databinding.ActivityLoaderScreenBinding
 import com.example.bookanalyzer.domain.repositories.LoaderScreenRepository
-import com.example.bookanalyzer.mvp.presenters.LoaderScreenPresenter
-import com.example.bookanalyzer.mvp.views.LoaderScreenView
+import com.example.bookanalyzer.view_models.AnalysisProcessViewModel
+import com.example.bookanalyzer.view_models.AnalysisProcessViewModelFactory
 import com.example.bookanalyzer.ui.EXTRA_BOOK_PATH
-import moxy.MvpAppCompatFragment
-import moxy.presenter.InjectPresenter
-import moxy.presenter.ProvidePresenter
 import javax.inject.Inject
 
-class AnalysisProcessFragment() : MvpAppCompatFragment(), LoaderScreenView {
+class AnalysisProcessFragment() : Fragment() {
 
     companion object {
         fun newInstance(path: String) = AnalysisProcessFragment().apply {
@@ -40,14 +40,7 @@ class AnalysisProcessFragment() : MvpAppCompatFragment(), LoaderScreenView {
     @Inject
     lateinit var repository: LoaderScreenRepository
 
-    @InjectPresenter
-    lateinit var presenter: LoaderScreenPresenter
-
-    @ProvidePresenter
-    fun provideStartScreenPresenter(): LoaderScreenPresenter {
-        MyApp.appComponent.inject(this)
-        return LoaderScreenPresenter(repository)
-    }
+    private lateinit var viewModel: AnalysisProcessViewModel
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -57,6 +50,11 @@ class AnalysisProcessFragment() : MvpAppCompatFragment(), LoaderScreenView {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+        MyApp.appComponent.inject(this)
+        val viewModelFactory = AnalysisProcessViewModelFactory(repository)
+        viewModel = ViewModelProvider(this, viewModelFactory).get(
+            AnalysisProcessViewModel::class.java
+        )
     }
 
     override fun onCreateView(
@@ -71,8 +69,9 @@ class AnalysisProcessFragment() : MvpAppCompatFragment(), LoaderScreenView {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         setupToolBar()
+        setupObservers()
         bookPath?.let {
-            presenter.onViewCreated(it)
+            viewModel.onViewCreated(it)
         }
     }
 
@@ -83,22 +82,32 @@ class AnalysisProcessFragment() : MvpAppCompatFragment(), LoaderScreenView {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
-            presenter.onOptionsItemBackSelected()
+            viewModel.onOptionsItemBackSelected()
         }
         return super.onOptionsItemSelected(item)
     }
 
-    override fun goToAnalysisActivity(analysisId: Int) {
-        interaction?.onAnalysisFinished(analysisId)
+    override fun onDestroy() {
+        super.onDestroy()
+        viewModel.onDestroy()
     }
 
-    override fun onStop() {
-        super.onStop()
-        presenter.onStop()
-    }
+    private fun setupObservers() {
+        viewModel.analysisToShow.observe(viewLifecycleOwner, Observer { analysisId ->
+            if (analysisId == null) {
+                return@Observer
+            }
+            interaction?.onAnalysisFinished(analysisId)
+        })
 
-    override fun finishActivity() {
-        activity?.onBackPressed()
+        viewModel.isFragmentFinishRequired.observe(viewLifecycleOwner, Observer { isRequired ->
+            if (isRequired == null) {
+                return@Observer
+            }
+            if (isRequired) {
+                activity?.onBackPressed()
+            }
+        })
     }
 
     private fun setupToolBar() {

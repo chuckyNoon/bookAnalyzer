@@ -7,6 +7,9 @@ import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.bookanalyzer.MyApp
@@ -14,17 +17,13 @@ import com.example.bookanalyzer.R
 import com.example.bookanalyzer.ResourceManager
 import com.example.bookanalyzer.databinding.ActivityBookAnalysisBinding
 import com.example.bookanalyzer.domain.repositories.BookAnalysisRepository
-import com.example.bookanalyzer.mvp.presenters.BookAnalysisPresenter
-import com.example.bookanalyzer.mvp.views.BookAnalysisView
+import com.example.bookanalyzer.view_models.AnalysisResultViewModel
+import com.example.bookanalyzer.view_models.AnalysisResultViewModelFactory
 import com.example.bookanalyzer.ui.EXTRA_ANALYSIS_ID
-import com.example.bookanalyzer.ui.adapters.analysis_params_adapter.AbsAnalysisCell
 import com.example.bookanalyzer.ui.adapters.analysis_params_adapter.AnalysisParamsAdapter
-import moxy.MvpAppCompatFragment
-import moxy.presenter.InjectPresenter
-import moxy.presenter.ProvidePresenter
 import javax.inject.Inject
 
-class AnalysisResultFragment : MvpAppCompatFragment(), BookAnalysisView {
+class AnalysisResultFragment : Fragment() {
 
     companion object {
         fun newInstance(id: Int) = AnalysisResultFragment().apply {
@@ -48,14 +47,7 @@ class AnalysisResultFragment : MvpAppCompatFragment(), BookAnalysisView {
     @Inject
     lateinit var repository: BookAnalysisRepository
 
-    @InjectPresenter
-    lateinit var presenter: BookAnalysisPresenter
-
-    @ProvidePresenter
-    fun provideBookAnalysisPresenter(): BookAnalysisPresenter {
-        MyApp.appComponent.inject(this)
-        return BookAnalysisPresenter(repository, resourceManager)
-    }
+    private lateinit var viewModel:AnalysisResultViewModel
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -65,6 +57,11 @@ class AnalysisResultFragment : MvpAppCompatFragment(), BookAnalysisView {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+        MyApp.appComponent.inject(this)
+        val viewModelFactory = AnalysisResultViewModelFactory(repository, resourceManager)
+        viewModel = ViewModelProvider(this, viewModelFactory).get(
+            AnalysisResultViewModel::class.java
+        )
     }
 
     override fun onCreateView(
@@ -80,8 +77,9 @@ class AnalysisResultFragment : MvpAppCompatFragment(), BookAnalysisView {
         super.onViewCreated(view, savedInstanceState)
         setupToolBar()
         setupRecyclerView()
+        setupObservers()
         analysisId?.let {
-            presenter.onViewCreated(it)
+            viewModel.onViewCreated(it)
         }
     }
 
@@ -92,22 +90,9 @@ class AnalysisResultFragment : MvpAppCompatFragment(), BookAnalysisView {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
-            presenter.onOptionsItemBackSelected()
+            viewModel.onOptionsItemBackSelected()
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    override fun setupCells(cells: ArrayList<AbsAnalysisCell>) {
-        val adapter = binding?.analysisParamsRecycler?.adapter as AnalysisParamsAdapter
-        adapter.setupCells(cells)
-    }
-
-    override fun startWordListActivity(analysisId: Int) {
-        interaction?.onWordListButtonClicked(analysisId)
-    }
-
-    override fun finishActivity() {
-        activity?.onBackPressed()
     }
 
     private fun setupToolBar() {
@@ -117,24 +102,54 @@ class AnalysisResultFragment : MvpAppCompatFragment(), BookAnalysisView {
     }
 
     private fun setupRecyclerView() {
-        val adapter = AnalysisParamsAdapter(wordListButtonInteraction)
-        val layoutManager = LinearLayoutManager(context)
-        val recycler = binding?.analysisParamsRecycler
-        recycler?.adapter = adapter
-        recycler?.layoutManager = layoutManager
-        recycler?.addItemDecoration(
-            DividerItemDecoration(
-                context,
-                layoutManager.orientation
+        binding?.analysisParamsRecycler?.apply {
+            layoutManager = LinearLayoutManager(context)
+            addItemDecoration(
+                DividerItemDecoration(
+                    context,
+                    DividerItemDecoration.VERTICAL
+                )
             )
-        )
+        }
+    }
+
+    private fun setupObservers(){
+        viewModel.cells.observe(viewLifecycleOwner, Observer {cells->
+            if(cells == null){
+                return@Observer
+            }
+            val adapter = binding?.analysisParamsRecycler?.adapter as? AnalysisParamsAdapter
+            if (adapter == null){
+                val newAdapter = AnalysisParamsAdapter(wordListButtonInteraction)
+                newAdapter.setupCells(cells)
+                binding?.analysisParamsRecycler?.adapter = newAdapter
+            }else{
+                adapter.setupCells(cells)
+            }
+        })
+
+        viewModel.isFragmentFinishRequired.observe(viewLifecycleOwner, Observer { isRequired->
+            if (isRequired == null){
+                return@Observer
+            }
+            if(isRequired){
+                activity?.onBackPressed()
+            }
+        })
+
+        viewModel.wordListToShow.observe(viewLifecycleOwner, Observer { analysisId->
+            if (analysisId == null){
+                return@Observer
+            }
+            interaction?.onWordListButtonClicked(analysisId)
+        })
     }
 
     private val wordListButtonInteraction =
         object : AnalysisParamsAdapter.WordListButtonInteraction {
             override fun onButtonClicked() {
                 analysisId?.let {
-                    presenter.onWordListButtonClicked(it)
+                    viewModel.onWordListButtonClicked(it)
                 }
             }
         }

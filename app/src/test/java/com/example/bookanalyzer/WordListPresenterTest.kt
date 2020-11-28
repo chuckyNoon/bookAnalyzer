@@ -2,7 +2,6 @@ package com.example.bookanalyzer
 
 import com.example.bookanalyzer.domain.models.WordEntity
 import com.example.bookanalyzer.domain.repositories.WordListRepository
-import com.example.bookanalyzer.mvp.presenters.WordListPresenter
 import com.example.bookanalyzer.mvp.views.WordListView
 import com.example.bookanalyzer.mvp.views.`WordListView$$State`
 import io.mockk.*

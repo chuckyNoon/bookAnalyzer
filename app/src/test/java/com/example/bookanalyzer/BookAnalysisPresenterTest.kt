@@ -2,7 +2,6 @@ package com.example.bookanalyzer
 
 import com.example.bookanalyzer.domain.models.ShowedAnalysisEntity
 import com.example.bookanalyzer.domain.repositories.BookAnalysisRepository
-import com.example.bookanalyzer.mvp.presenters.BookAnalysisPresenter
 import com.example.bookanalyzer.mvp.views.BookAnalysisView
 import com.example.bookanalyzer.mvp.views.`BookInfoView$$State`
 import io.mockk.*

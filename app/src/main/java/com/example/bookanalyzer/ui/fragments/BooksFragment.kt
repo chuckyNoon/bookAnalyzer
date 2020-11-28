@@ -16,6 +16,9 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
+import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
+import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -25,23 +28,19 @@ import com.example.bookanalyzer.ResourceManager
 import com.example.bookanalyzer.common.FileUtils
 import com.example.bookanalyzer.databinding.ActivityStartBinding
 import com.example.bookanalyzer.domain.repositories.StartScreenRepository
-import com.example.bookanalyzer.mvp.presenters.StartScreenPresenter
-import com.example.bookanalyzer.mvp.views.StartScreenView
-import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookCell
+import com.example.bookanalyzer.view_models.BooksViewModel
+import com.example.bookanalyzer.view_models.BooksViewModelFactory
 import com.example.bookanalyzer.ui.adapters.book_items_adapter.BooksAdapter
 import com.example.bookanalyzer.ui.adapters.book_items_adapter.SimpleItemTouchHelperCallback
 import com.example.bookanalyzer.ui.adapters.side_menu_adapter.SideMenuRowCell
 import com.example.bookanalyzer.ui.adapters.side_menu_adapter.SideMenuRowsAdapter
 import com.example.bookanalyzer.ui.fragments.dialogs.FirstLaunchDialog
 import com.example.bookanalyzer.ui.fragments.dialogs.SearchSettingsDialog
-import moxy.MvpAppCompatFragment
-import moxy.presenter.InjectPresenter
-import moxy.presenter.ProvidePresenter
 import java.io.File
 import javax.inject.Inject
 
-class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSettingsSelected,
-    FirstLaunchDialog.OnSelectedLaunchOption, StartScreenView {
+class BooksFragment() : Fragment(), SearchSettingsDialog.OnSearchSettingsSelected,
+    FirstLaunchDialog.OnSelectedLaunchOption {
 
     companion object {
         private const val TAG_FIRST_LAUNCH_DIALOG = "123"
@@ -63,14 +62,7 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
     @Inject
     lateinit var repository: StartScreenRepository
 
-    @InjectPresenter
-    lateinit var presenter: StartScreenPresenter
-
-    @ProvidePresenter
-    fun provideStartScreenPresenter(): StartScreenPresenter {
-        MyApp.appComponent.inject(this)
-        return StartScreenPresenter(repository, resourceManager)
-    }
+    private lateinit var viewModel: BooksViewModel
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -80,6 +72,11 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setHasOptionsMenu(true)
+        MyApp.appComponent.inject(this)
+        val viewModelFactory = BooksViewModelFactory(repository, resourceManager)
+        viewModel = ViewModelProvider(this, viewModelFactory).get(
+            BooksViewModel::class.java
+        )
     }
 
     override fun onCreateView(
@@ -96,6 +93,7 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
         setupToolBar()
         setupSideMenu()
         setupRecyclerView()
+        setupObservers()
     }
 
     override fun onDestroyView() {
@@ -108,23 +106,20 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
         if (isFirstApplicationLaunch()) {
             FirstLaunchDialog().show(childFragmentManager, TAG_FIRST_LAUNCH_DIALOG)
         } else {
-            presenter.onStart()
+            viewModel.onStart()
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        viewModel.onStop()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (item.itemId == android.R.id.home) {
-            presenter.onOptionsMenuItemSelected()
+            viewModel.onOptionsMenuItemSelected()
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    override fun startLoaderScreenActivity(bookPath: String) {
-        interaction?.onNotAnalyzedBookClicked(bookPath)
-    }
-
-    override fun startBookInfoActivity(analysisId: Int) {
-        interaction?.onAnalyzedBookClicked(analysisId)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -133,7 +128,7 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
             data?.data?.let { uri ->
                 val bookPath = FileUtils().getPathByUri(requireContext(), uri)
                 bookPath?.let {
-                    presenter.onActivityResult(bookPath)
+                    viewModel.onActivityResult(bookPath)
                 }
             }
         }
@@ -171,30 +166,30 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
         }
     }
 
-    override fun showSearchSettingsDialog() {
+    private fun showSearchSettingsDialog() {
         SearchSettingsDialog().show(childFragmentManager, TAG_SEARCH_SETTING_DIALOG)
     }
 
     override fun onSearchSettingsSelected(bookFormats: ArrayList<String>, searchRootDir: File) {
-        presenter.onSearchSettingsSelected(bookFormats, searchRootDir)
+        viewModel.onSearchSettingsSelected(bookFormats, searchRootDir)
     }
 
-    override fun showLoadingStateView() {
+    private fun showLoadingStateView() {
         binding?.loadingStateView?.visibility = View.VISIBLE
     }
 
-    override fun hideLoadingStateView() {
+    private fun hideLoadingStateView() {
         binding?.loadingStateView?.visibility = View.INVISIBLE
     }
 
-    override fun moveLoadingStateViewUp(animDuration: Int) {
+    private fun moveLoadingStateViewUp(animDuration: Int) {
         ObjectAnimator.ofFloat(binding?.loadingStateView, "translationY", 0f).apply {
             duration = animDuration.toLong()
             start()
         }
     }
 
-    override fun moveLoadingStateViewDown(animDuration: Int) {
+    private fun moveLoadingStateViewDown(animDuration: Int) {
         val height = binding?.loadingStateView?.height?.toFloat() ?: return
         ObjectAnimator.ofFloat(binding?.loadingStateView, "translationY", height).apply {
             duration = animDuration.toLong()
@@ -202,11 +197,11 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
         }
     }
 
-    override fun setLoadingStateViewText(stringResId: Int) {
+    private fun setLoadingStateViewText(stringResId: Int) {
         binding?.loadingStateView?.text = resources.getString(stringResId)
     }
 
-    override fun updateLoadingStateView(
+    private fun updateLoadingStateView(
         stringResId: Int,
         animDownDuration: Long,
         animUpDuration: Long
@@ -234,23 +229,75 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
         }
     }
 
-    override fun showSideMenu() {
-        binding?.drawerLayout?.open()
-    }
-
-    override fun setupCells(bookCells: ArrayList<BookCell>) {
-        val adapter = binding?.booksRecycler?.adapter as BooksAdapter
-        adapter.setupBooks(bookCells)
-    }
-
     /*override fun onRestart() {
         super.onRestart()
         presenter.onRestart()
     }*/
 
-    override fun onStop() {
-        super.onStop()
-        presenter.onStop()
+    private fun setupObservers() {
+        viewModel.bookCells.observe(viewLifecycleOwner, Observer { bookCells ->
+            if (bookCells == null) {
+                return@Observer
+            }
+            val adapter = binding?.booksRecycler?.adapter as BooksAdapter?
+            if (adapter == null) {
+                val defaultBookImage = ResourcesCompat.getDrawable(resources, R.drawable.book, null)
+                val newAdapter = BooksAdapter(
+                    requireActivity().filesDir,
+                    defaultBookImage,
+                    bookInteraction
+                )
+                newAdapter.setupBooks(bookCells)
+                binding?.booksRecycler?.adapter = newAdapter
+            } else {
+                adapter.setupBooks(bookCells)
+            }
+        })
+
+        viewModel.contentLoadingState.observe(viewLifecycleOwner, Observer { loadingState ->
+            if (loadingState == null) {
+                return@Observer
+            }
+            when (loadingState) {
+                BooksViewModel.ContentLoadingState.Active -> {
+                    showLoadingStateView()
+                    moveLoadingStateViewUp(300)
+                    setLoadingStateViewText(R.string.loading_content_started)
+                }
+                BooksViewModel.ContentLoadingState.Finished->{
+                    updateLoadingStateView(R.string.loading_content_ended, 250, 300)
+                }
+                else->{
+                    moveLoadingStateViewDown(250)
+                    hideLoadingStateView()
+                }
+            }
+        })
+
+        viewModel.sideMenuState.observe(viewLifecycleOwner, Observer {sideMenuState->
+            if (sideMenuState == null){
+                return@Observer
+            }
+            when (sideMenuState){
+                BooksViewModel.SideMenuState.Showed->{
+                    binding?.drawerLayout?.open()
+                }
+            }
+        })
+
+        viewModel.bookToAnalyze.observe(viewLifecycleOwner, Observer { bookPath ->
+            if (bookPath == null){
+                return@Observer
+            }
+            interaction?.onNotAnalyzedBookClicked(bookPath)
+        })
+
+        viewModel.bookToShow.observe(viewLifecycleOwner, Observer { analysisId ->
+            if (analysisId == null){
+                return@Observer
+            }
+            interaction?.onAnalyzedBookClicked(analysisId)
+        })
     }
 
     private fun isFirstApplicationLaunch(): Boolean {
@@ -270,19 +317,16 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
     }
 
     private fun setupRecyclerView() {
-        val defaultBookImage = ResourcesCompat.getDrawable(resources, R.drawable.book, null)
-        val adapter = BooksAdapter(
-            requireActivity().filesDir,
-            defaultBookImage,
-            bookInteraction
-        )
         binding?.booksRecycler?.setHasFixedSize(true)
-        val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(presenter)
+        binding?.booksRecycler?.layoutManager = LinearLayoutManager(context)
+        val dividerItemDecoration = DividerItemDecoration(
+            context,
+            DividerItemDecoration.VERTICAL
+        )
+        binding?.booksRecycler?.addItemDecoration(dividerItemDecoration)
+        val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(viewModel)
         val itemTouchHelper = ItemTouchHelper(callback)
         itemTouchHelper.attachToRecyclerView(binding?.booksRecycler)
-
-        binding?.booksRecycler?.adapter = adapter
-        binding?.booksRecycler?.layoutManager = LinearLayoutManager(context)
     }
 
     private fun requestReadPermission(requestCode: Int) {
@@ -323,7 +367,7 @@ class BooksFragment() : MvpAppCompatFragment(), SearchSettingsDialog.OnSearchSet
                 itemBackgroundTransition.startTransition(200)
                 itemBackgroundTransition.reverseTransition(200)
             }
-            presenter.onBookClicked(position)
+            viewModel.onBookClicked(position)
         }
     }
 
