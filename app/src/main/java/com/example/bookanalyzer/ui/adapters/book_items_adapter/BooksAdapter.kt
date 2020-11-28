@@ -29,6 +29,10 @@ class BooksAdapter(
         override fun areContentsTheSame(oldItem: BookCell, newItem: BookCell): Boolean {
             return oldItem == newItem
         }
+
+        override fun getChangePayload(oldItem: BookCell, newItem: BookCell): Any? {
+            return newItem
+        }
     }
 
     private val differ = AsyncListDiffer(this, diffUtilCallback)
@@ -44,6 +48,15 @@ class BooksAdapter(
             appFilesDir,
             interaction
         )
+
+    override fun onBindViewHolder(holder: BookHolder, position: Int, payloads: MutableList<Any>) {
+        super.onBindViewHolder(holder, position, payloads)
+        if (payloads.size < 1){
+            return
+        }
+        val cell = payloads[0] as BookCell
+        holder.bind(cell)
+    }
 
     override fun onBindViewHolder(holder: BookHolder, position: Int) {
         holder.bind(differ.currentList[position])
