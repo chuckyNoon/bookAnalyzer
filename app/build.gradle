@@ -52,7 +52,6 @@ dependencies {
     def navigation_version = "2.3.0"
     def drawer_layout_version = "1.1.0"
     def rx_java_version = "3.0.6"
-    def moxy_version = '2.2.0'
     def loading_view_version = "1.1.5"
     def recycler_view_version = "1.1.0"
     def gif_drawable_version = "1.2.19"
@@ -65,17 +64,7 @@ dependencies {
     def material_version = "1.2.1"
     def coordinator_layout_version = "1.1.0"
     def picasso_version = "2.71828"
-    def junit_version = "5"
-    def androidx_junit_version = "1.1.1"
-    def espresso_core_version = "3.2.0"
     def jars_dir = "libs"
-
-    //moxy
-    implementation "com.github.moxy-community:moxy:$moxy_version"
-    implementation "com.github.moxy-community:moxy-android:$moxy_version"
-    implementation "com.github.moxy-community:moxy-app-compat:$moxy_version"
-    implementation "com.github.moxy-community:moxy-ktx:$moxy_version"
-    kapt "com.github.moxy-community:moxy-compiler:$moxy_version"
 
     //Room
     implementation "androidx.room:room-runtime:$room_version"

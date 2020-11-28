@@ -1,6 +1,7 @@
 package com.example.bookanalyzer.ui
 
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.databinding.ActivityMainBinding
@@ -8,13 +9,12 @@ import com.example.bookanalyzer.ui.fragments.AnalysisProcessFragment
 import com.example.bookanalyzer.ui.fragments.AnalysisResultFragment
 import com.example.bookanalyzer.ui.fragments.BooksFragment
 import com.example.bookanalyzer.ui.fragments.WordsFragment
-import moxy.MvpAppCompatActivity
 
 const val EXTRA_BOOK_PATH = "BookPath"
 const val EXTRA_ANALYSIS_ID = "AnalysisId"
 
 class MainActivity() :
-    MvpAppCompatActivity(),
+    AppCompatActivity(),
     AnalysisProcessFragment.ProcessFragmentInteraction,
     AnalysisResultFragment.ResultFragmentInteraction,
     BooksFragment.BooksFragmentInteraction {

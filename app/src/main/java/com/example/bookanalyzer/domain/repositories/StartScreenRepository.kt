@@ -17,28 +17,26 @@ class StartScreenRepository(
     private val previewDao: BookPreviewDao?,
     private val bookPreviewListParser: BookPreviewListParser,
     private val imageStorage: ImageStorage
-){
+) {
     suspend fun getInitialBookEntities(paths: ArrayList<String>) =
         withContext(Dispatchers.Default) {
-            val bookEntity = ArrayList<BookEntity>().apply {
-                paths.forEach { path ->
-                    val entity = BookEntity(path = path, analysisId = ANALYSIS_NOT_EXIST)
-                    add(entity)
-                }
+            val bookEntities = ArrayList<BookEntity>()
+            paths.forEach { path ->
+                val entity = BookEntity(path = path, analysisId = ANALYSIS_NOT_EXIST)
+                bookEntities.add(entity)
             }
-            (bookEntity)
+            (bookEntities)
         }
 
     suspend fun getCompleteBookEntities() = withContext(Dispatchers.Default) {
         val dbItems = previewDao?.getBookPreviews() ?: ArrayList()
-        val bookEntities = ArrayList<BookEntity>().apply {
-            for (dbItem in dbItems) {
-                val bookEntity = dbItem.toBookEntity().apply {
-                    uniqueWordCount = getUniqueWordCountByPath(path)
-                    analysisId = getAnalysisIdByPath(path)
-                }
-                add(bookEntity)
+        val bookEntities = ArrayList<BookEntity>()
+        for (dbItem in dbItems) {
+            val bookEntity = dbItem.toBookEntity().apply {
+                uniqueWordCount = getUniqueWordCountByPath(path)
+                analysisId = getAnalysisIdByPath(path)
             }
+            bookEntities.add(bookEntity)
         }
         (bookEntities)
     }
@@ -61,10 +59,12 @@ class StartScreenRepository(
             }
         }
 
-    suspend fun insertDataFromPathsInDb(bookPaths: ArrayList<String>) =
+    suspend fun insertDataFromPathsInDb(bookPaths: ArrayList<String>, toReplace:Boolean = true) =
         withContext(Dispatchers.Default) {
             previewDao?.let { previewDao ->
-                previewDao.nukeTable()
+                if (toReplace){
+                    previewDao.nukeTable()
+                }
                 val parsedDataList = bookPreviewListParser.getParsedDataList(bookPaths)
                 for (parsedData in parsedDataList) {
                     val dbPreviewData = parsedData.toDbBookPreviewData().apply {

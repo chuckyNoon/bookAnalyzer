@@ -87,11 +87,6 @@ class AnalysisProcessFragment() : Fragment() {
         return super.onOptionsItemSelected(item)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        viewModel.onDestroy()
-    }
-
     private fun setupObservers() {
         viewModel.analysisToShow.observe(viewLifecycleOwner, Observer { analysisId ->
             if (analysisId == null) {

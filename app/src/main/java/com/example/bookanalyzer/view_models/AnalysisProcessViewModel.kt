@@ -52,7 +52,8 @@ class AnalysisProcessViewModel(private val repository: LoaderScreenRepository) :
         }
     }
 
-    fun onDestroy() {
+    override fun onCleared() {
+        super.onCleared()
         job.cancel()
     }
 }

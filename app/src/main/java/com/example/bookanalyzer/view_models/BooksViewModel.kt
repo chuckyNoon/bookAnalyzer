@@ -116,7 +116,7 @@ class BooksViewModel(
     }
 
     fun onBookMove(fromPosition: Int, toPosition: Int) {
-        /* val newList = copyList(items)
+        /*val newList = copyList(items)
          val prev = newList.removeAt(fromPosition)
          newList.add(toPosition, prev)
          items = newList
@@ -181,7 +181,10 @@ class BooksViewModel(
     }
 
     private fun addBookItemToList(bookPath: String) {
-        //to fix
+        launch {
+            repository.insertDataFromPathsInDb(arrayListOf(bookPath), toReplace = false)
+            buildCompleteBookList()
+        }
     }
 
     private fun isBookAnalyzed(analysisId: Int) = (analysisId != ANALYSIS_NOT_EXIST)
