@@ -7,6 +7,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.ViewCompat
 import androidx.recyclerview.widget.AsyncListDiffer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -14,6 +15,7 @@ import com.example.bookanalyzer.R
 import com.example.bookanalyzer.databinding.ItemBookBinding
 import com.squareup.picasso.Picasso
 import java.io.File
+
 
 class BooksAdapter(
     private val appFilesDir: File,
@@ -51,15 +53,18 @@ class BooksAdapter(
 
     override fun onBindViewHolder(holder: BookHolder, position: Int, payloads: MutableList<Any>) {
         super.onBindViewHolder(holder, position, payloads)
-        if (payloads.size < 1){
+        if (payloads.size < 1) {
             return
         }
         val cell = payloads[0] as BookCell
         holder.bind(cell)
+        ViewCompat.setTransitionName(holder.itemView, cell.filePath)
     }
 
     override fun onBindViewHolder(holder: BookHolder, position: Int) {
-        holder.bind(differ.currentList[position])
+        val cell = differ.currentList[position]
+        holder.bind(cell)
+        ViewCompat.setTransitionName(holder.itemView, cell.filePath)
     }
 
     override fun getItemCount() = differ.currentList.size
@@ -106,7 +111,7 @@ class BooksAdapter(
                         (true)
                     }
                     MotionEvent.ACTION_UP -> {
-                        bookInteraction.onBookClicked(view, adapterPosition)
+                        bookInteraction.onBookClicked(itemView, adapterPosition)
                         (true)
                     }
                     else -> {

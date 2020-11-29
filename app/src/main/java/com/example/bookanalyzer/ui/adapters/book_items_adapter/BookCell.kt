@@ -1,5 +1,7 @@
 package com.example.bookanalyzer.ui.adapters.book_items_adapter
 
+import java.io.Serializable
+
 data class BookCell(
     val filePath: String,
     val title: String,

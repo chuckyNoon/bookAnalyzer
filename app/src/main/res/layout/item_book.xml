@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="180dp"
-    android:elevation="5dp"
     android:outlineProvider="bounds">
 
     <include
@@ -24,9 +24,10 @@
             android:layout_height="154dp"
             android:layout_marginStart="16dp"
             android:layout_marginTop="8dp"
+            android:src="@drawable/book"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
-            app:srcCompat="@drawable/ic_launcher_foreground" />
+            />
 
         <TextView
             android:id="@+id/bookNameView"
@@ -35,9 +36,10 @@
             android:layout_marginStart="29dp"
             android:layout_marginEnd="19dp"
             android:maxLines="2"
+            android:text="Title"
+            android:textColor="@android:color/black"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:textColor="@android:color/black"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toEndOf="@+id/bookImage"
             app:layout_constraintTop_toTopOf="@+id/bookImage" />
@@ -47,6 +49,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:maxLines="2"
+            android:text="Author"
             android:textColor="@color/middle_dark"
             android:textSize="12sp"
             app:layout_constraintEnd_toEndOf="@+id/bookNameView"
@@ -58,6 +61,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxLines="2"
+            android:text="Format"
             android:textColor="@color/middle_dark"
             android:textSize="12sp"
             app:layout_constraintStart_toStartOf="@+id/bookAuthorView"
@@ -70,6 +74,8 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="16dp"
             android:layout_marginBottom="24dp"
+            android:max="100"
+            android:progress="30"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintHorizontal_bias="0.0"

@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.bookanalyzer.MyApp
 import com.example.bookanalyzer.R
-import com.example.bookanalyzer.databinding.ActivityWordListBinding
+import com.example.bookanalyzer.databinding.FragmentWordsBinding
 import com.example.bookanalyzer.domain.repositories.WordListRepository
 import com.example.bookanalyzer.view_models.WordsViewModel
 import com.example.bookanalyzer.view_models.WordsViewModelFactory
@@ -42,7 +42,7 @@ class WordsFragment() : Fragment(){
         arguments?.getInt(EXTRA_ANALYSIS_ID)
     }
 
-    private var binding: ActivityWordListBinding? = null
+    private var binding: FragmentWordsBinding? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -51,6 +51,7 @@ class WordsFragment() : Fragment(){
         val viewModelFactory = WordsViewModelFactory(repository)
         viewModel = ViewModelProvider(this, viewModelFactory).get(
             WordsViewModel::class.java)
+
     }
 
     override fun onCreateView(
@@ -58,7 +59,7 @@ class WordsFragment() : Fragment(){
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = ActivityWordListBinding.inflate(layoutInflater)
+        binding = FragmentWordsBinding.inflate(layoutInflater)
         return binding?.root
     }
 

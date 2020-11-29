@@ -12,7 +12,7 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.bookanalyzer.MyApp
 import com.example.bookanalyzer.R
-import com.example.bookanalyzer.databinding.ActivityLoaderScreenBinding
+import com.example.bookanalyzer.databinding.FragmentAnalysisProcessBinding
 import com.example.bookanalyzer.domain.repositories.LoaderScreenRepository
 import com.example.bookanalyzer.view_models.AnalysisProcessViewModel
 import com.example.bookanalyzer.view_models.AnalysisProcessViewModelFactory
@@ -35,7 +35,7 @@ class AnalysisProcessFragment() : Fragment() {
 
     private var interaction: ProcessFragmentInteraction? = null
 
-    private var binding: ActivityLoaderScreenBinding? = null
+    private var binding: FragmentAnalysisProcessBinding? = null
 
     @Inject
     lateinit var repository: LoaderScreenRepository
@@ -62,7 +62,7 @@ class AnalysisProcessFragment() : Fragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = ActivityLoaderScreenBinding.inflate(layoutInflater)
+        binding = FragmentAnalysisProcessBinding.inflate(layoutInflater)
         return binding?.root
     }
 
@@ -92,7 +92,7 @@ class AnalysisProcessFragment() : Fragment() {
             if (analysisId == null) {
                 return@Observer
             }
-            interaction?.onAnalysisFinished(analysisId)
+            interaction?.onAnalysisFinished(ShowBookIntention(analysisId = analysisId))
         })
 
         viewModel.isFragmentFinishRequired.observe(viewLifecycleOwner, Observer { isRequired ->
@@ -112,6 +112,6 @@ class AnalysisProcessFragment() : Fragment() {
     }
 
     interface ProcessFragmentInteraction {
-        fun onAnalysisFinished(analysisId: Int)
+        fun onAnalysisFinished(intention: ShowBookIntention)
     }
 }

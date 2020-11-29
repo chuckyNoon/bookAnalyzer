@@ -9,10 +9,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.drawable.TransitionDrawable
 import android.os.Bundle
-import android.view.LayoutInflater
-import android.view.MenuItem
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.res.ResourcesCompat
@@ -26,17 +23,19 @@ import com.example.bookanalyzer.MyApp
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.ResourceManager
 import com.example.bookanalyzer.common.FileUtils
-import com.example.bookanalyzer.databinding.ActivityStartBinding
+import com.example.bookanalyzer.databinding.FragmentBooksBinding
 import com.example.bookanalyzer.domain.repositories.StartScreenRepository
-import com.example.bookanalyzer.view_models.BooksViewModel
-import com.example.bookanalyzer.view_models.BooksViewModelFactory
+import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookCell
 import com.example.bookanalyzer.ui.adapters.book_items_adapter.BooksAdapter
 import com.example.bookanalyzer.ui.adapters.book_items_adapter.SimpleItemTouchHelperCallback
 import com.example.bookanalyzer.ui.adapters.side_menu_adapter.SideMenuRowCell
 import com.example.bookanalyzer.ui.adapters.side_menu_adapter.SideMenuRowsAdapter
 import com.example.bookanalyzer.ui.fragments.dialogs.FirstLaunchDialog
 import com.example.bookanalyzer.ui.fragments.dialogs.SearchSettingsDialog
+import com.example.bookanalyzer.view_models.BooksViewModel
+import com.example.bookanalyzer.view_models.BooksViewModelFactory
 import java.io.File
+import java.io.Serializable
 import javax.inject.Inject
 
 class BooksFragment() : Fragment(), SearchSettingsDialog.OnSearchSettingsSelected,
@@ -54,7 +53,7 @@ class BooksFragment() : Fragment(), SearchSettingsDialog.OnSearchSettingsSelecte
 
     private var interaction: BooksFragmentInteraction? = null
 
-    private var binding: ActivityStartBinding? = null
+    private var binding: FragmentBooksBinding? = null
 
     @Inject
     lateinit var resourceManager: ResourceManager
@@ -84,7 +83,7 @@ class BooksFragment() : Fragment(), SearchSettingsDialog.OnSearchSettingsSelecte
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        binding = ActivityStartBinding.inflate(layoutInflater)
+        binding = FragmentBooksBinding.inflate(layoutInflater)
         return binding?.root
     }
 
@@ -229,11 +228,6 @@ class BooksFragment() : Fragment(), SearchSettingsDialog.OnSearchSettingsSelecte
         }
     }
 
-    /*override fun onRestart() {
-        super.onRestart()
-        presenter.onRestart()
-    }*/
-
     private fun setupObservers() {
         viewModel.bookCells.observe(viewLifecycleOwner, Observer { bookCells ->
             if (bookCells == null) {
@@ -264,39 +258,39 @@ class BooksFragment() : Fragment(), SearchSettingsDialog.OnSearchSettingsSelecte
                     moveLoadingStateViewUp(300)
                     setLoadingStateViewText(R.string.loading_content_started)
                 }
-                BooksViewModel.ContentLoadingState.Finished->{
+                BooksViewModel.ContentLoadingState.Finished -> {
                     updateLoadingStateView(R.string.loading_content_ended, 250, 300)
                 }
-                else->{
+                else -> {
                     moveLoadingStateViewDown(250)
                     hideLoadingStateView()
                 }
             }
         })
 
-        viewModel.sideMenuState.observe(viewLifecycleOwner, Observer {sideMenuState->
-            if (sideMenuState == null){
+        viewModel.sideMenuState.observe(viewLifecycleOwner, Observer { sideMenuState ->
+            if (sideMenuState == null) {
                 return@Observer
             }
-            when (sideMenuState){
-                BooksViewModel.SideMenuState.Showed->{
+            when (sideMenuState) {
+                BooksViewModel.SideMenuState.Showed -> {
                     binding?.drawerLayout?.open()
                 }
             }
         })
 
         viewModel.bookToAnalyze.observe(viewLifecycleOwner, Observer { bookPath ->
-            if (bookPath == null){
+            if (bookPath == null) {
                 return@Observer
             }
             interaction?.onNotAnalyzedBookClicked(bookPath)
         })
 
-        viewModel.bookToShow.observe(viewLifecycleOwner, Observer { analysisId ->
-            if (analysisId == null){
+        viewModel.showBookIntent.observe(viewLifecycleOwner, Observer { intention ->
+            if (intention == null) {
                 return@Observer
             }
-            interaction?.onAnalyzedBookClicked(analysisId)
+            interaction?.onAnalyzedBookClicked(intention)
         })
     }
 
@@ -317,13 +311,15 @@ class BooksFragment() : Fragment(), SearchSettingsDialog.OnSearchSettingsSelecte
     }
 
     private fun setupRecyclerView() {
-        binding?.booksRecycler?.setHasFixedSize(true)
-        binding?.booksRecycler?.layoutManager = LinearLayoutManager(context)
-        val dividerItemDecoration = DividerItemDecoration(
-            context,
-            DividerItemDecoration.VERTICAL
-        )
-        binding?.booksRecycler?.addItemDecoration(dividerItemDecoration)
+        binding?.booksRecycler?.apply {
+            setHasFixedSize(true)
+            layoutManager = LinearLayoutManager(context)
+            val dividerItemDecoration = DividerItemDecoration(
+                context,
+                DividerItemDecoration.VERTICAL
+            )
+            addItemDecoration(dividerItemDecoration)
+        }
         val callback: ItemTouchHelper.Callback = SimpleItemTouchHelperCallback(viewModel)
         val itemTouchHelper = ItemTouchHelper(callback)
         itemTouchHelper.attachToRecyclerView(binding?.booksRecycler)
@@ -350,24 +346,36 @@ class BooksFragment() : Fragment(), SearchSettingsDialog.OnSearchSettingsSelecte
         )
         val sideMenuAdapter = SideMenuRowsAdapter(sideMenuRowInteraction)
         sideMenuAdapter.setupCells(sideMenuRowCells)
-        binding?.sideMenu?.sideMenuList?.addItemDecoration(
-            DividerItemDecoration(
-                context,
-                DividerItemDecoration.VERTICAL
+        binding?.sideMenu?.sideMenuList?.apply{
+            addItemDecoration(
+                DividerItemDecoration(
+                    context,
+                    DividerItemDecoration.VERTICAL
+                )
             )
-        )
-        binding?.sideMenu?.sideMenuList?.layoutManager = LinearLayoutManager(context)
-        binding?.sideMenu?.sideMenuList?.adapter = sideMenuAdapter
+            layoutManager = LinearLayoutManager(context)
+            adapter = sideMenuAdapter
+        }
     }
 
     private val bookInteraction = object : BooksAdapter.BookInteraction {
         override fun onBookClicked(view: View, position: Int) {
+            fun getY(view:View?) : Float{
+                val pos = IntArray(2)
+                view?.getLocationOnScreen(pos)
+                return pos[1].toFloat()
+            }
             if (view.background is TransitionDrawable) {
                 val itemBackgroundTransition = view.background as TransitionDrawable
                 itemBackgroundTransition.startTransition(200)
                 itemBackgroundTransition.reverseTransition(200)
             }
-            viewModel.onBookClicked(position)
+            var yItemOffset = getY(view) - getY(binding?.booksRecycler)
+            if (yItemOffset < 0){
+                binding?.booksRecycler?.scrollToPosition(position)
+                yItemOffset = 0f
+            }
+            viewModel.onBookClicked(position, yItemOffset)
         }
     }
 
@@ -383,6 +391,12 @@ class BooksFragment() : Fragment(), SearchSettingsDialog.OnSearchSettingsSelecte
 
     interface BooksFragmentInteraction {
         fun onNotAnalyzedBookClicked(bookPath: String)
-        fun onAnalyzedBookClicked(analysisId: Int)
+        fun onAnalyzedBookClicked(intention: ShowBookIntention)
     }
 }
+
+data class ShowBookIntention(
+    val cell: BookCell? = null,
+    val analysisId: Int,
+    val yOffset: Float? = null
+) : Serializable

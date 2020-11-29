@@ -10,6 +10,7 @@ import com.example.bookanalyzer.common.FilesSearch
 import com.example.bookanalyzer.domain.models.BookEntity
 import com.example.bookanalyzer.domain.repositories.StartScreenRepository
 import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookCell
+import com.example.bookanalyzer.ui.fragments.ShowBookIntention
 import kotlinx.coroutines.*
 import java.io.File
 import java.util.*
@@ -42,11 +43,11 @@ class BooksViewModel(
     override val coroutineContext: CoroutineContext
         get() = job + dispatcher
 
-    enum class ContentLoadingState{
+    enum class ContentLoadingState {
         Inactive, Active, Finished
     }
 
-    enum class SideMenuState{
+    enum class SideMenuState {
         Hidden, Showed
     }
 
@@ -58,13 +59,13 @@ class BooksViewModel(
     private val _contentLoadingState = MutableLiveData<ContentLoadingState>()
     private val _sideMenuState = MutableLiveData(SideMenuState.Hidden)
     private val _bookToAnalyze = MutableLiveData<String?>(null)
-    private val _bookToShow =  MutableLiveData<Int?>(null)
+    private val _showBookIntent = MutableLiveData<ShowBookIntention>()
 
     val bookCells: LiveData<ArrayList<BookCell>> = _bookCells
     val contentLoadingState: LiveData<ContentLoadingState> = _contentLoadingState
     val sideMenuState: LiveData<SideMenuState> = _sideMenuState
-    val bookToAnalyze:LiveData<String?> = _bookToAnalyze
-    val bookToShow:LiveData<Int?> = _bookToShow
+    val bookToAnalyze: LiveData<String?> = _bookToAnalyze
+    val showBookIntent: LiveData<ShowBookIntention> = _showBookIntent
 
     fun onStart() {
         launch {
@@ -123,14 +124,15 @@ class BooksViewModel(
          viewState.showList(newList)*/
     }
 
-    fun onBookClicked(position: Int) {
-        val book = bookEntities[position]
-        val analysisId = book.analysisId
+    fun onBookClicked(adapterPos: Int, yOffset: Float) {
+        val bookEntity = bookEntities[adapterPos]
+        val analysisId = bookEntity.analysisId
         if (isBookAnalyzed(analysisId)) {
-            _bookToShow.value = analysisId
-            _bookToShow.value = null
+            _showBookIntent.value =
+                ShowBookIntention(bookEntity.toBookCell(), analysisId, yOffset)
+            _showBookIntent.value = null
         } else {
-            _bookToAnalyze.value = book.path
+            _bookToAnalyze.value = bookEntity.path
             _bookToAnalyze.value = null
         }
     }
