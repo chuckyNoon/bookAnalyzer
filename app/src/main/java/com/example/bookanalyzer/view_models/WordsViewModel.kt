@@ -1,16 +1,12 @@
 package com.example.bookanalyzer.view_models
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.*
+import com.example.bookanalyzer.MyNavigation
+import com.example.bookanalyzer.SingleEventLiveData
 import com.example.bookanalyzer.domain.models.WordEntity
 import com.example.bookanalyzer.domain.repositories.WordListRepository
 import com.example.bookanalyzer.ui.adapters.word_list_adapter.WordCell
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlin.coroutines.CoroutineContext
 
 class WordsViewModelFactory(
     private val repository: WordListRepository,
@@ -33,9 +29,7 @@ data class BottomPanelViewState(
     val seekBarMaxValue: Int
 )
 
-class WordsViewModel(private val repository: WordListRepository) : ViewModel(), CoroutineScope {
-    override val coroutineContext: CoroutineContext
-        get() = Dispatchers.Main
+class WordsViewModel(private val repository: WordListRepository) : ViewModel(){
 
     private var wordEntities = ArrayList<WordEntity>()
     private var bottomPanelState = BottomPanelState()
@@ -44,15 +38,15 @@ class WordsViewModel(private val repository: WordListRepository) : ViewModel(), 
     private val _wordCells = MutableLiveData<ArrayList<WordCell>>()
     private val _cursorPosition = MutableLiveData(0)
     private val _bottomPanelViewState = MutableLiveData<BottomPanelViewState>()
-    private val _isFragmentFinishRequired = MutableLiveData(false)
+    private val _navigation = SingleEventLiveData<MyNavigation>()
 
     val wordCells: LiveData<ArrayList<WordCell>> = _wordCells
     val cursorPosition: LiveData<Int> = _cursorPosition
     val bottomPanelViewState: LiveData<BottomPanelViewState> = _bottomPanelViewState
-    val isFragmentFinishRequired: LiveData<Boolean> = _isFragmentFinishRequired
+    val navigation: LiveData<MyNavigation> = _navigation
 
     fun onProgressChanged(progress: Int) {
-        _cursorPosition.value = Math.max(progress, 1)
+        _cursorPosition.value = progress.coerceAtLeast(1)
          bottomPanelState.text = "${_cursorPosition.value} from ${wordEntities.size}"
         _bottomPanelViewState.value = bottomPanelState.toViewState()
     }
@@ -61,7 +55,7 @@ class WordsViewModel(private val repository: WordListRepository) : ViewModel(), 
         if (!isFirstLaunch) {
             return
         }
-        launch {
+        viewModelScope.launch {
             wordEntities = repository.getWordEntities(analysisId) ?: return@launch
             _wordCells.value = wordEntities.toCells()
 
@@ -74,8 +68,7 @@ class WordsViewModel(private val repository: WordListRepository) : ViewModel(), 
     }
 
     fun onOptionsItemBackSelected() {
-        _isFragmentFinishRequired.value = true
-        _isFragmentFinishRequired.value = false
+        _navigation.value = MyNavigation.Exit()
     }
 
     fun onWordClicked(){

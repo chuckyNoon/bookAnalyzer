@@ -1,19 +1,14 @@
 package com.example.bookanalyzer.view_models
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.*
+import com.example.bookanalyzer.MyNavigation
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.ResourceManager
+import com.example.bookanalyzer.SingleEventLiveData
 import com.example.bookanalyzer.domain.models.ShowedAnalysisEntity
 import com.example.bookanalyzer.domain.repositories.BookAnalysisRepository
 import com.example.bookanalyzer.ui.adapters.analysis_params_adapter.AbsAnalysisCell
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlin.coroutines.CoroutineContext
 
 class AnalysisResultViewModelFactory(
     private val repository: BookAnalysisRepository,
@@ -27,29 +22,23 @@ class AnalysisResultViewModelFactory(
 class AnalysisResultViewModel(
     private val repository: BookAnalysisRepository,
     private val resourceManager: ResourceManager
-) : ViewModel(), CoroutineScope {
+) : ViewModel(){
 
-    override val coroutineContext: CoroutineContext
-        get() = Dispatchers.Main + job
-
-    private val job = SupervisorJob()
     private var isFirstLaunch = true
 
     private lateinit var bookAnalysis: ShowedAnalysisEntity
 
     private val _cells = MutableLiveData<ArrayList<AbsAnalysisCell>>()
-    private val _isFragmentFinishRequired = MutableLiveData<Boolean>()
-    private val _wordListToShow = MutableLiveData<Int>()
+    private val _navigation = SingleEventLiveData<MyNavigation>()
 
     val cells: LiveData<ArrayList<AbsAnalysisCell>> = _cells
-    val isFragmentFinishRequired: LiveData<Boolean> = _isFragmentFinishRequired
-    val wordListToShow: LiveData<Int> = _wordListToShow
+    val navigation: LiveData<MyNavigation> = _navigation
 
     fun onViewCreated(analysisId: Int) {
         if (!isFirstLaunch) {
             return
         }
-        launch {
+        viewModelScope.launch {
             bookAnalysis = repository.getAnalysis(analysisId)
             _cells.value = bookAnalysis.toParamCells()
             isFirstLaunch = true
@@ -57,13 +46,11 @@ class AnalysisResultViewModel(
     }
 
     fun onOptionsItemBackSelected() {
-        _isFragmentFinishRequired.value = true
-        _isFragmentFinishRequired.value = false
+        _navigation.value = MyNavigation.Exit()
     }
 
     fun onWordListButtonClicked(analysisId: Int) {
-        _wordListToShow.value = analysisId
-        _wordListToShow.value = null
+        _navigation.value = MyNavigation.ToWordsFragment(analysisId)
     }
 
     private fun ShowedAnalysisEntity.toParamCells(): ArrayList<AbsAnalysisCell> {

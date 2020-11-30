@@ -14,6 +14,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.bookanalyzer.MyApp
+import com.example.bookanalyzer.MyNavigation
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.databinding.FragmentWordsBinding
 import com.example.bookanalyzer.domain.repositories.WordListRepository
@@ -150,15 +151,14 @@ class WordsFragment() : Fragment(){
             }
         })
 
-        viewModel.isFragmentFinishRequired.observe(viewLifecycleOwner, Observer { isRequired->
-            if (isRequired == null){
+        viewModel.navigation.observe(viewLifecycleOwner, Observer { navigation->
+            if (navigation == null){
                 return@Observer
             }
-            if (isRequired){
-                activity?.onBackPressed()
+            when(navigation){
+                is MyNavigation.Exit -> activity?.onBackPressed()
             }
         })
-
     }
 
     private val wordInteraction = object : WordsAdapter.WordInteraction {

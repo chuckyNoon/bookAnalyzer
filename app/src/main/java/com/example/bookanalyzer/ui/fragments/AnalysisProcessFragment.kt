@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.bookanalyzer.MyApp
+import com.example.bookanalyzer.MyNavigation
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.databinding.FragmentAnalysisProcessBinding
 import com.example.bookanalyzer.domain.repositories.LoaderScreenRepository
@@ -88,19 +89,13 @@ class AnalysisProcessFragment() : Fragment() {
     }
 
     private fun setupObservers() {
-        viewModel.analysisToShow.observe(viewLifecycleOwner, Observer { analysisId ->
-            if (analysisId == null) {
+        viewModel.navigation.observe(viewLifecycleOwner, Observer { navigation ->
+            if (navigation == null) {
                 return@Observer
             }
-            interaction?.onAnalysisFinished(ShowBookIntention(analysisId = analysisId))
-        })
-
-        viewModel.isFragmentFinishRequired.observe(viewLifecycleOwner, Observer { isRequired ->
-            if (isRequired == null) {
-                return@Observer
-            }
-            if (isRequired) {
-                activity?.onBackPressed()
+            when(navigation){
+                is MyNavigation.Exit -> activity?.onBackPressed()
+                is MyNavigation.ToResultFragment -> interaction?.onAnalysisFinished(navigation.extra)
             }
         })
     }
@@ -112,6 +107,6 @@ class AnalysisProcessFragment() : Fragment() {
     }
 
     interface ProcessFragmentInteraction {
-        fun onAnalysisFinished(intention: ShowBookIntention)
+        fun onAnalysisFinished(intention: ResultFragmentExtra)
     }
 }

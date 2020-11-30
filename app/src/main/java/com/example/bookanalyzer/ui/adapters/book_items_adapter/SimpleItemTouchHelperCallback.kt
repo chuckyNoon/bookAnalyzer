@@ -12,10 +12,6 @@ class SimpleItemTouchHelperCallback(private val viewModel: BooksViewModel) :
 
     private var lastDraggedViewHolder: ItemTouchHelperViewHolder? = null
 
-    override fun isLongPressDragEnabled(): Boolean {
-        return false //need to fix
-    }
-
     override fun isItemViewSwipeEnabled(): Boolean {
         return true
     }
@@ -34,8 +30,7 @@ class SimpleItemTouchHelperCallback(private val viewModel: BooksViewModel) :
         source: RecyclerView.ViewHolder,
         target: RecyclerView.ViewHolder
     ): Boolean {
-        viewModel.onBookMove(source.adapterPosition, target.adapterPosition)
-        return true
+        return false
     }
 
     override fun onSwiped(viewHolder: RecyclerView.ViewHolder, i: Int) {
@@ -96,7 +91,7 @@ class SimpleItemTouchHelperCallback(private val viewModel: BooksViewModel) :
         val backgroundView: View =
             (viewHolder as BooksAdapter.BookHolder).binding.backgroundView.root
         if (actionState == ItemTouchHelper.ACTION_STATE_SWIPE) {
-            backgroundView.left = Math.max(dX, 0f).toInt()
+            backgroundView.left = dX.coerceAtLeast(0f).toInt()
         }
     }
 }

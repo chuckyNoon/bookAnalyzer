@@ -38,7 +38,7 @@ class SideMenuRowsAdapter(
         val binding = ItemSideMenuRowBinding.bind(view)
 
         init {
-            view.setOnTouchListener(object : OnSideMenuItemTouchListener {
+            view.setOnTouchListener(object : OnSideMenuItemTouchListener() {
                 override fun onClick() {
                     interaction.onRowClicked(adapterPosition)
                 }

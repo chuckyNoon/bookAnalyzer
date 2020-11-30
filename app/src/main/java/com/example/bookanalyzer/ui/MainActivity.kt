@@ -1,10 +1,8 @@
 package com.example.bookanalyzer.ui
 
 import android.os.Bundle
-import android.view.SurfaceControl
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentTransaction
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.databinding.ActivityMainBinding
 import com.example.bookanalyzer.ui.fragments.*
@@ -53,8 +51,8 @@ class MainActivity() :
         }
     }
 
-    override fun onAnalysisFinished(intention: ShowBookIntention) {
-        startAnalysisResultFragment(intention)
+    override fun onAnalysisFinished(extra: ResultFragmentExtra) {
+        startAnalysisResultFragment(extra)
     }
 
     override fun onWordListButtonClicked(analysisId: Int) {
@@ -65,8 +63,8 @@ class MainActivity() :
         startAnalysisProcessFragment(bookPath)
     }
 
-    override fun onAnalyzedBookClicked(intention: ShowBookIntention) {
-        startAnalysisResultFragment(intention)
+    override fun onAnalyzedBookClicked(extra: ResultFragmentExtra) {
+        startAnalysisResultFragment(extra)
     }
 
     private fun startBooksFragment() {
@@ -79,8 +77,8 @@ class MainActivity() :
         replaceFragment(fragment, TAG_PROCESS_FRAGMENT)
     }
 
-    private fun startAnalysisResultFragment(intention: ShowBookIntention) {
-        val fragment = AnalysisResultFragment.newInstance(intention)
+    private fun startAnalysisResultFragment(extra: ResultFragmentExtra) {
+        val fragment = AnalysisResultFragment.newInstance(extra)
         replaceFragment(fragment, TAG_RESULT_FRAGMENT)
     }
 

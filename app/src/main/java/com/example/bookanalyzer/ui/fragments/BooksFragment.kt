@@ -34,6 +34,7 @@ import com.example.bookanalyzer.ui.fragments.dialogs.FirstLaunchDialog
 import com.example.bookanalyzer.ui.fragments.dialogs.SearchSettingsDialog
 import com.example.bookanalyzer.view_models.BooksViewModel
 import com.example.bookanalyzer.view_models.BooksViewModelFactory
+import com.example.bookanalyzer.MyNavigation
 import java.io.File
 import java.io.Serializable
 import javax.inject.Inject
@@ -107,11 +108,6 @@ class BooksFragment() : Fragment(), SearchSettingsDialog.OnSearchSettingsSelecte
         } else {
             viewModel.onStart()
         }
-    }
-
-    override fun onStop() {
-        super.onStop()
-        viewModel.onStop()
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -279,19 +275,16 @@ class BooksFragment() : Fragment(), SearchSettingsDialog.OnSearchSettingsSelecte
             }
         })
 
-        viewModel.bookToAnalyze.observe(viewLifecycleOwner, Observer { bookPath ->
-            if (bookPath == null) {
+        viewModel.navigation.observe(viewLifecycleOwner, Observer { navigation->
+            if (navigation == null){
                 return@Observer
             }
-            interaction?.onNotAnalyzedBookClicked(bookPath)
+            when(navigation){
+                is MyNavigation.ToProcessFragment -> interaction?.onNotAnalyzedBookClicked(navigation.bookPath)
+                is MyNavigation.ToResultFragment -> interaction?.onAnalyzedBookClicked(navigation.extra)
+            }
         })
 
-        viewModel.showBookIntent.observe(viewLifecycleOwner, Observer { intention ->
-            if (intention == null) {
-                return@Observer
-            }
-            interaction?.onAnalyzedBookClicked(intention)
-        })
     }
 
     private fun isFirstApplicationLaunch(): Boolean {
@@ -391,11 +384,11 @@ class BooksFragment() : Fragment(), SearchSettingsDialog.OnSearchSettingsSelecte
 
     interface BooksFragmentInteraction {
         fun onNotAnalyzedBookClicked(bookPath: String)
-        fun onAnalyzedBookClicked(intention: ShowBookIntention)
+        fun onAnalyzedBookClicked(intention: ResultFragmentExtra)
     }
 }
 
-data class ShowBookIntention(
+data class ResultFragmentExtra(
     val cell: BookCell? = null,
     val analysisId: Int,
     val yOffset: Float? = null

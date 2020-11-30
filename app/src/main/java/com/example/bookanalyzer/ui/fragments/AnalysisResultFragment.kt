@@ -15,11 +15,11 @@ import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.bookanalyzer.MyApp
+import com.example.bookanalyzer.MyNavigation
 import com.example.bookanalyzer.R
 import com.example.bookanalyzer.ResourceManager
 import com.example.bookanalyzer.databinding.FragmentAnalysisResultBinding
 import com.example.bookanalyzer.domain.repositories.BookAnalysisRepository
-import com.example.bookanalyzer.ui.EXTRA_ANALYSIS_ID
 import com.example.bookanalyzer.ui.adapters.analysis_params_adapter.AnalysisParamsAdapter
 import com.example.bookanalyzer.view_models.AnalysisResultViewModel
 import com.example.bookanalyzer.view_models.AnalysisResultViewModelFactory
@@ -27,23 +27,24 @@ import com.squareup.picasso.Picasso
 import javax.inject.Inject
 
 
-const val EXTRA_INTENTION = "123123"
+const val EXTRA = "123123"
 
 class AnalysisResultFragment : Fragment() {
 
     companion object {
-        fun newInstance(intention:ShowBookIntention) =
+        fun newInstance(extra: ResultFragmentExtra) =
             AnalysisResultFragment().apply {
                 arguments = Bundle().apply {
-                    putSerializable(EXTRA_INTENTION, intention)
+                    putSerializable(EXTRA, extra)
                 }
             }
     }
 
     var exitAnimationFinished = false
+    var enterAnimationFinished = false
 
-    private val args: ShowBookIntention? by lazy {
-        arguments?.getSerializable(EXTRA_INTENTION) as ShowBookIntention?
+    private val extra: ResultFragmentExtra? by lazy {
+        arguments?.getSerializable(EXTRA) as ResultFragmentExtra?
     }
 
     private var interaction: ResultFragmentInteraction? = null
@@ -58,13 +59,13 @@ class AnalysisResultFragment : Fragment() {
 
     private lateinit var viewModel: AnalysisResultViewModel
 
-    fun startExitAnimation(){
+    fun startExitAnimation() {
         binding?.analysisParamsRecycler?.visibility = View.INVISIBLE
         binding?.textView?.visibility = View.INVISIBLE
         val startY = 0f
-        val endY = args?.yOffset ?: 0f
+        val endY = extra?.yOffset ?: 0f
         ObjectAnimator.ofFloat(binding?.body, "translationY", startY, endY).apply {
-            duration = if(endY != startY) 300 else 0
+            duration = if (endY != startY) 200 else 0
             addListener(object : Animator.AnimatorListener {
                 override fun onAnimationStart(animation: Animator?) {
                 }
@@ -115,13 +116,28 @@ class AnalysisResultFragment : Fragment() {
         setupToolBar()
         setupRecyclerView()
         setupObservers()
-        args?.analysisId?.let {
+        if (savedInstanceState != null){
+            enterAnimationFinished = true
+        }
+        extra?.analysisId?.let {
             viewModel.onViewCreated(it)
         }
     }
 
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding = null
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == android.R.id.home) {
+            viewModel.onOptionsItemBackSelected()
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
     private fun setupBookPreview() {
-        val cell = args?.cell ?: return
+        val cell = extra?.cell ?: return
         binding?.bookPreview?.apply {
             bookNameView.text = cell.title
             wordCountView.text = cell.uniqueWordCount
@@ -143,18 +159,6 @@ class AnalysisResultFragment : Fragment() {
                 bookImage.setImageDrawable(defaultBookImage)
             }
         }
-    }
-
-    override fun onDestroyView() {
-        super.onDestroyView()
-        binding = null
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == android.R.id.home) {
-            viewModel.onOptionsItemBackSelected()
-        }
-        return super.onOptionsItemSelected(item)
     }
 
     private fun setupToolBar() {
@@ -183,52 +187,53 @@ class AnalysisResultFragment : Fragment() {
                 adapter.setupCells(cells)
             }
             startPostponedEnterTransition()
-            binding?.analysisParamsRecycler?.visibility = View.INVISIBLE
-            binding?.textView?.visibility = View.INVISIBLE
-            val startY = args?.yOffset ?: 0f
-            val endY = 0f
-            ObjectAnimator.ofFloat(binding?.body, "translationY", startY, endY).apply {
-                duration = if (startY != endY) 300 else 0
-                addListener(object : Animator.AnimatorListener {
-                    override fun onAnimationStart(animation: Animator?) {
-                    }
-
-                    override fun onAnimationEnd(animation: Animator?) {
-                        binding?.analysisParamsRecycler?.visibility = View.VISIBLE
-                        binding?.textView?.visibility = View.VISIBLE
-                    }
-
-                    override fun onAnimationCancel(animation: Animator?) {
-                    }
-
-                    override fun onAnimationRepeat(animation: Animator?) {
-                    }
-                })
-                start()
+            if (!enterAnimationFinished){
+                startEnterAnimation()
             }
         })
 
-        viewModel.isFragmentFinishRequired.observe(viewLifecycleOwner, Observer { isRequired ->
-            if (isRequired == null) {
+        viewModel.navigation.observe(viewLifecycleOwner, Observer { navigation ->
+            if (navigation == null) {
                 return@Observer
             }
-            if (isRequired) {
-                activity?.onBackPressed()
+            when (navigation) {
+                is MyNavigation.Exit -> activity?.onBackPressed()
+                is MyNavigation.ToWordsFragment -> interaction?.onWordListButtonClicked(navigation.analysisId)
             }
         })
+    }
 
-        viewModel.wordListToShow.observe(viewLifecycleOwner, Observer { analysisId ->
-            if (analysisId == null) {
-                return@Observer
-            }
-            interaction?.onWordListButtonClicked(analysisId)
-        })
+    private fun startEnterAnimation(){
+        binding?.analysisParamsRecycler?.visibility = View.INVISIBLE
+        binding?.textView?.visibility = View.INVISIBLE
+        val startY = extra?.yOffset ?: 0f
+        val endY = 0f
+        ObjectAnimator.ofFloat(binding?.body, "translationY", startY, endY).apply {
+            duration = if (startY != endY) 200 else 0
+            addListener(object : Animator.AnimatorListener {
+                override fun onAnimationStart(animation: Animator?) {
+                }
+
+                override fun onAnimationEnd(animation: Animator?) {
+                    binding?.analysisParamsRecycler?.visibility = View.VISIBLE
+                    binding?.textView?.visibility = View.VISIBLE
+                    enterAnimationFinished = true
+                }
+
+                override fun onAnimationCancel(animation: Animator?) {
+                }
+
+                override fun onAnimationRepeat(animation: Animator?) {
+                }
+            })
+            start()
+        }
     }
 
     private val wordListButtonInteraction =
         object : AnalysisParamsAdapter.WordListButtonInteraction {
             override fun onButtonClicked() {
-                args?.analysisId?.let {
+                extra?.analysisId?.let {
                     viewModel.onWordListButtonClicked(it)
                 }
             }
