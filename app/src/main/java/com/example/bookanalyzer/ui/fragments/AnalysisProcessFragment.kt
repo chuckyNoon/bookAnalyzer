@@ -18,20 +18,24 @@ import com.example.bookanalyzer.domain.repositories.LoaderScreenRepository
 import com.example.bookanalyzer.view_models.AnalysisProcessViewModel
 import com.example.bookanalyzer.view_models.AnalysisProcessViewModelFactory
 import com.example.bookanalyzer.ui.EXTRA_BOOK_PATH
+import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookCell
+import java.io.Serializable
 import javax.inject.Inject
+
+const val EXTRA_PROCESS_FRAGMENT = "wefwefwe"
 
 class AnalysisProcessFragment() : Fragment() {
 
     companion object {
-        fun newInstance(path: String) = AnalysisProcessFragment().apply {
+        fun newInstance(extra: ProcessFragmentExtra) = AnalysisProcessFragment().apply {
             arguments = Bundle().apply {
-                putString(EXTRA_BOOK_PATH, path)
+                putSerializable(EXTRA_PROCESS_FRAGMENT, extra)
             }
         }
     }
 
-    private val bookPath: String? by lazy {
-        arguments?.getString(EXTRA_BOOK_PATH)
+    private val extra: ProcessFragmentExtra? by lazy {
+        arguments?.getSerializable(EXTRA_PROCESS_FRAGMENT) as ProcessFragmentExtra?
     }
 
     private var interaction: ProcessFragmentInteraction? = null
@@ -71,7 +75,7 @@ class AnalysisProcessFragment() : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupToolBar()
         setupObservers()
-        bookPath?.let {
+        extra?.let {
             viewModel.onViewCreated(it)
         }
     }
@@ -93,7 +97,7 @@ class AnalysisProcessFragment() : Fragment() {
             if (navigation == null) {
                 return@Observer
             }
-            when(navigation){
+            when (navigation) {
                 is MyNavigation.Exit -> activity?.onBackPressed()
                 is MyNavigation.ToResultFragment -> interaction?.onAnalysisFinished(navigation.extra)
             }
@@ -110,3 +114,5 @@ class AnalysisProcessFragment() : Fragment() {
         fun onAnalysisFinished(intention: ResultFragmentExtra)
     }
 }
+
+data class ProcessFragmentExtra(val cell: BookCell?, val bookPath: String) : Serializable

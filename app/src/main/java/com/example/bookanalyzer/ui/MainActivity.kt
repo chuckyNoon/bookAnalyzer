@@ -59,8 +59,8 @@ class MainActivity() :
         startWordsFragment(analysisId)
     }
 
-    override fun onNotAnalyzedBookClicked(bookPath: String) {
-        startAnalysisProcessFragment(bookPath)
+    override fun onNotAnalyzedBookClicked(extra: ProcessFragmentExtra) {
+        startAnalysisProcessFragment(extra)
     }
 
     override fun onAnalyzedBookClicked(extra: ResultFragmentExtra) {
@@ -72,8 +72,8 @@ class MainActivity() :
         replaceFragment(fragment, TAG_BOOKS_FRAGMENT)
     }
 
-    private fun startAnalysisProcessFragment(path: String) {
-        val fragment = AnalysisProcessFragment.newInstance(path)
+    private fun startAnalysisProcessFragment(extra: ProcessFragmentExtra) {
+        val fragment = AnalysisProcessFragment.newInstance(extra)
         replaceFragment(fragment, TAG_PROCESS_FRAGMENT)
     }
 

@@ -4,6 +4,7 @@ import androidx.lifecycle.*
 import com.example.bookanalyzer.MyNavigation
 import com.example.bookanalyzer.SingleEventLiveData
 import com.example.bookanalyzer.domain.repositories.LoaderScreenRepository
+import com.example.bookanalyzer.ui.fragments.ProcessFragmentExtra
 import com.example.bookanalyzer.ui.fragments.ResultFragmentExtra
 import kotlinx.coroutines.launch
 
@@ -27,16 +28,17 @@ class AnalysisProcessViewModel(private val repository: LoaderScreenRepository) :
         _navigation.value = MyNavigation.Exit()
     }
 
-    fun onViewCreated(bookPath: String) {
+    fun onViewCreated(extra: ProcessFragmentExtra) {
         if (!firstLaunch) {
             return
         }
         viewModelScope.launch {
+            val bookPath = extra.bookPath
             val sourceAnalysisEntity = repository.analyzeBook(bookPath)
             repository.saveAnalysis(sourceAnalysisEntity)
             val analysisId = repository.getAnalysisIdByPath(bookPath)
             analysisId?.let {
-                _navigation.value = MyNavigation.ToResultFragment(ResultFragmentExtra(analysisId = analysisId))
+                _navigation.value = MyNavigation.ToResultFragment(ResultFragmentExtra(extra.cell, it))
                 firstLaunch = false
             }
         }

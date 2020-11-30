@@ -22,16 +22,18 @@ class AnalysisResultViewModelFactory(
 class AnalysisResultViewModel(
     private val repository: BookAnalysisRepository,
     private val resourceManager: ResourceManager
-) : ViewModel(){
+) : ViewModel() {
 
     private var isFirstLaunch = true
 
     private lateinit var bookAnalysis: ShowedAnalysisEntity
 
     private val _cells = MutableLiveData<ArrayList<AbsAnalysisCell>>()
+    private val _uniqueWordCount = MutableLiveData<Int>()
     private val _navigation = SingleEventLiveData<MyNavigation>()
 
     val cells: LiveData<ArrayList<AbsAnalysisCell>> = _cells
+    val uniqueWordCount: LiveData<Int> = _uniqueWordCount
     val navigation: LiveData<MyNavigation> = _navigation
 
     fun onViewCreated(analysisId: Int) {
@@ -40,6 +42,7 @@ class AnalysisResultViewModel(
         }
         viewModelScope.launch {
             bookAnalysis = repository.getAnalysis(analysisId)
+            _uniqueWordCount.value = bookAnalysis.uniqueWordCount
             _cells.value = bookAnalysis.toParamCells()
             isFirstLaunch = true
         }

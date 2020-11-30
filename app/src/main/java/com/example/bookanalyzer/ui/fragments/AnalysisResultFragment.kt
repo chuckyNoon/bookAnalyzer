@@ -27,7 +27,7 @@ import com.squareup.picasso.Picasso
 import javax.inject.Inject
 
 
-const val EXTRA = "123123"
+const val EXTRA_RESULT_FRAGMENT = "123123"
 
 class AnalysisResultFragment : Fragment() {
 
@@ -35,7 +35,7 @@ class AnalysisResultFragment : Fragment() {
         fun newInstance(extra: ResultFragmentExtra) =
             AnalysisResultFragment().apply {
                 arguments = Bundle().apply {
-                    putSerializable(EXTRA, extra)
+                    putSerializable(EXTRA_RESULT_FRAGMENT, extra)
                 }
             }
     }
@@ -44,7 +44,7 @@ class AnalysisResultFragment : Fragment() {
     var enterAnimationFinished = false
 
     private val extra: ResultFragmentExtra? by lazy {
-        arguments?.getSerializable(EXTRA) as ResultFragmentExtra?
+        arguments?.getSerializable(EXTRA_RESULT_FRAGMENT) as ResultFragmentExtra?
     }
 
     private var interaction: ResultFragmentInteraction? = null
@@ -174,6 +174,14 @@ class AnalysisResultFragment : Fragment() {
     }
 
     private fun setupObservers() {
+        viewModel.uniqueWordCount.observe(viewLifecycleOwner, Observer { uniqueWordCount->
+            if (uniqueWordCount == null){
+                return@Observer
+            }
+            binding?.bookPreview?.wordCountView?.text = "$uniqueWordCount words"
+            binding?.bookPreview?.progressBar?.progress = uniqueWordCount
+        })
+
         viewModel.cells.observe(viewLifecycleOwner, Observer { cells ->
             if (cells == null) {
                 return@Observer

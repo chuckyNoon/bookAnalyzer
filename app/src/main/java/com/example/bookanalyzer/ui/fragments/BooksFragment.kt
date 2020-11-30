@@ -255,6 +255,7 @@ class BooksFragment() : Fragment(), SearchSettingsDialog.OnSearchSettingsSelecte
                     setLoadingStateViewText(R.string.loading_content_started)
                 }
                 BooksViewModel.ContentLoadingState.Finished -> {
+                    showLoadingStateView()
                     updateLoadingStateView(R.string.loading_content_ended, 250, 300)
                 }
                 else -> {
@@ -280,7 +281,7 @@ class BooksFragment() : Fragment(), SearchSettingsDialog.OnSearchSettingsSelecte
                 return@Observer
             }
             when(navigation){
-                is MyNavigation.ToProcessFragment -> interaction?.onNotAnalyzedBookClicked(navigation.bookPath)
+                is MyNavigation.ToProcessFragment -> interaction?.onNotAnalyzedBookClicked(navigation.extra)
                 is MyNavigation.ToResultFragment -> interaction?.onAnalyzedBookClicked(navigation.extra)
             }
         })
@@ -383,8 +384,8 @@ class BooksFragment() : Fragment(), SearchSettingsDialog.OnSearchSettingsSelecte
     }
 
     interface BooksFragmentInteraction {
-        fun onNotAnalyzedBookClicked(bookPath: String)
-        fun onAnalyzedBookClicked(intention: ResultFragmentExtra)
+        fun onNotAnalyzedBookClicked(extra: ProcessFragmentExtra)
+        fun onAnalyzedBookClicked(extra: ResultFragmentExtra)
     }
 }
 

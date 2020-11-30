@@ -9,6 +9,7 @@ import com.example.bookanalyzer.common.FilesSearch
 import com.example.bookanalyzer.domain.models.BookEntity
 import com.example.bookanalyzer.domain.repositories.StartScreenRepository
 import com.example.bookanalyzer.ui.adapters.book_items_adapter.BookCell
+import com.example.bookanalyzer.ui.fragments.ProcessFragmentExtra
 import com.example.bookanalyzer.ui.fragments.ResultFragmentExtra
 import kotlinx.coroutines.*
 import java.io.File
@@ -65,7 +66,7 @@ class BooksViewModel(
                 _contentLoadingState.value = ContentLoadingState.Finished
                 delay(TIME_BEFORE_HIDING_LOADING_STATE_VIEW)
                 _contentLoadingState.value = ContentLoadingState.Hidden
-            } else {
+            }else{
                 buildCompleteBookList()
             }
             isBookListCreated = true
@@ -90,10 +91,6 @@ class BooksViewModel(
         _sideMenuState.value = SideMenuState.Showed
     }
 
-    fun onActivityResult(bookPath: String) {
-        addBookItemToList(bookPath)
-    }
-
     fun onBookDismiss(position: Int) {
         bookEntities.removeAt(position)
         _bookCells.value = convertBookEntitiesToCells(bookEntities)
@@ -102,14 +99,31 @@ class BooksViewModel(
         }
     }
 
+    fun onActivityResult(bookPath: String) {
+        viewModelScope.launch {
+            if (bookEntities.firstOrNull { it.path == bookPath } == null){
+                repository.insertDataFromPathsInDb(arrayListOf(bookPath), toReplace = false)
+                buildCompleteBookList()
+            }
+            val bookEntity = bookEntities.firstOrNull { it.path == bookPath }
+            bookEntity?.let {
+                findNavigationType(it)
+            }
+        }
+    }
+
     fun onBookClicked(adapterPos: Int, yOffset: Float) {
-        val bookEntity = bookEntities[adapterPos]
+        findNavigationType(bookEntities[adapterPos], yOffset)
+    }
+
+    private fun findNavigationType(bookEntity: BookEntity, yOffset: Float = 0f){
         val analysisId = bookEntity.analysisId
         if (isBookAnalyzed(analysisId)) {
             val extra = ResultFragmentExtra(bookEntity.toBookCell(), analysisId, yOffset)
             _navigation.value = MyNavigation.ToResultFragment(extra)
         } else {
-            _navigation.value = MyNavigation.ToProcessFragment(bookEntity.path)
+            val extra = ProcessFragmentExtra(bookEntity.toBookCell(), bookEntity.path)
+            _navigation.value = MyNavigation.ToProcessFragment(extra)
         }
     }
 
@@ -156,13 +170,6 @@ class BooksViewModel(
             ("?")
         }
         return "$wordCount words"
-    }
-
-    private fun addBookItemToList(bookPath: String) {
-        viewModelScope.launch {
-            repository.insertDataFromPathsInDb(arrayListOf(bookPath), toReplace = false)
-            buildCompleteBookList()
-        }
     }
 
     private fun isBookAnalyzed(analysisId: Int) = (analysisId != ANALYSIS_NOT_EXIST)
